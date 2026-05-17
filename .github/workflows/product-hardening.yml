@@ -31,6 +31,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Python test dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install numpy==2.0.2 laspy==2.6.1 scipy==1.13.1 matplotlib==3.8.4 reportlab==4.4.10 Pillow==11.3.0 lazrs==0.8.1
+
       - name: Check i18n
         run: npm run check:i18n
 
@@ -59,6 +64,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build Potree browser bundle
+        run: |
+          cd ../potree
+          npm ci
+          npm run build
 
       - name: Install Playwright for smoke tests
         run: |
