@@ -33,7 +33,7 @@ Scope: P0-P2 findings across architecture, upload, security, i18n, viewer, 3DGS,
 | [#3 Default upload password hash is used when production secret is missing](https://github.com/yang498-Peter/cloudstudio-platform/issues/3) | P1 | upload/security/deploy | In audit | [#18](https://github.com/yang498-Peter/cloudstudio-platform/pull/18) |
 | [#4 Unauthenticated scan root registration can expose server directories](https://github.com/yang498-Peter/cloudstudio-platform/issues/4) | P1 | security/storage | In audit | [#18](https://github.com/yang498-Peter/cloudstudio-platform/pull/18) |
 | [#5 Absolute path APIs can read or write outside CloudStudio storage](https://github.com/yang498-Peter/cloudstudio-platform/issues/5) | P1 | security/storage | In audit | [#18](https://github.com/yang498-Peter/cloudstudio-platform/pull/18) |
-| [#6 Runtime data and job artifacts are publicly exposed as static files](https://github.com/yang498-Peter/cloudstudio-platform/issues/6) | P1 | security/storage/viewer | Open | Pending |
+| [#6 Runtime data and job artifacts are publicly exposed as static files](https://github.com/yang498-Peter/cloudstudio-platform/issues/6) | P1 | security/storage/viewer | In audit | [#22](https://github.com/yang498-Peter/cloudstudio-platform/pull/22) |
 | [#7 3DGS publishing reports ready before SOG optimization is complete](https://github.com/yang498-Peter/cloudstudio-platform/issues/7) | P1 | 3dgs/upload/tests | In audit | [#19](https://github.com/yang498-Peter/cloudstudio-platform/pull/19) |
 | [#8 3DGS rotation is hard-coded instead of stored per asset](https://github.com/yang498-Peter/cloudstudio-platform/issues/8) | P1 | 3dgs/viewer | In audit | [#19](https://github.com/yang498-Peter/cloudstudio-platform/pull/19) |
 | [#9 i18n failures can keep homepage and viewer hidden](https://github.com/yang498-Peter/cloudstudio-platform/issues/9) | P1 | i18n/viewer/tests | In audit | [#20](https://github.com/yang498-Peter/cloudstudio-platform/pull/20) |
@@ -50,6 +50,8 @@ Scope: P0-P2 findings across architecture, upload, security, i18n, viewer, 3DGS,
 - `npm ci`: passed; npm warned about Multer 1.x deprecation and reported 2 vulnerabilities.
 - `npm run check:i18n`: passed; extra locale key warnings remain and are tracked under i18n follow-ups.
 - `npm run test:dxf-draw`: passed.
+- `npm run test:static-runtime`: passed.
+- `npm run test:runtime-storage`: passed.
 - `npm run test:volume`: passed.
 - `npm run test:floorplan`: passed.
 - `npm audit --omit=dev --json`: 0 vulnerabilities after #21 lockfile patch updates.
