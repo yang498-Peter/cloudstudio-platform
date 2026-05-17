@@ -11,6 +11,7 @@ import {
   createStaticFallbackMiddleware,
   ensureRuntimeStorageLayout,
   getDiskUsageSummary,
+  isSafePublicStaticRequest,
   listDirectoryEntries,
   resolveFirstExistingPath as resolveFirstExistingRuntimePath,
   resolveRuntimePath,
@@ -618,11 +619,21 @@ const zipStorage = multer.diskStorage({
 const zipUpload = multer({ storage: zipStorage, limits: UPLOAD_LIMITS, fileFilter: zipFileFilter });
 
 app.use(express.json({ limit: '50mb' }));
+function createGuardedStaticFallback(candidates) {
+  return createStaticFallbackMiddleware(express, candidates, {
+    allowRequest: isSafePublicStaticRequest,
+  });
+}
+
+function createGuardedStaticDirectory(dirPath) {
+  return createGuardedStaticFallback([dirPath]);
+}
+
 app.use('/potree', express.static(POTREE_ROOT));
-app.use('/pointclouds', createStaticFallbackMiddleware(express, RUNTIME_STORAGE.pointclouds.candidates));
-app.use('/gaussians', createStaticFallbackMiddleware(express, RUNTIME_STORAGE.gaussians.candidates));
-app.use('/projects', createStaticFallbackMiddleware(express, RUNTIME_STORAGE.projects.candidates));    // serve uploaded project files (photos etc.)
-app.use('/exports', createStaticFallbackMiddleware(express, RUNTIME_STORAGE.exports.candidates));
+app.use('/pointclouds', createGuardedStaticFallback(RUNTIME_STORAGE.pointclouds.candidates));
+app.use('/gaussians', createGuardedStaticFallback(RUNTIME_STORAGE.gaussians.candidates));
+app.use('/projects', createGuardedStaticFallback(RUNTIME_STORAGE.projects.candidates));    // serve uploaded project files (photos etc.)
+app.use('/exports', createGuardedStaticFallback(RUNTIME_STORAGE.exports.candidates));
 app.use('/assets', express.static(ASSETS_DIR));
 
 // ═══════════════════════════════════════════════════════════
@@ -3571,8 +3582,11 @@ app.use('/scan-data/:projectId', (req, res, next) => {
   if (!project) {
     return sendApiError(res, new Error('Scanner project not found'), { fallbackCode: 'PROJECT_NOT_FOUND', fallbackStatus: 404 });
   }
+  if (!isSafePublicStaticRequest(req)) {
+    return res.sendStatus(404);
+  }
   // Serve files from the project directory
-  express.static(project.dirPath)(req, res, next);
+  express.static(project.dirPath, { dotfiles: 'deny', fallthrough: true, index: false, redirect: false })(req, res, next);
 });
 
 // ── API: List scanner projects ──
@@ -5874,8 +5888,8 @@ app.get('/api/download-dtm', (req, res) => {
 });
 
 // Serve DTM job files (preview images)
-app.use('/dtm-jobs', express.static(DTM_DIR));
-app.use('/floorplan-jobs', express.static(FLOORPLAN_DIR));
+app.use('/dtm-jobs', createGuardedStaticDirectory(DTM_DIR));
+app.use('/floorplan-jobs', createGuardedStaticDirectory(FLOORPLAN_DIR));
 
 // POST /api/generate-surface
 app.post('/api/generate-surface', async (_req, res) => {
@@ -5970,7 +5984,7 @@ app.get('/api/surface-grid', (req, res) => {
   }
 });
 
-app.use('/surface-jobs', express.static(SURFACE_DIR));
+app.use('/surface-jobs', createGuardedStaticDirectory(SURFACE_DIR));
 
 app.post('/api/generate-volume-surface', async (req, res) => {
   let payloadPath = null;
@@ -6179,9 +6193,7 @@ app.get('/api/volume-surface-grid', (req, res) => {
   }
 });
 
-app.use('/volume-surface-jobs', express.static(VOLUME_SURFACE_DIR));
-
-app.use('/volume-surface-jobs', express.static(VOLUME_SURFACE_DIR));
+app.use('/volume-surface-jobs', createGuardedStaticDirectory(VOLUME_SURFACE_DIR));
 
 app.post('/api/volume-jobs', async (req, res) => {
   let volumeSlotAcquired = false;
@@ -6471,7 +6483,7 @@ app.get('/api/download-volume-job', (req, res) => {
   }
 });
 
-app.use('/volume-jobs', express.static(VOLUME_JOB_DIR));
+app.use('/volume-jobs', createGuardedStaticDirectory(VOLUME_JOB_DIR));
 
 // POST /api/generate-contours
 app.post('/api/generate-contours', async (_req, res) => {
