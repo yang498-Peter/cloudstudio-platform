@@ -17,18 +17,42 @@ Scope: P0-P2 findings across architecture, upload, security, i18n, viewer, 3DGS,
 
 | Workstream | Owner | Status | Output |
 | --- | --- | --- | --- |
-| Architecture and module boundaries | Explorer agent | In progress | Pending Issues |
-| Security, permissions, and file safety | Explorer agent | In progress | Pending Issues |
-| Viewer and i18n | Explorer agent | In progress | Pending Issues |
-| Upload and conversion flows | Explorer agent | In progress | Pending Issues |
-| 3DGS and SuperSplat | Explorer agent | In progress | Pending Issues |
-| Deployment and staging operations | Explorer agent | In progress | Pending Issues |
+| Architecture and module boundaries | Explorer agent | Complete | Issues #5, #6, #13 |
+| Security, permissions, and file safety | Explorer agent | Complete | Issues #1-#6, #14, #16 |
+| Viewer and i18n | Explorer agent | Complete | Issues #9, #11 |
+| Upload and conversion flows | Explorer agent | Complete | Issues #1, #2, #10 |
+| 3DGS and SuperSplat | Explorer agent | Complete | Issues #7, #8, #10 |
+| Deployment and staging operations | Explorer agent | Complete | Issues #12-#15 |
 
 ## Issue Register
 
 | Issue | Priority | Area | Status | PR |
 | --- | --- | --- | --- | --- |
-| Pending | Pending | Pending | Pending | Pending |
+| [#1 ZIP uploads can write outside the extraction directory](https://github.com/yang498-Peter/cloudstudio-platform/issues/1) | P0 | upload/security | Open | Pending |
+| [#2 Multipart uploads are accepted before authentication and size limits](https://github.com/yang498-Peter/cloudstudio-platform/issues/2) | P0 | upload/security | Open | Pending |
+| [#3 Default upload password hash is used when production secret is missing](https://github.com/yang498-Peter/cloudstudio-platform/issues/3) | P1 | upload/security/deploy | Open | Pending |
+| [#4 Unauthenticated scan root registration can expose server directories](https://github.com/yang498-Peter/cloudstudio-platform/issues/4) | P1 | security/storage | Open | Pending |
+| [#5 Absolute path APIs can read or write outside CloudStudio storage](https://github.com/yang498-Peter/cloudstudio-platform/issues/5) | P1 | security/storage | Open | Pending |
+| [#6 Runtime data and job artifacts are publicly exposed as static files](https://github.com/yang498-Peter/cloudstudio-platform/issues/6) | P1 | security/storage/viewer | Open | Pending |
+| [#7 3DGS publishing reports ready before SOG optimization is complete](https://github.com/yang498-Peter/cloudstudio-platform/issues/7) | P1 | 3dgs/upload/tests | Open | Pending |
+| [#8 3DGS rotation is hard-coded instead of stored per asset](https://github.com/yang498-Peter/cloudstudio-platform/issues/8) | P1 | 3dgs/viewer | Open | Pending |
+| [#9 i18n failures can keep homepage and viewer hidden](https://github.com/yang498-Peter/cloudstudio-platform/issues/9) | P1 | i18n/viewer/tests | Open | Pending |
+| [#10 Long-running conversion jobs lack timeouts and queryable job state](https://github.com/yang498-Peter/cloudstudio-platform/issues/10) | P1 | upload/3dgs/tests | Open | Pending |
+| [#11 Volume and clip dynamic UI still leaks English in non-English locales](https://github.com/yang498-Peter/cloudstudio-platform/issues/11) | P1 | i18n/viewer | Open | Pending |
+| [#12 Staging PM2 startup and rollback safeguards are incomplete](https://github.com/yang498-Peter/cloudstudio-platform/issues/12) | P1 | deploy | Open | Pending |
+| [#13 Runtime storage is still colocated with application code on staging](https://github.com/yang498-Peter/cloudstudio-platform/issues/13) | P1 | storage/deploy | Open | Pending |
+| [#14 Public health and API responses leak absolute server paths](https://github.com/yang498-Peter/cloudstudio-platform/issues/14) | P2 | security/deploy | Open | Pending |
+| [#15 Staging code differs from Git HEAD and deployment docs reference old targets](https://github.com/yang498-Peter/cloudstudio-platform/issues/15) | P2 | deploy | Open | Pending |
+| [#16 Dependency audit reports high severity path-to-regexp vulnerability](https://github.com/yang498-Peter/cloudstudio-platform/issues/16) | P2 | security/tests/upload | Open | Pending |
+
+## Baseline Results
+
+- `npm ci`: passed; npm warned about Multer 1.x deprecation and reported 2 vulnerabilities.
+- `npm run check:i18n`: passed; extra locale key warnings remain and are tracked under i18n follow-ups.
+- `npm run test:dxf-draw`: passed.
+- `npm run test:volume`: passed.
+- `npm run test:floorplan`: passed.
+- `npm audit --omit=dev --json`: 1 high (`path-to-regexp`) and 1 low (`qs`) vulnerability, tracked in #16.
 
 ## Baseline Commands
 
