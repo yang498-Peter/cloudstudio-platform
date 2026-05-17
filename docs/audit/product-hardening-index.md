@@ -39,11 +39,11 @@ Scope: P0-P2 findings across architecture, upload, security, i18n, viewer, 3DGS,
 | [#9 i18n failures can keep homepage and viewer hidden](https://github.com/yang498-Peter/cloudstudio-platform/issues/9) | P1 | i18n/viewer/tests | In audit | [#20](https://github.com/yang498-Peter/cloudstudio-platform/pull/20) |
 | [#10 Long-running conversion jobs lack timeouts and queryable job state](https://github.com/yang498-Peter/cloudstudio-platform/issues/10) | P1 | upload/3dgs/tests | Open | Pending |
 | [#11 Volume and clip dynamic UI still leaks English in non-English locales](https://github.com/yang498-Peter/cloudstudio-platform/issues/11) | P1 | i18n/viewer | In audit | [#20](https://github.com/yang498-Peter/cloudstudio-platform/pull/20) |
-| [#12 Staging PM2 startup and rollback safeguards are incomplete](https://github.com/yang498-Peter/cloudstudio-platform/issues/12) | P1 | deploy | Open | Pending |
-| [#13 Runtime storage is still colocated with application code on staging](https://github.com/yang498-Peter/cloudstudio-platform/issues/13) | P1 | storage/deploy | Open | Pending |
+| [#12 Staging PM2 startup and rollback safeguards are incomplete](https://github.com/yang498-Peter/cloudstudio-platform/issues/12) | P1 | deploy | In audit | [#21](https://github.com/yang498-Peter/cloudstudio-platform/pull/21) |
+| [#13 Runtime storage is still colocated with application code on staging](https://github.com/yang498-Peter/cloudstudio-platform/issues/13) | P1 | storage/deploy | In audit | [#21](https://github.com/yang498-Peter/cloudstudio-platform/pull/21) |
 | [#14 Public health and API responses leak absolute server paths](https://github.com/yang498-Peter/cloudstudio-platform/issues/14) | P2 | security/deploy | Open | Pending |
-| [#15 Staging code differs from Git HEAD and deployment docs reference old targets](https://github.com/yang498-Peter/cloudstudio-platform/issues/15) | P2 | deploy | Open | Pending |
-| [#16 Dependency audit reports high severity path-to-regexp vulnerability](https://github.com/yang498-Peter/cloudstudio-platform/issues/16) | P2 | security/tests/upload | Open | Pending |
+| [#15 Staging code differs from Git HEAD and deployment docs reference old targets](https://github.com/yang498-Peter/cloudstudio-platform/issues/15) | P2 | deploy | In audit | [#21](https://github.com/yang498-Peter/cloudstudio-platform/pull/21) |
+| [#16 Dependency audit reports high severity path-to-regexp vulnerability](https://github.com/yang498-Peter/cloudstudio-platform/issues/16) | P2 | security/tests/upload | In audit | [#21](https://github.com/yang498-Peter/cloudstudio-platform/pull/21) |
 
 ## Baseline Results
 
@@ -52,7 +52,7 @@ Scope: P0-P2 findings across architecture, upload, security, i18n, viewer, 3DGS,
 - `npm run test:dxf-draw`: passed.
 - `npm run test:volume`: passed.
 - `npm run test:floorplan`: passed.
-- `npm audit --omit=dev --json`: 1 high (`path-to-regexp`) and 1 low (`qs`) vulnerability, tracked in #16.
+- `npm audit --omit=dev --json`: 0 vulnerabilities after #21 lockfile patch updates.
 
 ## Baseline Commands
 
