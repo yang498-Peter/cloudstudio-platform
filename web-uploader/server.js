@@ -11,6 +11,12 @@ import {
   runCommandWithTimeout,
 } from './lib/long-job-state.js';
 import {
+  redactServerPath,
+  sanitizeManifestForClient,
+  sanitizeSourceFileForClient,
+  shouldExposeServerPaths,
+} from './lib/public-api-sanitize.js';
+import {
   buildRuntimeStorageLayout,
   createStaticFallbackMiddleware,
   ensureRuntimeStorageLayout,
@@ -54,6 +60,7 @@ const ROOT = path.resolve(__dirname, '..');
 const POTREE_ROOT = path.join(ROOT, 'potree');
 const PYTHON_VENDOR_SITE = '';
 const RUNTIME_STORAGE = buildRuntimeStorageLayout({ appDir: __dirname, env: process.env });
+const EXPOSE_SERVER_PATHS = shouldExposeServerPaths(process.env);
 
 function parsePositiveIntegerEnv(name, fallback) {
   const raw = process.env[name];
@@ -3849,12 +3856,12 @@ app.get('/api/scan-projects', (_req, res) => {
       projects: projects.map(p => ({
         projectId: p.projectId,
         name: p.name,
-        dirPath: p.dirPath || null,
+        dirPath: redactServerPath(p.dirPath, { expose: EXPOSE_SERVER_PATHS }),
         features: p.features,
-        sourceFiles: listScannerSourceFiles(p).map(file => ({
+        sourceFiles: listScannerSourceFiles(p).map(file => sanitizeSourceFileForClient({
           ...file,
           absPath: path.join(p.dirPath, file.relPath),
-        })),
+        }, { expose: EXPOSE_SERVER_PATHS })),
         cloudName: p.cloudName || null,
         pointcloudUrl: p.pointcloudUrl || null,
         scanDataUrl: `/scan-data/${p.projectId}`,
@@ -3919,7 +3926,12 @@ app.post('/api/scan-projects/register', uploadCredentialJsonPrecheck, (req, res)
       }
     }
     const projects = discoverScanProjects();
-    return sendApiSuccess(res, { projects: projects.length, roots: SCAN_PROJECT_ROOTS });
+    return sendApiSuccess(res, {
+      projects: projects.length,
+      roots: EXPOSE_SERVER_PATHS ? SCAN_PROJECT_ROOTS : [],
+      count: SCAN_PROJECT_ROOTS.length,
+      pathsExposed: EXPOSE_SERVER_PATHS,
+    });
   } catch (error) {
     return sendApiError(res, error, { fallbackCode: 'BAD_REQUEST', fallbackStatus: 400 });
   }
@@ -3927,7 +3939,11 @@ app.post('/api/scan-projects/register', uploadCredentialJsonPrecheck, (req, res)
 
 // ── API: Get scan roots ──
 app.get('/api/scan-roots', (_req, res) => {
-  return sendApiSuccess(res, { roots: SCAN_PROJECT_ROOTS });
+  return sendApiSuccess(res, {
+    roots: EXPOSE_SERVER_PATHS ? SCAN_PROJECT_ROOTS : [],
+    count: SCAN_PROJECT_ROOTS.length,
+    pathsExposed: EXPOSE_SERVER_PATHS,
+  });
 });
 
 // ── Standard routes ──
@@ -4002,15 +4018,18 @@ app.get('/health', (_req, res) => {
     platform: process.platform,
     desktop: false,
     converter: pathExists(CONVERTER),
-    converterPath: CONVERTER,
-    potreePath: POTREE_ROOT,
     exportPython: pathExists(PYTHON_BIN),
-    exportPythonPath: PYTHON_BIN,
     systemPython: Boolean(SYSTEM_PYTHON_BIN),
-    systemPythonPath: SYSTEM_PYTHON_BIN,
     desktopDialogs: false,
-    desktopDialogsPath: null,
     exportScript: fs.existsSync(EXPORT_POINTCLOUD_SCRIPT),
+    pathsExposed: EXPOSE_SERVER_PATHS,
+    ...(EXPOSE_SERVER_PATHS ? {
+      converterPath: CONVERTER,
+      potreePath: POTREE_ROOT,
+      exportPythonPath: PYTHON_BIN,
+      systemPythonPath: SYSTEM_PYTHON_BIN,
+      desktopDialogsPath: null,
+    } : {}),
     storage: getRuntimeStorageHealth(),
   });
 });
@@ -4227,7 +4246,10 @@ app.get('/api/clouds', (_req, res) => {
         features: entry.features || null,
         sourceType: entry.sourceType || 'desktop-local-import',
         metadataUrl: entry.metadataUrl || buildLocalPointcloudMetadataUrl(entry.cloudName),
-        sourcePath: entry.dirPath || entry.originalPath || path.dirname(entry.metadataPath),
+        sourcePath: redactServerPath(
+          entry.dirPath || entry.originalPath || path.dirname(entry.metadataPath),
+          { expose: EXPOSE_SERVER_PATHS, basename: true }
+        ),
         isExternal: true,
         scanDataUrl: entry.projectId ? `/scan-data/${encodeURIComponent(entry.projectId)}` : null,
         viewerUrl: entry.projectId
@@ -4250,7 +4272,7 @@ app.get('/api/clouds', (_req, res) => {
         features: entry.features || null,
         sourceType: 'scan-project',
         metadataUrl: entry.pointcloudUrl,
-        sourcePath: entry.dirPath,
+        sourcePath: redactServerPath(entry.dirPath, { expose: EXPOSE_SERVER_PATHS, basename: true }),
         scanDataUrl: `/scan-data/${encodeURIComponent(entry.projectId)}`,
         viewerUrl: buildScannerViewerUrl({
           projectId: entry.projectId,
@@ -4598,7 +4620,7 @@ app.post('/api/upload', uploadCredentialPrecheck, upload.single('pointcloud'), a
   if (!fs.existsSync(CONVERTER)) {
     return sendApiError(res, new Error('PotreeConverter not found'), {
       fallbackCode: 'CONVERTER_NOT_FOUND',
-      extra: { converter: CONVERTER },
+      extra: { converter: redactServerPath(CONVERTER, { expose: EXPOSE_SERVER_PATHS }) },
     });
   }
 
@@ -6062,7 +6084,9 @@ app.get('/api/cloud-source', (req, res) => {
       }
     }
 
-    return sendApiSuccess(res, { manifest });
+    return sendApiSuccess(res, {
+      manifest: sanitizeManifestForClient(manifest, { expose: EXPOSE_SERVER_PATHS }),
+    });
   } catch (error) {
     return sendApiError(res, error, { fallbackCode: 'INTERNAL_ERROR' });
   }
@@ -6071,6 +6095,7 @@ app.get('/api/cloud-source', (req, res) => {
 app.get('/api/mesh-file', (req, res) => {
   try {
     const mesh = parseObjMeshFile(req.query.path);
+    if (!EXPOSE_SERVER_PATHS) delete mesh.sourcePath;
     return sendApiSuccess(res, mesh);
   } catch (error) {
     return sendApiError(res, error, {
@@ -6086,7 +6111,11 @@ app.get('/api/project-dir', (req, res) => {
     const projectId = requireNonEmptyString(req.query.projectId, 'projectId', { code: 'BAD_REQUEST' });
     const project = getScannerProjectById(projectId);
     if (!project) return res.json({ ok: false, dirPath: null });
-    return sendApiSuccess(res, { dirPath: project.dirPath, name: project.name });
+    return sendApiSuccess(res, {
+      dirPath: redactServerPath(project.dirPath, { expose: EXPOSE_SERVER_PATHS }),
+      name: project.name,
+      pathsExposed: EXPOSE_SERVER_PATHS,
+    });
   } catch (error) {
     return sendApiError(res, error, { fallbackCode: 'INTERNAL_ERROR' });
   }
