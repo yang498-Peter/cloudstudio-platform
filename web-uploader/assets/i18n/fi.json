@@ -218,8 +218,8 @@
       "gaussianNameLabel": "Näkymän nimi (valinnainen, käyttää tiedoston nimeä jos tyhjä)",
       "gaussianNamePlaceholder": "esim. factory_gaussian_scene",
       "gaussianSubmitBtn": "Lähetä ja avaa katselu",
-      "gaussianReadyTitle": "3DGS julkaistu: {{cloudName}}",
-      "gaussianReadyTitleShort": "3DGS julkaistu",
+      "gaussianReadyTitle": "3DGS valmis selaimeen: {{cloudName}}",
+      "gaussianReadyTitleShort": "3DGS valmis selaimeen",
       "openGaussianViewer": "Avaa katselu"
     },
     "clouds": {
@@ -241,7 +241,9 @@
       "gaussianSupersplat": "3DGS-katselu · {{format}}",
       "sourceSize": "Lähde",
       "publishSize": "Verkkopaketti",
-      "publishStatus": "Tila: {{status}}"
+      "publishStatus": "Tila: {{status}}",
+      "directBrowseReady": "Suora selaus valmis",
+      "sogStatus": "SOG: {{status}}"
     },
     "adv": {
       "label": "Miksi CloudStudio",
@@ -269,7 +271,7 @@
       "uploadSuccess": "Muunnos valmis: {{cloudName}}",
       "projectUploadSuccess": "✓ Projekti lähetetty: {{projectName}}{{features}}",
       "preconvertedSuccess": "✓ Esimuunnettu pilvi lisätty: {{cloudName}}",
-      "gaussianSuccess": "✓ 3DGS julkaistu: {{cloudName}}"
+      "gaussianSuccess": "3DGS valmis selaimeen: {{cloudName}}"
     },
     "toast": {
       "loadFailed": "Lataus epäonnistui: {{message}}",

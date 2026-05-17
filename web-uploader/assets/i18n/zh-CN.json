@@ -218,8 +218,8 @@
       "gaussianNameLabel": "场景名称（可选，留空使用文件名）",
       "gaussianNamePlaceholder": "例如：factory_gaussian_scene",
       "gaussianSubmitBtn": "上传并打开浏览",
-      "gaussianReadyTitle": "3DGS 已发布：{{cloudName}}",
-      "gaussianReadyTitleShort": "3DGS 已发布",
+      "gaussianReadyTitle": "3DGS 可直接浏览：{{cloudName}}",
+      "gaussianReadyTitleShort": "3DGS 可直接浏览",
       "openGaussianViewer": "打开浏览"
     },
     "clouds": {
@@ -241,7 +241,9 @@
       "gaussianSupersplat": "3DGS 浏览 · {{format}}",
       "sourceSize": "源文件",
       "publishSize": "网页浏览",
-      "publishStatus": "状态：{{status}}"
+      "publishStatus": "状态：{{status}}",
+      "directBrowseReady": "可直接浏览",
+      "sogStatus": "SOG：{{status}}"
     },
     "adv": {
       "label": "为何选择",
@@ -269,7 +271,7 @@
       "uploadSuccess": "转换成功: {{cloudName}}",
       "projectUploadSuccess": "✓ 项目上传完成: {{projectName}}{{features}}",
       "preconvertedSuccess": "✓ 预转换点云已上传：{{cloudName}}",
-      "gaussianSuccess": "✓ 3DGS 已发布：{{cloudName}}"
+      "gaussianSuccess": "3DGS 可直接浏览：{{cloudName}}"
     },
     "toast": {
       "loadFailed": "加载失败: {{message}}",

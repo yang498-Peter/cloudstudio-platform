@@ -218,8 +218,8 @@
       "gaussianNameLabel": "Scenens namn (valfritt, använder filnamn om tomt)",
       "gaussianNamePlaceholder": "t.ex. factory_gaussian_scene",
       "gaussianSubmitBtn": "Ladda upp och öppna visaren",
-      "gaussianReadyTitle": "3DGS publicerad: {{cloudName}}",
-      "gaussianReadyTitleShort": "3DGS publicerad",
+      "gaussianReadyTitle": "3DGS redo för visning: {{cloudName}}",
+      "gaussianReadyTitleShort": "3DGS redo för visning",
       "openGaussianViewer": "Öppna visaren"
     },
     "clouds": {
@@ -241,7 +241,9 @@
       "gaussianSupersplat": "3DGS-visning · {{format}}",
       "sourceSize": "Källa",
       "publishSize": "Webbpaket",
-      "publishStatus": "Publikationsstatus: {{status}}"
+      "publishStatus": "Publikationsstatus: {{status}}",
+      "directBrowseReady": "Direktvisning klar",
+      "sogStatus": "SOG: {{status}}"
     },
     "adv": {
       "label": "Varför CloudStudio",
@@ -269,7 +271,7 @@
       "uploadSuccess": "Konvertering klar: {{cloudName}}",
       "projectUploadSuccess": "✓ Projekt uppladdat: {{projectName}}{{features}}",
       "preconvertedSuccess": "✓ Förkonverterat moln tillagt: {{cloudName}}",
-      "gaussianSuccess": "✓ 3DGS publicerad: {{cloudName}}"
+      "gaussianSuccess": "3DGS redo för visning: {{cloudName}}"
     },
     "toast": {
       "loadFailed": "Laddning misslyckades: {{message}}",

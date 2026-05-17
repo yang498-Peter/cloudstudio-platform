@@ -218,8 +218,8 @@
       "gaussianNameLabel": "Szenenname (optional, leer lassen für Dateiname)",
       "gaussianNamePlaceholder": "z. B. factory_gaussian_scene",
       "gaussianSubmitBtn": "Hochladen und Viewer öffnen",
-      "gaussianReadyTitle": "3DGS veröffentlicht: {{cloudName}}",
-      "gaussianReadyTitleShort": "3DGS veröffentlicht",
+      "gaussianReadyTitle": "3DGS direkt anzeigebereit: {{cloudName}}",
+      "gaussianReadyTitleShort": "3DGS direkt anzeigebereit",
       "openGaussianViewer": "Öffnen Sie den Viewer"
     },
     "clouds": {
@@ -241,7 +241,9 @@
       "gaussianSupersplat": "3DGS-Viewer · {{format}}",
       "sourceSize": "Quelle",
       "publishSize": "Ansicht",
-      "publishStatus": "Veröffentlichungsstatus: {{status}}"
+      "publishStatus": "Veröffentlichungsstatus: {{status}}",
+      "directBrowseReady": "Direkte Ansicht bereit",
+      "sogStatus": "SOG: {{status}}"
     },
     "adv": {
       "label": "Warum CloudStudio",
@@ -269,7 +271,7 @@
       "uploadSuccess": "Konvertierung abgeschlossen: {{cloudName}}",
       "projectUploadSuccess": "✓ Projekt hochgeladen: {{projectName}}{{features}}",
       "preconvertedSuccess": "✓ Vorkonvertierte Cloud hinzugefügt: {{cloudName}}",
-      "gaussianSuccess": "✓ 3DGS veröffentlicht: {{cloudName}}"
+      "gaussianSuccess": "3DGS direkt anzeigebereit: {{cloudName}}"
     },
     "toast": {
       "loadFailed": "Laden fehlgeschlagen: {{message}}",

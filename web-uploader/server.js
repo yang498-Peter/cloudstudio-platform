@@ -28,6 +28,8 @@ const EMBEDDED_VIEWER_HTML = '';
 const DEFAULT_UPLOAD_PASSWORD_SHA256 = '4beb94958cd5b507d6b013c89964bf72c5434bddcc06f98baf8eb70143720e63';
 const SPLAT_TRANSFORM_VERSION = '2.0.3';
 const GAUSSIAN_CONVERT_ROTATION = String(process.env.GAUSSIAN_CONVERT_ROTATION || '90,0,180').trim();
+const DEFAULT_GAUSSIAN_VIEWER_ROTATION = Object.freeze({ rx: 90, ry: 0, rz: 180 });
+const BAKED_GAUSSIAN_VIEWER_ROTATION = Object.freeze({ rx: 0, ry: 0, rz: 0 });
 let gaussianConversionQueue = Promise.resolve();
 const UPLOAD_PASSWORD_SHA256 = resolveUploadPasswordHash(process.env);
 const GIB = 1024 * 1024 * 1024;
@@ -2549,18 +2551,57 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+function normalizeGaussianViewerRotation(value, fallback = DEFAULT_GAUSSIAN_VIEWER_ROTATION) {
+  const source = value && typeof value === 'object' ? value : {};
+  const normalized = {
+    rx: Number(source.rx),
+    ry: Number(source.ry),
+    rz: Number(source.rz),
+  };
+  const fallbackRotation = fallback && typeof fallback === 'object' ? fallback : DEFAULT_GAUSSIAN_VIEWER_ROTATION;
+  for (const axis of ['rx', 'ry', 'rz']) {
+    if (!Number.isFinite(normalized[axis])) normalized[axis] = fallbackRotation[axis] ?? 0;
+  }
+  return normalized;
+}
+
+function gaussianViewerRotationEquals(a, b) {
+  const left = normalizeGaussianViewerRotation(a);
+  const right = normalizeGaussianViewerRotation(b);
+  return left.rx === right.rx && left.ry === right.ry && left.rz === right.rz;
+}
+
+function resolveGaussianViewerRotation(manifest = {}, publishInfo = {}, fallback = DEFAULT_GAUSSIAN_VIEWER_ROTATION) {
+  const topLevelRotation = manifest.viewerRotation
+    ? normalizeGaussianViewerRotation(manifest.viewerRotation, fallback)
+    : null;
+  const publishRotation = (manifest.publish?.viewerRotation || publishInfo.viewerRotation)
+    ? normalizeGaussianViewerRotation(manifest.publish?.viewerRotation || publishInfo.viewerRotation, fallback)
+    : null;
+
+  if (topLevelRotation && publishRotation && !gaussianViewerRotationEquals(topLevelRotation, publishRotation)) {
+    if (!gaussianViewerRotationEquals(publishRotation, DEFAULT_GAUSSIAN_VIEWER_ROTATION)) {
+      return publishRotation;
+    }
+  }
+
+  return topLevelRotation || publishRotation || normalizeGaussianViewerRotation(null, fallback);
+}
+
 function buildGaussianEditorUrl(assetName, manifest = {}, publishInfo = {}) {
   const fileName = manifest.fileName || manifest.originalName || 'scene.ply';
-  const rotation = publishInfo.viewerRotation || (publishInfo.rotationBaked
-    ? { rx: 0, ry: 0, rz: 0 }
-    : { rx: 90, ry: 0, rz: 180 });
+  const rotation = resolveGaussianViewerRotation(
+    manifest,
+    publishInfo,
+    publishInfo.rotationBaked ? BAKED_GAUSSIAN_VIEWER_ROTATION : DEFAULT_GAUSSIAN_VIEWER_ROTATION,
+  );
   const params = new URLSearchParams({
     load: `/gaussians/${assetName}/${fileName}`,
     filename: fileName,
     lng: 'en',
-    rx: String(rotation.rx ?? 90),
-    ry: String(rotation.ry ?? 0),
-    rz: String(rotation.rz ?? 180),
+    rx: String(rotation.rx),
+    ry: String(rotation.ry),
+    rz: String(rotation.rz),
     'show.grid': 'false',
     'show.bound': 'false',
     v: GAUSSIAN_EDITOR_VERSION,
@@ -2570,6 +2611,45 @@ function buildGaussianEditorUrl(assetName, manifest = {}, publishInfo = {}) {
 
 function getGaussianViewerUrl(assetName, publishInfo = null, fallbackFileName = 'scene.ply') {
   return `/3dgs/${encodeURIComponent(assetName)}`;
+}
+
+function buildGaussianCloudListEntry(name, manifest = {}) {
+  const publish = manifest.publish || {};
+  const optimizationStatus = publish.optimizationStatus
+    || manifest.optimizationStatus
+    || (publish.sourceFormat === 'ply' || manifest.format === 'ply' ? 'unknown' : 'not-applicable');
+  const directBrowseStatus = publish.directBrowseStatus || manifest.directBrowseStatus || (
+    ['ready', 'direct-ready', 'optimized-ready'].includes(publish.status) ? 'ready' : 'unknown'
+  );
+  const viewerRotation = resolveGaussianViewerRotation(
+    manifest,
+    publish,
+    publish.rotationBaked ? BAKED_GAUSSIAN_VIEWER_ROTATION : DEFAULT_GAUSSIAN_VIEWER_ROTATION,
+  );
+
+  return {
+    name,
+    cloudName: name,
+    resourceType: 'gaussian',
+    sourceType: manifest.type || 'gaussian-upload',
+    gaussianFormat: manifest.format || null,
+    gaussianPipeline: publish.pipeline || null,
+    gaussianPublishStatus: publish.status || 'raw',
+    gaussianDirectBrowseStatus: directBrowseStatus,
+    gaussianOptimizationStatus: optimizationStatus,
+    gaussianOptimizationEligible: Boolean(publish.optimizationEligible || optimizationStatus !== 'not-applicable'),
+    gaussianOptimizationPipeline: publish.optimizationPipeline || null,
+    gaussianPublishBytes: publish.bytes || manifest.runtimeBytes || null,
+    originalBytes: manifest.originalBytes || null,
+    fileUrl: manifest.fileUrl || null,
+    sourceFileUrl: manifest.sourceFileUrl || null,
+    points: null,
+    metadataUrl: null,
+    scanDataUrl: null,
+    viewerRotation,
+    editorViewerUrl: buildGaussianEditorUrl(name, manifest, publish),
+    viewerUrl: manifest.viewerUrl || getGaussianViewerUrl(name, publish, manifest.fileName || 'scene.ply'),
+  };
 }
 
 function readGaussianManifest(assetName) {
@@ -2656,24 +2736,39 @@ function enqueueGaussianConversion(task) {
 }
 
 function finalizeGaussianManifestForEditor(assetName, manifest, publishOverrides = {}) {
-  const editorViewerUrl = buildGaussianEditorUrl(assetName, manifest, manifest.publish || {});
+  const publish = {
+    ...(manifest.publish || {}),
+    ...publishOverrides,
+  };
+  const rotationFallback = publish.rotationBaked
+    ? BAKED_GAUSSIAN_VIEWER_ROTATION
+    : DEFAULT_GAUSSIAN_VIEWER_ROTATION;
+  const viewerRotation = resolveGaussianViewerRotation(manifest, publish, rotationFallback);
+
   manifest.viewerUrl = `/3dgs/${encodeURIComponent(assetName)}`;
+  manifest.viewerRotation = viewerRotation;
+  manifest.directBrowseStatus = publish.directBrowseStatus || 'ready';
+  manifest.optimizationStatus = publish.optimizationStatus || manifest.optimizationStatus || 'not-applicable';
   manifest.publish = {
-    status: 'ready',
+    status: 'direct-ready',
+    directBrowseStatus: manifest.directBrowseStatus,
     pipeline: 'supersplat-editor-direct',
     engine: 'playcanvas-supersplat-editor',
     sourceFormat: manifest.format,
-    editorViewerUrl,
-    directViewerUrl: editorViewerUrl,
+    editorViewerUrl: '',
+    directViewerUrl: '',
     viewerUrl: manifest.viewerUrl,
+    viewerRotation,
+    optimizationStatus: manifest.optimizationStatus,
     publishedAt: new Date().toISOString(),
-    ...publishOverrides,
+    ...publish,
   };
-  if (publishOverrides.viewerRotation || publishOverrides.rotationBaked) {
-    const updatedViewerUrl = buildGaussianEditorUrl(assetName, manifest, manifest.publish);
-    manifest.publish.editorViewerUrl = updatedViewerUrl;
-    manifest.publish.directViewerUrl = updatedViewerUrl;
-  }
+  manifest.publish.viewerRotation = viewerRotation;
+  manifest.publish.directBrowseStatus = manifest.directBrowseStatus;
+  manifest.publish.optimizationStatus = manifest.optimizationStatus;
+  const editorViewerUrl = buildGaussianEditorUrl(assetName, manifest, manifest.publish);
+  manifest.publish.editorViewerUrl = editorViewerUrl;
+  manifest.publish.directViewerUrl = editorViewerUrl;
   manifest.note = 'Published with CloudStudio SuperSplat Editor browse mode. Source file is loaded directly by the viewer.';
   return manifest;
 }
@@ -2696,7 +2791,10 @@ function createGaussianDirectManifest(assetName, {
     uploadedAt,
     fileUrl: `/gaussians/${encodeURIComponent(assetName)}/${encodeURIComponent(targetName)}`,
   };
+  const isPlySource = manifest.format === 'ply';
   finalizeGaussianManifestForEditor(assetName, manifest, {
+    status: 'direct-ready',
+    directBrowseStatus: 'ready',
     pipeline: 'supersplat-editor-direct',
     engine: 'playcanvas-supersplat-editor',
     sourceFormat: manifest.format,
@@ -2705,10 +2803,14 @@ function createGaussianDirectManifest(assetName, {
     bytes: sourceBytes,
     sourceBytes,
     rotationBaked: false,
-    viewerRotation: { rx: 90, ry: 0, rz: 180 },
-    optimizationStatus: 'pending',
+    viewerRotation: DEFAULT_GAUSSIAN_VIEWER_ROTATION,
+    optimizationEligible: isPlySource,
+    optimizationStatus: isPlySource ? 'pending' : 'not-applicable',
+    optimizationPipeline: isPlySource ? 'supersplat-editor-sog' : null,
   });
-  manifest.note = 'Published immediately in direct 3DGS browse mode. SOG optimization may continue in the background for PLY uploads.';
+  manifest.note = isPlySource
+    ? 'Direct 3DGS browsing is ready. SOG optimization is pending in the background.'
+    : 'Direct 3DGS browsing is ready. SOG optimization is not applicable for this source format.';
   if (assetDir) {
     writeGaussianManifest(assetDir, manifest);
   }
@@ -2735,8 +2837,10 @@ async function optimizeGaussianAssetToSog({
       });
     currentManifest.publish = {
       ...(currentManifest.publish || {}),
-      status: 'ready',
+      status: 'direct-ready',
+      directBrowseStatus: 'ready',
       optimizationStatus: 'failed',
+      optimizationEligible: true,
       optimizationPipeline: 'supersplat-editor-sog',
       sourceFormat: 'ply',
       attemptedRuntimeFormat: 'sog',
@@ -2747,6 +2851,11 @@ async function optimizeGaussianAssetToSog({
       tool: `@playcanvas/splat-transform@${SPLAT_TRANSFORM_VERSION}`,
       failedAt: new Date().toISOString(),
     };
+    const viewerRotation = resolveGaussianViewerRotation(currentManifest, currentManifest.publish, DEFAULT_GAUSSIAN_VIEWER_ROTATION);
+    currentManifest.viewerRotation = viewerRotation;
+    currentManifest.directBrowseStatus = 'ready';
+    currentManifest.optimizationStatus = 'failed';
+    currentManifest.publish.viewerRotation = viewerRotation;
     currentManifest.note = 'Direct PLY browsing is available. Background SOG optimization failed on the server.';
     writeGaussianManifest(assetDir, currentManifest);
     console.warn(`[Gaussian] Background SOG optimization failed for ${assetName}: ${currentManifest.publish.error}`);
@@ -2754,6 +2863,11 @@ async function optimizeGaussianAssetToSog({
   }
 
   const runtimeBytes = fs.statSync(runtimePath).size;
+  const previousManifest = readGaussianManifest(assetName) || {};
+  const previousRotation = resolveGaussianViewerRotation(previousManifest, previousManifest.publish || {}, DEFAULT_GAUSSIAN_VIEWER_ROTATION);
+  const viewerRotation = gaussianViewerRotationEquals(previousRotation, DEFAULT_GAUSSIAN_VIEWER_ROTATION)
+    ? BAKED_GAUSSIAN_VIEWER_ROTATION
+    : previousRotation;
   const manifest = {
     type: 'gaussian-upload',
     resourceType: 'gaussian',
@@ -2767,9 +2881,12 @@ async function optimizeGaussianAssetToSog({
     fileUrl: `/gaussians/${encodeURIComponent(assetName)}/${encodeURIComponent(runtimeName)}`,
     sourceFileUrl: `/gaussians/${encodeURIComponent(assetName)}/${encodeURIComponent(targetName)}`,
     convertedFrom: targetName,
-    uploadedAt: new Date().toISOString(),
+    uploadedAt: previousManifest.uploadedAt || new Date().toISOString(),
+    viewerRotation,
   };
   finalizeGaussianManifestForEditor(assetName, manifest, {
+    status: 'optimized-ready',
+    directBrowseStatus: 'ready',
     pipeline: 'supersplat-editor-sog',
     engine: 'playcanvas-supersplat-editor',
     sourceFormat: 'ply',
@@ -2778,10 +2895,12 @@ async function optimizeGaussianAssetToSog({
     bytes: runtimeBytes,
     sourceBytes,
     rotationBaked: true,
-    viewerRotation: { rx: 0, ry: 0, rz: 0 },
+    viewerRotation,
     conversionRotation: GAUSSIAN_CONVERT_ROTATION,
     durationMs: conversion.durationMs,
+    optimizationEligible: true,
     optimizationStatus: 'ready',
+    optimizedAt: new Date().toISOString(),
     tool: `@playcanvas/splat-transform@${SPLAT_TRANSFORM_VERSION}`,
   });
   manifest.note = 'Published with CloudStudio SuperSplat Editor browse mode using official PlayCanvas SOG generated from the original PLY. Rotation is baked into the published file.';
@@ -3782,23 +3901,7 @@ app.get('/api/clouds', (_req, res) => {
         if (!fs.existsSync(manifestPath)) return null;
         try {
           const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
-          return {
-            name,
-            cloudName: name,
-            resourceType: 'gaussian',
-            sourceType: manifest.type || 'gaussian-upload',
-            gaussianFormat: manifest.format || null,
-            gaussianPipeline: manifest.publish?.pipeline || null,
-            gaussianPublishStatus: manifest.publish?.status || 'raw',
-            gaussianPublishBytes: manifest.publish?.bytes || manifest.runtimeBytes || null,
-            originalBytes: manifest.originalBytes || null,
-            fileUrl: manifest.fileUrl || null,
-            sourceFileUrl: manifest.sourceFileUrl || null,
-            points: null,
-            metadataUrl: null,
-            scanDataUrl: null,
-            viewerUrl: manifest.viewerUrl || getGaussianViewerUrl(name, manifest.publish, manifest.fileName || 'scene.ply'),
-          };
+          return buildGaussianCloudListEntry(name, manifest);
         } catch {
           return null;
         }
@@ -4608,6 +4711,11 @@ app.post('/api/upload-gaussian', uploadCredentialPrecheck, upload.single('gaussi
     fileUrl: directManifest.fileUrl,
     sourceFileUrl: directManifest.sourceFileUrl || null,
     viewerUrl: directManifest.viewerUrl,
+    viewerRotation: directManifest.viewerRotation,
+    directBrowseStatus: directManifest.directBrowseStatus,
+    optimizationStatus: directManifest.optimizationStatus,
+    optimizationEligible: directManifest.publish?.optimizationEligible || false,
+    optimizationPipeline: directManifest.publish?.optimizationPipeline || null,
     publish: directManifest.publish,
     note: directManifest.note,
   });
@@ -6959,13 +7067,17 @@ export {
   ZIP_MAX_FILE_BYTES,
   ZIP_MAX_FILES,
   ZIP_MAX_TOTAL_BYTES,
+  buildGaussianCloudListEntry,
+  buildGaussianEditorUrl,
   buildPreconvertedZipExtractScript,
   buildScannerProjectZipExtractScript,
+  createGaussianDirectManifest,
   createUploadFileFilter,
   ensureExistingBoundedPath,
   getUploadPasswordCandidate,
   isPathWithinCloudStudioBounds,
   requiresExplicitUploadPasswordEnv,
+  resolveGaussianViewerRotation,
   resolveUploadPasswordHash,
   uploadCredentialJsonPrecheck,
   verifyUploadPassword,
