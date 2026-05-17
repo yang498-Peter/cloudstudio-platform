@@ -610,7 +610,9 @@
       "viewProfile": "查看剖面",
       "objectsTitle": "裁剪对象",
       "emptyObjects": "暂无裁剪体积",
-      "profileClipAction": "创建裁剪框"
+      "profileClipAction": "创建裁剪框",
+      "hide": "隐藏",
+      "show": "显示"
     },
     "clipBox": {
       "workspaceTitle": "裁剪框",
@@ -652,7 +654,8 @@
       "exportNote": "当前有 {{count}} 个已确认裁剪框，导出会按 {{mode}} 执行。",
       "exportFiltered": "裁剪框过滤点数: {{count}}",
       "toolHint": "⬜ 裁剪框 - 放置盒体并调整尺寸，在裁剪面板确认后按当前裁剪模式导出 | ESC 取消",
-      "statusEditing": "正在编辑裁剪框... 调整控制柄，完成后确认本轮裁剪"
+      "statusEditing": "正在编辑裁剪框... 调整控制柄，完成后确认本轮裁剪",
+      "resumeEdit": "继续编辑此裁剪框"
     },
     "profile": {
       "panelTitle": "✂ 截面 / 剖面视图",
@@ -872,7 +875,219 @@
     "volume": {
       "panelNote": "单击沿边界圈定区域，双击确认后设置参考高程平面。",
       "noPending": "当前无待处理体积区域",
-      "new": "⛏ 新建"
+      "new": "⛏ 新建",
+      "newPlain": "新建",
+      "pointCloudFallback": "点云",
+      "scenarios": {
+        "stockpile_boundary": {
+          "label": "料堆",
+          "shortLabel": "料堆"
+        },
+        "plane_cut_fill": {
+          "label": "平面挖填",
+          "shortLabel": "平面挖填"
+        },
+        "ground_fit_volume": {
+          "label": "地形拟合体积",
+          "shortLabel": "地形拟合"
+        }
+      },
+      "baseModes": {
+        "boundary": {
+          "label": "边界拟合",
+          "option": "边界拟合"
+        },
+        "fixed": {
+          "label": "固定高程",
+          "option": "固定高程"
+        },
+        "ground": {
+          "label": "地面拟合",
+          "option": "地面拟合"
+        }
+      },
+      "baseSources": {
+        "groundClass2Fit": "地面拟合（2 类）",
+        "localCsfFit": "本地 CSF 地面拟合",
+        "groundQuantileFallback": "地面兜底",
+        "boundaryFallback": "边界兜底",
+        "fixedElevation": "固定高程",
+        "boundaryFit": "边界拟合"
+      },
+      "surfaces": {
+        "baseSurfaceTitle": "基准面",
+        "noBaseResult": "暂无基准面结果",
+        "baseEmptyHint": "体积任务返回结果后，可附加拟合/基准/参考面。",
+        "analysisSurfaceTitle": "分析面",
+        "noAnalysisResult": "暂无分析面结果",
+        "analysisEmptyHint": "构建或计算体积任务后，会生成用于体积计算的分析面。",
+        "jobSource": "任务 {{jobId}}",
+        "inlineMeshData": "内联 meshData",
+        "dataUnavailable": "网格/栅格数据不可用",
+        "baseSurface": "基准面",
+        "analysisSurface": "分析面"
+      },
+      "metrics": {
+        "verts": "{{count}} 个顶点",
+        "tris": "{{count}} 个三角面",
+        "cells": "{{count}} 个栅格",
+        "measuredFill": "测得填方",
+        "measuredCut": "测得挖方",
+        "netVolume": "净方量",
+        "measuredFillNote": "基准面以下材料占主导。挖方和填方仍会分别显示。",
+        "measuredCutNote": "基准面以上材料占主导。挖方和填方仍会分别显示。",
+        "netVolumeNote": "填方 - 挖方。正值表示填方占主导，负值表示挖方占主导。",
+        "cellsCoverage": "{{count}} 个栅格 · {{coverage}}",
+        "cut": "挖方",
+        "fill": "填方",
+        "coverage": "覆盖率"
+      },
+      "recommendation": {
+        "using": "正在使用推荐值 {{value}} m",
+        "recommended": "推荐 {{value}} m",
+        "range": "范围 {{min}}-{{max}} m",
+        "targetCells": "目标约 {{count}} 个栅格"
+      },
+      "status": {
+        "running": "运行中",
+        "ready": "就绪",
+        "error": "错误",
+        "idle": "空闲",
+        "pending": "待处理",
+        "drawing": "绘制中",
+        "loadedIn3d": "已加载到 3D",
+        "activeWithInterval": "已启用 · {{interval}} m",
+        "measurementReady": "体积测量已就绪",
+        "pickingReferenceElevation": "正在拾取体积参考高程..."
+      },
+      "confidence": {
+        "high": "高",
+        "medium": "中",
+        "low": "低",
+        "unknown": "未知",
+        "lineHtml": "置信度：<strong>{{confidence}}</strong> · {{baseSource}}"
+      },
+      "interpretation": {
+        "stockpile": "{{scenario}}：将分析面与 {{base}} 对比，通常基于所选边界高程插值得到基准面，适合料堆类作业。",
+        "planeCutFill": "{{scenario}}：将分析面与 {{base}} 对比。正挖方表示材料高于固定高程；正净值表示填方多于挖方。",
+        "groundLocalCsf": "{{scenario}}：没有可靠的 2 类地面支撑，因此在选区内通过本地 CSF 地面分类构建基准面。通常比低分位兜底更可靠，但选区内可见地面较少时仍需查看警告。",
+        "groundQuantileFallback": "{{scenario}}：没有 2 类地面支撑，因此根据未分类点云的低分位地形包络近似基准面。请将结果视为估算并查看警告。",
+        "groundBoundaryFallback": "{{scenario}}：地面支撑不足以进行真实地形拟合，任务已回退到边界插值。信任结果前请检查警告。",
+        "groundLowSupport": "{{scenario}}：正在与拟合地形基准面对比，但地面支撑比例偏低。依赖拟合基准面前请验证分类质量。",
+        "groundFit": "{{scenario}}：将分析面与拟合地形基准面对比。适用于料堆位于不平整地面且不希望假设平底的场景。"
+      },
+      "workspace": {
+        "emptyTitle": "暂无体积区域",
+        "emptyCopyHtml": "点击上方工具栏中的 <strong>新建</strong>，在视口中绘制边界，然后双击确认。",
+        "drawingMetaHtml": "已放置 <strong>{{count}}</strong> 个顶点 · 双击确认"
+      },
+      "warnings": {
+        "summary": "{{count}} 条警告 · {{confidence}} 置信度"
+      },
+      "sections": {
+        "display3d": "3D 显示",
+        "edgesOverlay": "边线与覆盖层",
+        "meshExport": "网格导出",
+        "source": "来源",
+        "surfacesDisplay": "3D 面与显示",
+        "advancedSettings": "高级设置",
+        "contours": "等高线"
+      },
+      "surfaceDisplayMode": {
+        "analysis": "分析面",
+        "base": "基准面",
+        "both": "两者",
+        "none": "无",
+        "hidden": "已隐藏"
+      },
+      "fields": {
+        "cellSize": "栅格尺寸 (m)",
+        "referenceHeight": "参考高程 (m)",
+        "elevationPlaceholder": "高程",
+        "interval": "间距 (m)",
+        "labelSize": "标注大小",
+        "baseSurfaceOverride": "基准面覆盖",
+        "pointFilter": "点过滤",
+        "surfaceMode": "表面模式",
+        "aggregation": "聚合",
+        "gapFill": "空洞填充",
+        "displayDensity": "显示密度"
+      },
+      "actions": {
+        "deleteRegion": "删除体积区域",
+        "pickHeightTitle": "在点云中点击一个点以拾取其高程",
+        "pick": "拾取",
+        "min": "最小",
+        "avg": "平均",
+        "max": "最大",
+        "overlayOn": "覆盖层开",
+        "overlayOff": "覆盖层关",
+        "analysisEdgesOn": "分析面边线开",
+        "analysisEdgesOff": "分析面边线关",
+        "baseEdgesOn": "基准面边线开",
+        "baseEdgesOff": "基准面边线关",
+        "refreshSurfaces": "刷新表面",
+        "analysisObj": "分析面 OBJ",
+        "baseObj": "基准面 OBJ",
+        "generate": "生成",
+        "labelsOn": "标注开",
+        "labelsOff": "标注关",
+        "exportDxf": "导出 DXF",
+        "exportReport": "导出报告",
+        "rerun": "重新运行",
+        "redraw": "重绘",
+        "startTitle": "启动统一的服务端体积测量"
+      },
+      "pointFilters": {
+        "all": "全部点",
+        "excludeVegetation": "排除草木",
+        "excludeVegetationBuildings": "排除植被/建筑",
+        "groundOnly": "仅地面（2 类）"
+      },
+      "surfaceTypes": {
+        "stockpile": "料堆",
+        "dsm": "完整表面 (DSM)",
+        "dtm": "地面高程 (DTM)"
+      },
+      "aggregationModes": {
+        "median": "中位数",
+        "max": "最大",
+        "min": "最小"
+      },
+      "holeFill": {
+        "leave": "保留空洞",
+        "reference": "用参考高程填充",
+        "interpolate": "插值"
+      },
+      "history": {
+        "title": "最近任务",
+        "subtitle": "较旧区域会保持紧凑，直到重新打开。"
+      },
+      "toasts": {
+        "drawNewBoundary": "为此体积任务绘制新的边界。",
+        "computeFailed": "体积计算失败：{{message}}",
+        "localMeshBuildFailed": "本地网格构建失败：{{message}}",
+        "reportSnapshotFailed": "无法嵌入当前视图截图，将改为下载最新可用报告。",
+        "loadSurfaceFailed": "加载{{label}}失败：{{message}}",
+        "invalidReferenceElevation": "参考高程输入无效",
+        "cellSizeMinimum": "栅格尺寸至少为 0.25 m",
+        "invalidDisplayDensity": "显示密度输入无效",
+        "pickElevationStart": "点击点云中的点以拾取高程。按 ESC 取消。",
+        "referenceElevationPicked": "已拾取参考高程：{{value}}",
+        "elevationPickingCancelled": "已取消高程拾取",
+        "loadSurfaceBeforeContours": "请先加载{{label}}，再生成等高线。",
+        "cancelled": "已取消当前体积区域绘制"
+      },
+      "confirm": {
+        "switchScenario": "切换体积方法会重置此区域的基准面、点过滤和表面模式默认值。是否继续？"
+      },
+      "panel": {
+        "metaDrawing": "正在绘制边界 · {{count}} 个顶点",
+        "metaJobs": "体积任务 · {{count}}",
+        "metaEmpty": "暂无体积任务",
+        "noteActive": "双击确认边界。当前工作区会把方法和结果步骤保持在一起。",
+        "noteEmpty": "点击“新建”开始引导式体积测量。"
+      }
     },
     "scene": {
       "mobileScene": "☰ 场景"

@@ -610,7 +610,9 @@
       "viewProfile": "Näytä profiili",
       "objectsTitle": "Objektien leikkaaminen",
       "emptyObjects": "Ei leikkausobjekteja",
-      "profileClipAction": "Luo Clip Box"
+      "profileClipAction": "Luo Clip Box",
+      "hide": "Piilota",
+      "show": "Näytä"
     },
     "clipBox": {
       "workspaceTitle": "Leikelaatikko",
@@ -652,7 +654,8 @@
       "exportNote": "Vahvistetut pidikelaatikot: {{count}}. Vienti seuraa {{mode}}:tä.",
       "exportFiltered": "Leikelaatikon suodatuspisteet: {{count}}",
       "toolHint": "⬜ Leikelaatikko — aseta laatikko, säädä kokoa, vahvista Clip-paneelissa ja vie sitten nykyinen leiketila läpi | ESC peruutus",
-      "statusEditing": "Muokataan leikelaatikkoa... säädä kahvoja ja vahvista sitten tämä kierros, kun olet valmis"
+      "statusEditing": "Muokataan leikelaatikkoa... säädä kahvoja ja vahvista sitten tämä kierros, kun olet valmis",
+      "resumeEdit": "Jatka tämän leikkauslaatikon muokkausta"
     },
     "profile": {
       "panelTitle": "✂ Poikkileikkaus/profiilinäkymä",
@@ -872,7 +875,219 @@
     "volume": {
       "panelNote": "Napsauta rajataksesi rajan ja aseta sitten vertailukorkeustaso kaksoisnapsauttamalla.",
       "noPending": "Ei odottavaa volyymialuetta",
-      "new": "⛏ Uutta"
+      "new": "⛏ Uutta",
+      "newPlain": "Uusi",
+      "pointCloudFallback": "Pistepilvi",
+      "scenarios": {
+        "stockpile_boundary": {
+          "label": "Varastokasa",
+          "shortLabel": "Varastokasa"
+        },
+        "plane_cut_fill": {
+          "label": "Tason leikkaus/täyttö",
+          "shortLabel": "Leikkaus/täyttö"
+        },
+        "ground_fit_volume": {
+          "label": "Maastoon sovitettu tilavuus",
+          "shortLabel": "Maastosovitus"
+        }
+      },
+      "baseModes": {
+        "boundary": {
+          "label": "Rajasovitus",
+          "option": "Rajasovitus"
+        },
+        "fixed": {
+          "label": "Kiinteä korkeus",
+          "option": "Kiinteä korkeus"
+        },
+        "ground": {
+          "label": "Maastosovitus",
+          "option": "Maastosovitus"
+        }
+      },
+      "baseSources": {
+        "groundClass2Fit": "Maastosovitus (luokka 2)",
+        "localCsfFit": "Paikallinen CSF-maastosovitus",
+        "groundQuantileFallback": "Maaston vararatkaisu",
+        "boundaryFallback": "Rajan vararatkaisu",
+        "fixedElevation": "Kiinteä korkeus",
+        "boundaryFit": "Rajasovitus"
+      },
+      "surfaces": {
+        "baseSurfaceTitle": "Peruspinta",
+        "noBaseResult": "Peruspinnan tulosta ei vielä ole",
+        "baseEmptyHint": "Liitä sovitettu/perus-/referenssipinta, kun tilavuustyö palauttaa sen.",
+        "analysisSurfaceTitle": "Analyysipinta",
+        "noAnalysisResult": "Analyysipinnan tulosta ei vielä ole",
+        "analysisEmptyHint": "Rakenna tai laske tilavuustyö, jotta tilavuuslaskennan analyysipinta syntyy.",
+        "jobSource": "Työ {{jobId}}",
+        "inlineMeshData": "Sisäinen meshData",
+        "dataUnavailable": "Verkko-/ruututietoja ei ole saatavilla",
+        "baseSurface": "peruspinta",
+        "analysisSurface": "analyysipinta"
+      },
+      "metrics": {
+        "verts": "{{count}} kärkeä",
+        "tris": "{{count}} kolmiota",
+        "cells": "{{count}} solua",
+        "measuredFill": "Mitattu täyttö",
+        "measuredCut": "Mitattu leikkaus",
+        "netVolume": "Nettotilavuus",
+        "measuredFillNote": "Peruspinnan alapuolinen materiaali hallitsee. Leikkaus ja täyttö näytetään erikseen.",
+        "measuredCutNote": "Peruspinnan yläpuolinen materiaali hallitsee. Leikkaus ja täyttö näytetään erikseen.",
+        "netVolumeNote": "Täyttö - leikkaus. Positiivinen arvo tarkoittaa täytön hallintaa; negatiivinen leikkauksen.",
+        "cellsCoverage": "{{count}} solua · {{coverage}}",
+        "cut": "Leikkaus",
+        "fill": "Täyttö",
+        "coverage": "Kattavuus"
+      },
+      "recommendation": {
+        "using": "Käytetään suositusta {{value}} m",
+        "recommended": "Suositus {{value}} m",
+        "range": "alue {{min}}-{{max}} m",
+        "targetCells": "tavoite ~{{count}} solua"
+      },
+      "status": {
+        "running": "Käynnissä",
+        "ready": "Valmis",
+        "error": "Virhe",
+        "idle": "Jouten",
+        "pending": "Odottaa",
+        "drawing": "Piirretään",
+        "loadedIn3d": "Ladattu 3D-näkymään",
+        "activeWithInterval": "Aktiivinen · {{interval}} m",
+        "measurementReady": "Tilavuusmittaus valmis",
+        "pickingReferenceElevation": "Valitaan tilavuuden viitekorkeutta..."
+      },
+      "confidence": {
+        "high": "korkea",
+        "medium": "keskitaso",
+        "low": "matala",
+        "unknown": "tuntematon",
+        "lineHtml": "Luottamus: <strong>{{confidence}}</strong> · {{baseSource}}"
+      },
+      "interpretation": {
+        "stockpile": "{{scenario}}: vertaa analyysipintaa kohteeseen {{base}}, joka yleensä interpoloidaan valitun rajan korkeuksista varastokasamittausta varten.",
+        "planeCutFill": "{{scenario}}: vertaa analyysipintaa kohteeseen {{base}}. Positiivinen leikkaus tarkoittaa materiaalia kiinteän korkeuden yläpuolella; positiivinen netto tarkoittaa enemmän täyttöä kuin leikkausta.",
+        "groundLocalCsf": "{{scenario}}: luotettavaa luokan 2 maastotukea ei ollut, joten peruspinta rakennettiin paikallisella CSF-maastoluokituksella valitulla alueella. Tämä on yleensä vahvempi kuin matalan persentiilin vararatkaisu, mutta tarkista varoitukset, jos näkyvää maata on vähän.",
+        "groundQuantileFallback": "{{scenario}}: luokan 2 maastotukea ei ollut, joten peruspinta arvioitiin luokittelemattoman pistepilven matalan persentiilin maastokuoresta. Käsittele tulosta arviona ja tarkista varoitukset.",
+        "groundBoundaryFallback": "{{scenario}}: maastotuki oli liian heikko todelliseen maastosovitukseen, joten työ käytti raja-interpolointia. Tarkista varoitukset ennen tulokseen luottamista.",
+        "groundLowSupport": "{{scenario}}: vertaa sovitettuun maastomaiseen perustaan, mutta maastotuen suhde on matala. Varmista luokituksen laatu ennen perustan käyttöä.",
+        "groundFit": "{{scenario}}: vertaa analyysipintaa sovitettuun maastomaiseen perustaan. Käytä tätä, kun kasa on epätasaisella maalla eikä tasaista pohjaa haluta olettaa."
+      },
+      "workspace": {
+        "emptyTitle": "Tilavuusalueita ei vielä ole",
+        "emptyCopyHtml": "Napsauta ylätyökalurivillä <strong>Uusi</strong>, piirrä raja näkymässä ja vahvista kaksoisnapsautuksella.",
+        "drawingMetaHtml": "<strong>{{count}}</strong> kärkeä asetettu · vahvista kaksoisnapsautuksella"
+      },
+      "warnings": {
+        "summary": "{{count}} varoitusta · luottamus {{confidence}}"
+      },
+      "sections": {
+        "display3d": "3D-näyttö",
+        "edgesOverlay": "Reunat ja peitto",
+        "meshExport": "Verkon vienti",
+        "source": "Lähde",
+        "surfacesDisplay": "3D-pinnat ja näyttö",
+        "advancedSettings": "Lisäasetukset",
+        "contours": "Korkeuskäyrät"
+      },
+      "surfaceDisplayMode": {
+        "analysis": "Analyysi",
+        "base": "Perusta",
+        "both": "Molemmat",
+        "none": "Ei mitään",
+        "hidden": "Piilotettu"
+      },
+      "fields": {
+        "cellSize": "Solukoko (m)",
+        "referenceHeight": "Viitekorkeus (m)",
+        "elevationPlaceholder": "Korkeus",
+        "interval": "Väli (m)",
+        "labelSize": "Selitteen koko",
+        "baseSurfaceOverride": "Peruspinnan ohitus",
+        "pointFilter": "Pistesuodatin",
+        "surfaceMode": "Pintatila",
+        "aggregation": "Koostaminen",
+        "gapFill": "Aukkojen täyttö",
+        "displayDensity": "Näyttötiheys"
+      },
+      "actions": {
+        "deleteRegion": "Poista tilavuusalue",
+        "pickHeightTitle": "Napsauta pistepilven pistettä poimiaksesi sen korkeuden",
+        "pick": "Poimi",
+        "min": "Pienin",
+        "avg": "Keskiarvo",
+        "max": "Maks",
+        "overlayOn": "Peitto päällä",
+        "overlayOff": "Peitto pois",
+        "analysisEdgesOn": "Analyysireunat päällä",
+        "analysisEdgesOff": "Analyysireunat pois",
+        "baseEdgesOn": "Perusreunat päällä",
+        "baseEdgesOff": "Perusreunat pois",
+        "refreshSurfaces": "Päivitä pinnat",
+        "analysisObj": "Analyysi OBJ",
+        "baseObj": "Perus OBJ",
+        "generate": "Luo",
+        "labelsOn": "Selitteet päällä",
+        "labelsOff": "Selitteet pois",
+        "exportDxf": "Vie DXF",
+        "exportReport": "Vie raportti",
+        "rerun": "Suorita uudelleen",
+        "redraw": "Piirrä uudelleen",
+        "startTitle": "Käynnistä yhtenäinen palvelinpuolen tilavuusmittaus"
+      },
+      "pointFilters": {
+        "all": "Kaikki pisteet",
+        "excludeVegetation": "Sulje ruoho / puut pois",
+        "excludeVegetationBuildings": "Sulje kasvillisuus / rakennukset pois",
+        "groundOnly": "Vain maa (luokka 2)"
+      },
+      "surfaceTypes": {
+        "stockpile": "Varastokasa",
+        "dsm": "Koko pinta (DSM)",
+        "dtm": "Maanpinnan taso (DTM)"
+      },
+      "aggregationModes": {
+        "median": "Mediaani",
+        "max": "Maksimi",
+        "min": "Minimi"
+      },
+      "holeFill": {
+        "leave": "Jätä aukot",
+        "reference": "Täytä viitekorkeudella",
+        "interpolate": "Interpoloi"
+      },
+      "history": {
+        "title": "Viimeisimmät työt",
+        "subtitle": "Vanhemmat alueet pysyvät tiiviinä, kunnes avaat ne uudelleen."
+      },
+      "toasts": {
+        "drawNewBoundary": "Piirrä uusi raja tälle tilavuustyölle.",
+        "computeFailed": "Tilavuuslaskenta epäonnistui: {{message}}",
+        "localMeshBuildFailed": "Paikallisen verkon luonti epäonnistui: {{message}}",
+        "reportSnapshotFailed": "Nykyistä näkymäkuvaa ei voitu liittää raporttiin. Ladataan uusin saatavilla oleva raportti.",
+        "loadSurfaceFailed": "Kohteen {{label}} lataus epäonnistui: {{message}}",
+        "invalidReferenceElevation": "Virheellinen viitekorkeus",
+        "cellSizeMinimum": "Solukoon on oltava vähintään 0,25 m",
+        "invalidDisplayDensity": "Virheellinen näyttötiheys",
+        "pickElevationStart": "Napsauta pistepilven pistettä korkeuden poimimiseksi. Peruuta ESC-näppäimellä.",
+        "referenceElevationPicked": "Viitekorkeus poimittu: {{value}}",
+        "elevationPickingCancelled": "Korkeuden poiminta peruutettu",
+        "loadSurfaceBeforeContours": "Lataa ensin {{label}} ja luo sitten korkeuskäyrät.",
+        "cancelled": "Nykyisen tilavuusalueen piirto peruutettu"
+      },
+      "confirm": {
+        "switchScenario": "Tilavuusmenetelmän vaihtaminen nollaa tämän alueen peruspinnan, pistesuodattimen ja pintatilan oletukset. Jatketaanko?"
+      },
+      "panel": {
+        "metaDrawing": "Rajaa piirretään · {{count}} kärkeä",
+        "metaJobs": "Tilavuustyöt · {{count}}",
+        "metaEmpty": "Ei tilavuustöitä",
+        "noteActive": "Vahvista raja kaksoisnapsautuksella. Aktiivinen työtila pitää menetelmän ja tulokset yhdessä.",
+        "noteEmpty": "Aloita ohjattu tilavuusmittaus napsauttamalla \"Uusi\"."
+      }
     },
     "scene": {
       "mobileScene": "☰ Näkymä"

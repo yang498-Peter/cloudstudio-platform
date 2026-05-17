@@ -611,7 +611,9 @@
       "viewProfile": "프로필 보기",
       "objectsTitle": "객체 자르기",
       "emptyObjects": "클리핑 개체 없음",
-      "profileClipAction": "클리핑 박스 만들기"
+      "profileClipAction": "클리핑 박스 만들기",
+      "hide": "숨기기",
+      "show": "표시"
     },
     "clipBox": {
       "workspaceTitle": "클립박스",
@@ -653,7 +655,8 @@
       "exportNote": "확인된 클립 박스: {{count}}. 내보내기는 {{mode}}를 따릅니다.",
       "exportFiltered": "클립 상자 필터링된 포인트: {{count}}",
       "toolHint": "⬜ 클리핑 박스 — 상자를 배치하고 크기를 조정한 뒤 클리핑 패널에서 확인하고 현재 클립 모드로 내보냅니다 | ESC 취소",
-      "statusEditing": "클리핑 박스 편집 중... 핸들을 조정한 뒤 이번 클리핑을 확인하세요"
+      "statusEditing": "클리핑 박스 편집 중... 핸들을 조정한 뒤 이번 클리핑을 확인하세요",
+      "resumeEdit": "이 클립 박스 편집 재개"
     },
     "profile": {
       "panelTitle": "✂ 단면 / 프로파일 보기",
@@ -874,7 +877,219 @@
     "volume": {
       "panelNote": "경계를 따라 클릭하고 더블 클릭하여 기준 고도 평면을 설정하세요.",
       "noPending": "대기 중인 체적 영역 없음",
-      "new": "⛏ 새로 만들기"
+      "new": "⛏ 새로 만들기",
+      "newPlain": "새로 만들기",
+      "pointCloudFallback": "포인트 클라우드",
+      "scenarios": {
+        "stockpile_boundary": {
+          "label": "적치물",
+          "shortLabel": "적치물"
+        },
+        "plane_cut_fill": {
+          "label": "평면 절성/성토",
+          "shortLabel": "평면 절성/성토"
+        },
+        "ground_fit_volume": {
+          "label": "지형 맞춤 체적",
+          "shortLabel": "지형 맞춤"
+        }
+      },
+      "baseModes": {
+        "boundary": {
+          "label": "경계 맞춤",
+          "option": "경계 맞춤"
+        },
+        "fixed": {
+          "label": "고정 표고",
+          "option": "고정 표고"
+        },
+        "ground": {
+          "label": "지면 맞춤",
+          "option": "지면 맞춤"
+        }
+      },
+      "baseSources": {
+        "groundClass2Fit": "지면 맞춤(클래스 2)",
+        "localCsfFit": "로컬 CSF 지면 맞춤",
+        "groundQuantileFallback": "지면 대체값",
+        "boundaryFallback": "경계 대체값",
+        "fixedElevation": "고정 표고",
+        "boundaryFit": "경계 맞춤"
+      },
+      "surfaces": {
+        "baseSurfaceTitle": "기준 표면",
+        "noBaseResult": "아직 기준 표면 결과 없음",
+        "baseEmptyHint": "체적 작업이 반환한 맞춤/기준/참조 표면 결과를 연결합니다.",
+        "analysisSurfaceTitle": "분석 표면",
+        "noAnalysisResult": "아직 분석 표면 결과 없음",
+        "analysisEmptyHint": "체적 계산에 사용할 분석 표면을 만들거나 계산합니다.",
+        "jobSource": "작업 {{jobId}}",
+        "inlineMeshData": "인라인 meshData",
+        "dataUnavailable": "메시/그리드 데이터를 사용할 수 없음",
+        "baseSurface": "기준 표면",
+        "analysisSurface": "분석 표면"
+      },
+      "metrics": {
+        "verts": "정점 {{count}}개",
+        "tris": "삼각형 {{count}}개",
+        "cells": "셀 {{count}}개",
+        "measuredFill": "측정 성토",
+        "measuredCut": "측정 절토",
+        "netVolume": "순 체적",
+        "measuredFillNote": "기준 표면 아래 재료가 우세합니다. 절토와 성토는 별도로 표시됩니다.",
+        "measuredCutNote": "기준 표면 위 재료가 우세합니다. 절토와 성토는 별도로 표시됩니다.",
+        "netVolumeNote": "성토 - 절토. 양수는 성토 우세, 음수는 절토 우세를 의미합니다.",
+        "cellsCoverage": "셀 {{count}}개 · {{coverage}}",
+        "cut": "절토",
+        "fill": "성토",
+        "coverage": "커버리지"
+      },
+      "recommendation": {
+        "using": "권장값 {{value}} m 사용 중",
+        "recommended": "권장 {{value}} m",
+        "range": "범위 {{min}}-{{max}} m",
+        "targetCells": "목표 약 {{count}}셀"
+      },
+      "status": {
+        "running": "실행 중",
+        "ready": "준비됨",
+        "error": "오류",
+        "idle": "대기",
+        "pending": "보류",
+        "drawing": "그리는 중",
+        "loadedIn3d": "3D에 로드됨",
+        "activeWithInterval": "활성 · {{interval}} m",
+        "measurementReady": "체적 측정 준비 완료",
+        "pickingReferenceElevation": "체적 기준 표고 선택 중..."
+      },
+      "confidence": {
+        "high": "높음",
+        "medium": "보통",
+        "low": "낮음",
+        "unknown": "알 수 없음",
+        "lineHtml": "신뢰도: <strong>{{confidence}}</strong> · {{baseSource}}"
+      },
+      "interpretation": {
+        "stockpile": "{{scenario}}: 분석 표면을 {{base}}와 비교합니다. 일반적으로 선택한 경계 표고를 보간한 기준 표면으로 적치물 작업에 적합합니다.",
+        "planeCutFill": "{{scenario}}: 분석 표면을 {{base}}와 비교합니다. 양의 절토는 재료가 고정 표고 위에 있음을, 양의 순값은 성토가 절토보다 많음을 의미합니다.",
+        "groundLocalCsf": "{{scenario}}: 신뢰할 수 있는 클래스 2 지면 지원이 없어 선택 영역 내부의 로컬 CSF 지면 분류로 기준 표면을 만들었습니다. 낮은 분위수 대체보다 보통 더 강하지만, 가시 지면이 적으면 경고를 확인하세요.",
+        "groundQuantileFallback": "{{scenario}}: 클래스 2 지면 지원이 없어 미분류 포인트 클라우드의 낮은 분위수 지형 외피로 기준 표면을 근사했습니다. 결과를 추정치로 보고 경고를 확인하세요.",
+        "groundBoundaryFallback": "{{scenario}}: 실제 지형 맞춤에 필요한 지면 지원이 약해 경계 보간으로 대체되었습니다. 결과를 신뢰하기 전에 경고를 확인하세요.",
+        "groundLowSupport": "{{scenario}}: 맞춤 지형 기준과 비교하지만 지면 지원 비율이 낮습니다. 이 기준을 사용하기 전에 분류 품질을 확인하세요.",
+        "groundFit": "{{scenario}}: 분석 표면을 맞춤 지형 기준과 비교합니다. 적치물이 고르지 않은 지면 위에 있고 평평한 바닥을 가정하지 않으려는 경우에 사용합니다."
+      },
+      "workspace": {
+        "emptyTitle": "체적 영역이 아직 없습니다",
+        "emptyCopyHtml": "위 도구 모음에서 <strong>새로 만들기</strong>를 클릭하고 뷰포트에서 경계를 그린 뒤 두 번 클릭해 확인하세요.",
+        "drawingMetaHtml": "정점 <strong>{{count}}</strong>개 배치됨 · 두 번 클릭해 확인"
+      },
+      "warnings": {
+        "summary": "경고 {{count}}개 · 신뢰도 {{confidence}}"
+      },
+      "sections": {
+        "display3d": "3D 표시",
+        "edgesOverlay": "가장자리 및 오버레이",
+        "meshExport": "메시 내보내기",
+        "source": "소스",
+        "surfacesDisplay": "3D 표면 및 표시",
+        "advancedSettings": "고급 설정",
+        "contours": "등고선"
+      },
+      "surfaceDisplayMode": {
+        "analysis": "분석",
+        "base": "기준",
+        "both": "둘 다",
+        "none": "없음",
+        "hidden": "숨김"
+      },
+      "fields": {
+        "cellSize": "셀 크기 (m)",
+        "referenceHeight": "기준 표고 (m)",
+        "elevationPlaceholder": "표고",
+        "interval": "간격 (m)",
+        "labelSize": "라벨 크기",
+        "baseSurfaceOverride": "기준 표면 재정의",
+        "pointFilter": "포인트 필터",
+        "surfaceMode": "표면 모드",
+        "aggregation": "집계",
+        "gapFill": "빈틈 채우기",
+        "displayDensity": "표시 밀도"
+      },
+      "actions": {
+        "deleteRegion": "체적 영역 삭제",
+        "pickHeightTitle": "포인트 클라우드의 한 점을 클릭해 표고를 선택",
+        "pick": "선택",
+        "min": "최소",
+        "avg": "평균",
+        "max": "최대",
+        "overlayOn": "오버레이 켜짐",
+        "overlayOff": "오버레이 꺼짐",
+        "analysisEdgesOn": "분석 가장자리 켜짐",
+        "analysisEdgesOff": "분석 가장자리 꺼짐",
+        "baseEdgesOn": "기준 가장자리 켜짐",
+        "baseEdgesOff": "기준 가장자리 꺼짐",
+        "refreshSurfaces": "표면 새로고침",
+        "analysisObj": "분석 OBJ",
+        "baseObj": "기준 OBJ",
+        "generate": "생성",
+        "labelsOn": "라벨 켜짐",
+        "labelsOff": "라벨 꺼짐",
+        "exportDxf": "DXF 내보내기",
+        "exportReport": "보고서 내보내기",
+        "rerun": "다시 실행",
+        "redraw": "다시 그리기",
+        "startTitle": "통합 서버 측 체적 측정 시작"
+      },
+      "pointFilters": {
+        "all": "모든 포인트",
+        "excludeVegetation": "잔디/나무 제외",
+        "excludeVegetationBuildings": "식생/건물 제외",
+        "groundOnly": "지면만(클래스 2)"
+      },
+      "surfaceTypes": {
+        "stockpile": "적치물",
+        "dsm": "전체 표면(DSM)",
+        "dtm": "지면 레벨(DTM)"
+      },
+      "aggregationModes": {
+        "median": "중앙값",
+        "max": "최대",
+        "min": "최소"
+      },
+      "holeFill": {
+        "leave": "빈틈 유지",
+        "reference": "기준 표고로 채우기",
+        "interpolate": "보간"
+      },
+      "history": {
+        "title": "최근 작업",
+        "subtitle": "이전 영역은 다시 열 때까지 간단히 표시됩니다."
+      },
+      "toasts": {
+        "drawNewBoundary": "이 체적 작업의 새 경계를 그리세요.",
+        "computeFailed": "체적 계산 실패: {{message}}",
+        "localMeshBuildFailed": "로컬 메시 생성 실패: {{message}}",
+        "reportSnapshotFailed": "현재 뷰 스크린샷을 포함할 수 없습니다. 최신 사용 가능 보고서를 다운로드합니다.",
+        "loadSurfaceFailed": "{{label}} 로드 실패: {{message}}",
+        "invalidReferenceElevation": "기준 표고 입력이 잘못되었습니다",
+        "cellSizeMinimum": "셀 크기는 최소 0.25 m여야 합니다",
+        "invalidDisplayDensity": "표시 밀도 입력이 잘못되었습니다",
+        "pickElevationStart": "포인트 클라우드에서 표고를 선택할 점을 클릭하세요. ESC로 취소합니다.",
+        "referenceElevationPicked": "기준 표고 선택됨: {{value}}",
+        "elevationPickingCancelled": "표고 선택 취소됨",
+        "loadSurfaceBeforeContours": "먼저 {{label}}을(를) 로드한 후 등고선을 생성하세요.",
+        "cancelled": "현재 체적 영역 그리기가 취소되었습니다"
+      },
+      "confirm": {
+        "switchScenario": "체적 방법을 바꾸면 이 영역의 기준 표면, 포인트 필터, 표면 모드 기본값이 재설정됩니다. 계속할까요?"
+      },
+      "panel": {
+        "metaDrawing": "경계 그리는 중 · 정점 {{count}}개",
+        "metaJobs": "체적 작업 · {{count}}",
+        "metaEmpty": "체적 작업 없음",
+        "noteActive": "두 번 클릭해 경계를 확인하세요. 활성 작업공간은 방법과 결과 단계를 함께 유지합니다.",
+        "noteEmpty": "\"새로 만들기\"를 클릭해 안내형 체적 측정을 시작하세요."
+      }
     },
     "scene": {
       "mobileScene": "☰ 장면"

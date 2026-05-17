@@ -610,7 +610,9 @@
       "viewProfile": "Voir le profil",
       "objectsTitle": "Objets de découpe",
       "emptyObjects": "Aucun objet de découpe",
-      "profileClipAction": "Créer une boîte de découpe"
+      "profileClipAction": "Créer une boîte de découpe",
+      "hide": "Masquer",
+      "show": "Afficher"
     },
     "clipBox": {
       "workspaceTitle": "Boîte de découpe",
@@ -652,7 +654,8 @@
       "exportNote": "{{count}} boîte(s) confirmée(s). L'export suit {{mode}}.",
       "exportFiltered": "Points filtrés par les boîtes : {{count}}",
       "toolHint": "⬜ Boîte de découpe — placez la boîte, ajustez sa taille, confirmez dans le panneau Clip puis exportez avec le mode Clip actuel | Échap pour annuler",
-      "statusEditing": "Modification de la boîte de découpe... ajustez les poignées, puis confirmez cette découpe"
+      "statusEditing": "Modification de la boîte de découpe... ajustez les poignées, puis confirmez cette découpe",
+      "resumeEdit": "Reprendre la modification de cette boîte de découpe"
     },
     "profile": {
       "panelTitle": "✂ Coupe / Vue de profil",
@@ -873,7 +876,219 @@
     "volume": {
       "panelNote": "Cliquez pour dessiner le contour, puis double-cliquez pour définir le plan de référence d’altitude.",
       "noPending": "Aucune zone de volume en attente",
-      "new": "⛏ Nouveau"
+      "new": "⛏ Nouveau",
+      "newPlain": "Nouveau",
+      "pointCloudFallback": "Nuage de points",
+      "scenarios": {
+        "stockpile_boundary": {
+          "label": "Stock",
+          "shortLabel": "Stock"
+        },
+        "plane_cut_fill": {
+          "label": "Déblai/remblai plan",
+          "shortLabel": "Déblai/remblai"
+        },
+        "ground_fit_volume": {
+          "label": "Volume ajusté au terrain",
+          "shortLabel": "Ajusté terrain"
+        }
+      },
+      "baseModes": {
+        "boundary": {
+          "label": "Ajustement par limite",
+          "option": "Ajustement par limite"
+        },
+        "fixed": {
+          "label": "Altitude fixe",
+          "option": "Altitude fixe"
+        },
+        "ground": {
+          "label": "Ajustement au sol",
+          "option": "Ajustement au sol"
+        }
+      },
+      "baseSources": {
+        "groundClass2Fit": "Ajustement au sol (classe 2)",
+        "localCsfFit": "Ajustement sol CSF local",
+        "groundQuantileFallback": "Repli sol",
+        "boundaryFallback": "Repli limite",
+        "fixedElevation": "Altitude fixe",
+        "boundaryFit": "Ajustement par limite"
+      },
+      "surfaces": {
+        "baseSurfaceTitle": "Surface de base",
+        "noBaseResult": "Aucun résultat de surface de base",
+        "baseEmptyHint": "Joignez une surface ajustée/de base/de référence quand le calcul de volume la renvoie.",
+        "analysisSurfaceTitle": "Surface d’analyse",
+        "noAnalysisResult": "Aucun résultat de surface d’analyse",
+        "analysisEmptyHint": "Construisez ou calculez le volume pour produire la surface d’analyse utilisée.",
+        "jobSource": "Tâche {{jobId}}",
+        "inlineMeshData": "meshData intégré",
+        "dataUnavailable": "Données maillage/grille indisponibles",
+        "baseSurface": "surface de base",
+        "analysisSurface": "surface d’analyse"
+      },
+      "metrics": {
+        "verts": "{{count}} sommets",
+        "tris": "{{count}} triangles",
+        "cells": "{{count}} cellules",
+        "measuredFill": "Remblai mesuré",
+        "measuredCut": "Déblai mesuré",
+        "netVolume": "Volume net",
+        "measuredFillNote": "Le matériau sous la surface de base domine. Déblai et remblai restent affichés séparément.",
+        "measuredCutNote": "Le matériau au-dessus de la surface de base domine. Déblai et remblai restent affichés séparément.",
+        "netVolumeNote": "Remblai - déblai. Une valeur positive indique que le remblai domine; une valeur négative indique le déblai.",
+        "cellsCoverage": "{{count}} cellules · {{coverage}}",
+        "cut": "Déblai",
+        "fill": "Remblai",
+        "coverage": "Couverture"
+      },
+      "recommendation": {
+        "using": "Valeur recommandée utilisée {{value}} m",
+        "recommended": "Recommandé {{value}} m",
+        "range": "plage {{min}}-{{max}} m",
+        "targetCells": "cible ~{{count}} cellules"
+      },
+      "status": {
+        "running": "En cours",
+        "ready": "Prêt",
+        "error": "Erreur",
+        "idle": "Inactif",
+        "pending": "En attente",
+        "drawing": "Dessin",
+        "loadedIn3d": "Chargé en 3D",
+        "activeWithInterval": "Actif · {{interval}} m",
+        "measurementReady": "Mesure de volume prête",
+        "pickingReferenceElevation": "Sélection de l’altitude de référence..."
+      },
+      "confidence": {
+        "high": "élevée",
+        "medium": "moyenne",
+        "low": "faible",
+        "unknown": "inconnue",
+        "lineHtml": "Confiance : <strong>{{confidence}}</strong> · {{baseSource}}"
+      },
+      "interpretation": {
+        "stockpile": "{{scenario}} : compare la surface d’analyse à {{base}}, généralement interpolée depuis les altitudes de la limite sélectionnée pour les stocks.",
+        "planeCutFill": "{{scenario}} : compare la surface d’analyse à {{base}}. Un déblai positif signifie que le matériau est au-dessus de l’altitude fixe; un net positif signifie plus de remblai que de déblai.",
+        "groundLocalCsf": "{{scenario}} : aucun support sol classe 2 fiable; la base a été construite avec une classification sol CSF locale dans la zone sélectionnée. C’est en général plus robuste que le repli par faible percentile, mais vérifiez les avertissements si peu de sol visible est présent.",
+        "groundQuantileFallback": "{{scenario}} : aucun support sol classe 2; la base est approximée avec l’enveloppe de terrain à faible percentile du nuage non classé. Traitez le résultat comme une estimation et vérifiez les avertissements.",
+        "groundBoundaryFallback": "{{scenario}} : le support sol était trop faible pour un vrai ajustement terrain; le calcul est revenu à l’interpolation par limite. Inspectez les avertissements avant de faire confiance au résultat.",
+        "groundLowSupport": "{{scenario}} : compare à une base terrain ajustée, mais le ratio de support sol est faible. Vérifiez la qualité de classification avant de vous appuyer sur cette base.",
+        "groundFit": "{{scenario}} : compare la surface d’analyse à une base terrain ajustée. À utiliser quand le stock repose sur un terrain irrégulier et qu’un fond plat n’est pas souhaitable."
+      },
+      "workspace": {
+        "emptyTitle": "Aucune zone de volume",
+        "emptyCopyHtml": "Cliquez sur <strong>Nouveau</strong> dans la barre d’outils, tracez une limite dans la vue, puis double-cliquez pour confirmer.",
+        "drawingMetaHtml": "<strong>{{count}}</strong> sommets placés · double-cliquez pour confirmer"
+      },
+      "warnings": {
+        "summary": "{{count}} avertissements · confiance {{confidence}}"
+      },
+      "sections": {
+        "display3d": "Affichage 3D",
+        "edgesOverlay": "Arêtes et superposition",
+        "meshExport": "Export de maillage",
+        "source": "Source",
+        "surfacesDisplay": "Surfaces 3D et affichage",
+        "advancedSettings": "Paramètres avancés",
+        "contours": "Courbes de niveau"
+      },
+      "surfaceDisplayMode": {
+        "analysis": "Analyse",
+        "base": "Base de référence",
+        "both": "Les deux",
+        "none": "Aucun",
+        "hidden": "Masqué"
+      },
+      "fields": {
+        "cellSize": "Taille de cellule (m)",
+        "referenceHeight": "Altitude de référence (m)",
+        "elevationPlaceholder": "Altitude",
+        "interval": "Intervalle (m)",
+        "labelSize": "Taille des étiquettes",
+        "baseSurfaceOverride": "Remplacement de surface de base",
+        "pointFilter": "Filtre de points",
+        "surfaceMode": "Mode de surface",
+        "aggregation": "Agrégation",
+        "gapFill": "Comblement des vides",
+        "displayDensity": "Densité d’affichage"
+      },
+      "actions": {
+        "deleteRegion": "Supprimer la zone de volume",
+        "pickHeightTitle": "Cliquez un point du nuage pour relever son altitude",
+        "pick": "Relever",
+        "min": "Min.",
+        "avg": "Moy.",
+        "max": "Max.",
+        "overlayOn": "Superposition active",
+        "overlayOff": "Superposition inactive",
+        "analysisEdgesOn": "Arêtes analyse actives",
+        "analysisEdgesOff": "Arêtes analyse inactives",
+        "baseEdgesOn": "Arêtes base actives",
+        "baseEdgesOff": "Arêtes base inactives",
+        "refreshSurfaces": "Actualiser les surfaces",
+        "analysisObj": "OBJ analyse",
+        "baseObj": "OBJ base",
+        "generate": "Générer",
+        "labelsOn": "Étiquettes actives",
+        "labelsOff": "Étiquettes inactives",
+        "exportDxf": "Exporter DXF",
+        "exportReport": "Exporter le rapport",
+        "rerun": "Relancer",
+        "redraw": "Redessiner",
+        "startTitle": "Démarrer une mesure de volume unifiée côté serveur"
+      },
+      "pointFilters": {
+        "all": "Tous les points",
+        "excludeVegetation": "Exclure herbe / arbres",
+        "excludeVegetationBuildings": "Exclure végétation / bâtiments",
+        "groundOnly": "Sol uniquement (classe 2)"
+      },
+      "surfaceTypes": {
+        "stockpile": "Stock",
+        "dsm": "Surface complète (DSM)",
+        "dtm": "Niveau du sol (DTM)"
+      },
+      "aggregationModes": {
+        "median": "Médiane",
+        "max": "Maximum",
+        "min": "Minimum"
+      },
+      "holeFill": {
+        "leave": "Laisser les vides",
+        "reference": "Remplir avec altitude réf.",
+        "interpolate": "Interpoler"
+      },
+      "history": {
+        "title": "Tâches récentes",
+        "subtitle": "Les anciennes zones restent compactes jusqu’à réouverture."
+      },
+      "toasts": {
+        "drawNewBoundary": "Tracez une nouvelle limite pour cette tâche de volume.",
+        "computeFailed": "Échec du calcul de volume : {{message}}",
+        "localMeshBuildFailed": "Échec de construction du maillage local : {{message}}",
+        "reportSnapshotFailed": "Impossible d’intégrer la capture de la vue actuelle. Téléchargement du dernier rapport disponible.",
+        "loadSurfaceFailed": "Échec du chargement de {{label}} : {{message}}",
+        "invalidReferenceElevation": "Altitude de référence invalide",
+        "cellSizeMinimum": "La taille de cellule doit être au moins 0,25 m",
+        "invalidDisplayDensity": "Densité d’affichage invalide",
+        "pickElevationStart": "Cliquez un point du nuage pour relever l’altitude. Appuyez sur ESC pour annuler.",
+        "referenceElevationPicked": "Altitude de référence relevée : {{value}}",
+        "elevationPickingCancelled": "Sélection d’altitude annulée",
+        "loadSurfaceBeforeContours": "Chargez d’abord {{label}}, puis générez les courbes de niveau.",
+        "cancelled": "Dessin de la zone de volume annulé"
+      },
+      "confirm": {
+        "switchScenario": "Changer de méthode de volume réinitialisera la surface de base, le filtre de points et les valeurs de surface par défaut pour cette zone. Continuer ?"
+      },
+      "panel": {
+        "metaDrawing": "Dessin de limite · {{count}} sommets",
+        "metaJobs": "Tâches de volume · {{count}}",
+        "metaEmpty": "Aucune tâche de volume",
+        "noteActive": "Double-cliquez pour confirmer la limite. L’espace actif conserve ensemble méthode et résultats.",
+        "noteEmpty": "Cliquez sur « Nouveau » pour démarrer une mesure guidée du volume."
+      }
     },
     "scene": {
       "mobileScene": "☰ Scène"
