@@ -11485,6 +11485,23 @@ window.__CLOUDSTUDIO_THREE = THREE;
     // Potree Init
     // ─────────────────────────────────────────────
     viewer = new Potree.Viewer(document.getElementById('potree_render_area'));
+    const CLOUDSTUDIO_SKYBOX_URL = '/potree/resources/textures/cloudstudio-skybox/';
+    const setPotreeBackground = viewer.setBackground.bind(viewer);
+    viewer.setBackground = function setCloudStudioBackground(background) {
+      if (background === 'skybox') {
+        const changed = viewer.background !== background;
+        if (!viewer.skybox || !viewer.skybox.__cloudstudioSkybox) {
+          viewer.skybox = Potree.Utils.loadSkybox(CLOUDSTUDIO_SKYBOX_URL);
+          viewer.skybox.__cloudstudioSkybox = true;
+        }
+        viewer.background = background;
+        if (changed) {
+          viewer.dispatchEvent({ type: 'background_changed', viewer });
+        }
+        return;
+      }
+      setPotreeBackground(background);
+    };
     ensureViewerFeatureModulesInitialized();
     viewer.setEDLEnabled(true);
     viewer.setFOV(60);
