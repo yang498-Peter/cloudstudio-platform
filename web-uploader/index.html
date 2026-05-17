@@ -2343,7 +2343,7 @@
           <form id="uploadGaussianForm">
             <div class="field">
               <label data-i18n="index.upload.gaussianFileLabel">Gaussian PLY file</label>
-              <input id="f-gaussian" type="file" name="gaussianFile" accept=".ply">
+              <input id="f-gaussian" type="file" name="gaussianFile" accept=".ply,.splat,.ksplat">
             </div>
             <div class="field">
               <label data-i18n="index.upload.gaussianNameLabel">Scene name (optional, leave blank to use the file name)</label>
@@ -2782,6 +2782,10 @@
       const startAt = Date.now();
       const xhr = new XMLHttpRequest();
       xhr.open('POST', endpoint);
+      const uploadPassword = formData?.get?.('uploadPassword');
+      if (uploadPassword) {
+        xhr.setRequestHeader('X-CloudStudio-Upload-Password', String(uploadPassword));
+      }
 
       // Phase 1: Upload progress
       xhr.upload.addEventListener('progress', (ev) => {
