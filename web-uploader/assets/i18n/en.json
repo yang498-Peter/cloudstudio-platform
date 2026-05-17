@@ -610,7 +610,9 @@
       "viewProfile": "View Profile",
       "objectsTitle": "Clipping Objects",
       "emptyObjects": "No clipping objects",
-      "profileClipAction": "Create Clip Box"
+      "profileClipAction": "Create Clip Box",
+      "hide": "Hide",
+      "show": "Show"
     },
     "clipBox": {
       "workspaceTitle": "Clip Box",
@@ -652,7 +654,8 @@
       "exportNote": "Confirmed clip boxes: {{count}}. Export follows {{mode}}.",
       "exportFiltered": "Clip box filtered points: {{count}}",
       "toolHint": "⬜ Clip box — place the box, adjust its size, confirm it in the Clip panel, then export with the current clip mode | ESC cancel",
-      "statusEditing": "Editing clip box... adjust the handles, then confirm this round when ready"
+      "statusEditing": "Editing clip box... adjust the handles, then confirm this round when ready",
+      "resumeEdit": "Resume editing this clip box"
     },
     "profile": {
       "panelTitle": "✂ Cross-Section / Profile View",
@@ -872,7 +875,219 @@
     "volume": {
       "panelNote": "Click to outline the boundary, then double-click to set the reference elevation plane.",
       "noPending": "No pending volume region",
-      "new": "⛏ New"
+      "new": "⛏ New",
+      "newPlain": "New",
+      "pointCloudFallback": "Point Cloud",
+      "scenarios": {
+        "stockpile_boundary": {
+          "label": "Stockpile",
+          "shortLabel": "Stockpile"
+        },
+        "plane_cut_fill": {
+          "label": "Plane Cut/Fill",
+          "shortLabel": "Plane Cut/Fill"
+        },
+        "ground_fit_volume": {
+          "label": "Ground-Fitted Volume",
+          "shortLabel": "Ground-Fitted"
+        }
+      },
+      "baseModes": {
+        "boundary": {
+          "label": "Boundary Fit",
+          "option": "Boundary fit"
+        },
+        "fixed": {
+          "label": "Fixed Elevation",
+          "option": "Fixed elevation"
+        },
+        "ground": {
+          "label": "Ground Fit",
+          "option": "Ground fit"
+        }
+      },
+      "baseSources": {
+        "groundClass2Fit": "Ground fit (class 2)",
+        "localCsfFit": "Local CSF ground fit",
+        "groundQuantileFallback": "Ground fallback",
+        "boundaryFallback": "Boundary fallback",
+        "fixedElevation": "Fixed elevation",
+        "boundaryFit": "Boundary fit"
+      },
+      "surfaces": {
+        "baseSurfaceTitle": "Base Surface",
+        "noBaseResult": "No base surface result yet",
+        "baseEmptyHint": "Attach a fitted/base/reference surface result when the volume job returns it.",
+        "analysisSurfaceTitle": "Analysis Surface",
+        "noAnalysisResult": "No analysis surface result yet",
+        "analysisEmptyHint": "Build or compute the volume job to produce the analysis surface used for volume calculation.",
+        "jobSource": "Job {{jobId}}",
+        "inlineMeshData": "Inline meshData",
+        "dataUnavailable": "Mesh/grid data unavailable",
+        "baseSurface": "base surface",
+        "analysisSurface": "analysis surface"
+      },
+      "metrics": {
+        "verts": "{{count}} verts",
+        "tris": "{{count}} tris",
+        "cells": "{{count}} cells",
+        "measuredFill": "Measured Fill",
+        "measuredCut": "Measured Cut",
+        "netVolume": "Net Volume",
+        "measuredFillNote": "Dominant material below the base surface. Cut and Fill remain shown separately.",
+        "measuredCutNote": "Dominant material above the base surface. Cut and Fill remain shown separately.",
+        "netVolumeNote": "Fill - Cut. Positive means fill dominates; negative means cut dominates.",
+        "cellsCoverage": "{{count}} cells · {{coverage}}",
+        "cut": "Cut",
+        "fill": "Fill",
+        "coverage": "Coverage"
+      },
+      "recommendation": {
+        "using": "Using recommended {{value}} m",
+        "recommended": "Recommended {{value}} m",
+        "range": "range {{min}}-{{max}} m",
+        "targetCells": "target ~{{count}} cells"
+      },
+      "status": {
+        "running": "Running",
+        "ready": "Ready",
+        "error": "Error",
+        "idle": "Idle",
+        "pending": "Pending",
+        "drawing": "Drawing",
+        "loadedIn3d": "Loaded in 3D",
+        "activeWithInterval": "Active · {{interval}} m",
+        "measurementReady": "Volume measurement ready",
+        "pickingReferenceElevation": "Picking volume reference elevation..."
+      },
+      "confidence": {
+        "high": "high",
+        "medium": "medium",
+        "low": "low",
+        "unknown": "unknown",
+        "lineHtml": "Confidence: <strong>{{confidence}}</strong> · {{baseSource}}"
+      },
+      "interpretation": {
+        "stockpile": "{{scenario}}: compares the analysis surface against {{base}}, which is typically interpolated from the selected boundary heights for stockpile-style work.",
+        "planeCutFill": "{{scenario}}: compares the analysis surface against {{base}}. Positive cut means material sits above the fixed elevation; positive net means more fill than cut.",
+        "groundLocalCsf": "{{scenario}}: no reliable class-2 ground support was available, so the base surface was built from a local CSF ground classification inside the selected region. This is usually stronger than the low-percentile fallback, but still review warnings when the selected area contains little visible ground.",
+        "groundQuantileFallback": "{{scenario}}: no class-2 ground support was available, so the base surface was approximated from the low-percentile terrain envelope of the unclassified point cloud. Treat the result as an estimate and review the warnings.",
+        "groundBoundaryFallback": "{{scenario}}: ground support was too weak for a real terrain fit, so the job fell back to boundary interpolation. Inspect the warnings before trusting this result.",
+        "groundLowSupport": "{{scenario}}: compares against a fitted terrain-like base, but the ground support ratio is low. Verify classification quality before relying on the fitted base.",
+        "groundFit": "{{scenario}}: compares the analysis surface against a fitted terrain-like base. Use this when a pile sits on uneven land and you do not want to assume a flat floor."
+      },
+      "workspace": {
+        "emptyTitle": "No volume regions yet",
+        "emptyCopyHtml": "Click <strong>New</strong> in the toolbar above, outline a boundary in the viewport, then double-click to confirm.",
+        "drawingMetaHtml": "<strong>{{count}}</strong> vertices placed · double-click to confirm"
+      },
+      "warnings": {
+        "summary": "{{count}} warnings · {{confidence}} confidence"
+      },
+      "sections": {
+        "display3d": "3D display",
+        "edgesOverlay": "Edges & overlay",
+        "meshExport": "Mesh export",
+        "source": "Source",
+        "surfacesDisplay": "3D surfaces & display",
+        "advancedSettings": "Advanced settings",
+        "contours": "Contours"
+      },
+      "surfaceDisplayMode": {
+        "analysis": "Analysis",
+        "base": "Base",
+        "both": "Both",
+        "none": "None",
+        "hidden": "Hidden"
+      },
+      "fields": {
+        "cellSize": "Cell size (m)",
+        "referenceHeight": "Reference height (m)",
+        "elevationPlaceholder": "Elevation",
+        "interval": "Interval (m)",
+        "labelSize": "Label size",
+        "baseSurfaceOverride": "Base surface override",
+        "pointFilter": "Point filter",
+        "surfaceMode": "Surface mode",
+        "aggregation": "Aggregation",
+        "gapFill": "Gap fill",
+        "displayDensity": "Display density"
+      },
+      "actions": {
+        "deleteRegion": "Delete volume region",
+        "pickHeightTitle": "Click a point in the cloud to pick its elevation",
+        "pick": "Pick",
+        "min": "Min",
+        "avg": "Avg",
+        "max": "Max",
+        "overlayOn": "Overlay on",
+        "overlayOff": "Overlay off",
+        "analysisEdgesOn": "Analysis edges on",
+        "analysisEdgesOff": "Analysis edges off",
+        "baseEdgesOn": "Base edges on",
+        "baseEdgesOff": "Base edges off",
+        "refreshSurfaces": "Refresh surfaces",
+        "analysisObj": "Analysis OBJ",
+        "baseObj": "Base OBJ",
+        "generate": "Generate",
+        "labelsOn": "Labels on",
+        "labelsOff": "Labels off",
+        "exportDxf": "Export DXF",
+        "exportReport": "Export report",
+        "rerun": "Re-run",
+        "redraw": "Redraw",
+        "startTitle": "Start a unified server-side volume measurement"
+      },
+      "pointFilters": {
+        "all": "All points",
+        "excludeVegetation": "Exclude grass / trees",
+        "excludeVegetationBuildings": "Exclude vegetation / buildings",
+        "groundOnly": "Ground only (class 2)"
+      },
+      "surfaceTypes": {
+        "stockpile": "Stockpile",
+        "dsm": "Full surface (DSM)",
+        "dtm": "Ground level (DTM)"
+      },
+      "aggregationModes": {
+        "median": "Median",
+        "max": "Max",
+        "min": "Min"
+      },
+      "holeFill": {
+        "leave": "Leave holes",
+        "reference": "Fill with ref. elevation",
+        "interpolate": "Interpolate"
+      },
+      "history": {
+        "title": "Recent Jobs",
+        "subtitle": "Older regions stay compact until you reopen them."
+      },
+      "toasts": {
+        "drawNewBoundary": "Draw a new boundary for this volume job.",
+        "computeFailed": "Volume compute failed: {{message}}",
+        "localMeshBuildFailed": "Local mesh build failed: {{message}}",
+        "reportSnapshotFailed": "Could not embed the current view screenshot. Downloading the latest available report instead.",
+        "loadSurfaceFailed": "Failed to load {{label}}: {{message}}",
+        "invalidReferenceElevation": "Invalid reference elevation input",
+        "cellSizeMinimum": "Cell size must be at least 0.25 m",
+        "invalidDisplayDensity": "Invalid display density input",
+        "pickElevationStart": "Click a point in the cloud to pick elevation. Press ESC to cancel.",
+        "referenceElevationPicked": "Reference elevation picked: {{value}}",
+        "elevationPickingCancelled": "Elevation picking cancelled",
+        "loadSurfaceBeforeContours": "Load {{label}} first, then generate contours.",
+        "cancelled": "Current volume region drawing cancelled"
+      },
+      "confirm": {
+        "switchScenario": "Switching volume method will reset base surface, point filter, and surface mode defaults for this region. Continue?"
+      },
+      "panel": {
+        "metaDrawing": "Drawing boundary · {{count}} vertices",
+        "metaJobs": "Volume jobs · {{count}}",
+        "metaEmpty": "No volume jobs yet",
+        "noteActive": "Double-click to confirm the boundary. The active workspace will keep method and result steps together.",
+        "noteEmpty": "Click \"New\" to start a guided volume measurement."
+      }
     },
     "scene": {
       "mobileScene": "☰ Scene"

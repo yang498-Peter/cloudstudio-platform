@@ -610,7 +610,9 @@
       "viewProfile": "Profil anzeigen",
       "objectsTitle": "Objekte ausschneiden",
       "emptyObjects": "Keine Clipping-Objekte",
-      "profileClipAction": "Clipbox erstellen"
+      "profileClipAction": "Clipbox erstellen",
+      "hide": "Ausblenden",
+      "show": "Anzeigen"
     },
     "clipBox": {
       "workspaceTitle": "Clip-Box",
@@ -652,7 +654,8 @@
       "exportNote": "Bestätigte Clipboxen: {{count}}. Der Export folgt {{mode}}.",
       "exportFiltered": "Clipbox-gefilterte Punkte: {{count}}",
       "toolHint": "⬜ Clipbox — platzieren Sie die Box, passen Sie ihre Größe an, bestätigen Sie sie im Clip-Bereich und exportieren Sie mit dem aktuellen Clip-Modus | ESC abbrechen",
-      "statusEditing": "Clip-Box bearbeiten... Passen Sie die Griffe an und bestätigen Sie diese Runde, wenn Sie fertig sind"
+      "statusEditing": "Clip-Box bearbeiten... Passen Sie die Griffe an und bestätigen Sie diese Runde, wenn Sie fertig sind",
+      "resumeEdit": "Diese Clip-Box weiter bearbeiten"
     },
     "profile": {
       "panelTitle": "✂ Querschnitt-/Profilansicht",
@@ -872,7 +875,219 @@
     "volume": {
       "panelNote": "Klicken Sie, um die Grenze zu skizzieren, und doppelklicken Sie dann, um die Referenzhöhenebene festzulegen.",
       "noPending": "Keine ausstehende Volumenregion",
-      "new": "⛏ Neu"
+      "new": "⛏ Neu",
+      "newPlain": "Neu",
+      "pointCloudFallback": "Punktwolke",
+      "scenarios": {
+        "stockpile_boundary": {
+          "label": "Halde",
+          "shortLabel": "Halde"
+        },
+        "plane_cut_fill": {
+          "label": "Ebener Abtrag/Auftrag",
+          "shortLabel": "Abtrag/Auftrag"
+        },
+        "ground_fit_volume": {
+          "label": "Geländeangepasstes Volumen",
+          "shortLabel": "Geländeangepasst"
+        }
+      },
+      "baseModes": {
+        "boundary": {
+          "label": "Rand-Anpassung",
+          "option": "Rand-Anpassung"
+        },
+        "fixed": {
+          "label": "Feste Höhe",
+          "option": "Feste Höhe"
+        },
+        "ground": {
+          "label": "Gelände-Anpassung",
+          "option": "Gelände-Anpassung"
+        }
+      },
+      "baseSources": {
+        "groundClass2Fit": "Gelände-Anpassung (Klasse 2)",
+        "localCsfFit": "Lokale CSF-Gelände-Anpassung",
+        "groundQuantileFallback": "Gelände-Ersatz",
+        "boundaryFallback": "Rand-Ersatz",
+        "fixedElevation": "Feste Höhe",
+        "boundaryFit": "Rand-Anpassung"
+      },
+      "surfaces": {
+        "baseSurfaceTitle": "Basisfläche",
+        "noBaseResult": "Noch kein Ergebnis für die Basisfläche",
+        "baseEmptyHint": "Fügen Sie eine angepasste Basis- oder Referenzfläche hinzu, sobald der Volumenjob sie zurückgibt.",
+        "analysisSurfaceTitle": "Analysefläche",
+        "noAnalysisResult": "Noch kein Ergebnis für die Analysefläche",
+        "analysisEmptyHint": "Erstellen oder berechnen Sie den Volumenjob, um die Analysefläche für die Volumenberechnung zu erzeugen.",
+        "jobSource": "Job {{jobId}}",
+        "inlineMeshData": "Inline-meshData",
+        "dataUnavailable": "Mesh-/Rasterdaten nicht verfügbar",
+        "baseSurface": "Basisfläche",
+        "analysisSurface": "Analysefläche"
+      },
+      "metrics": {
+        "verts": "{{count}} Vertices",
+        "tris": "{{count}} Dreiecke",
+        "cells": "{{count}} Zellen",
+        "measuredFill": "Gemessener Auftrag",
+        "measuredCut": "Gemessener Abtrag",
+        "netVolume": "Nettovolumen",
+        "measuredFillNote": "Material unterhalb der Basisfläche überwiegt. Abtrag und Auftrag bleiben getrennt sichtbar.",
+        "measuredCutNote": "Material oberhalb der Basisfläche überwiegt. Abtrag und Auftrag bleiben getrennt sichtbar.",
+        "netVolumeNote": "Auftrag - Abtrag. Positive Werte bedeuten Auftrag dominiert; negative Werte bedeuten Abtrag dominiert.",
+        "cellsCoverage": "{{count}} Zellen · {{coverage}}",
+        "cut": "Abtrag",
+        "fill": "Auftrag",
+        "coverage": "Abdeckung"
+      },
+      "recommendation": {
+        "using": "Empfohlenen Wert {{value}} m verwenden",
+        "recommended": "Empfohlen {{value}} m",
+        "range": "Bereich {{min}}-{{max}} m",
+        "targetCells": "Ziel ca. {{count}} Zellen"
+      },
+      "status": {
+        "running": "Läuft",
+        "ready": "Bereit",
+        "error": "Fehler",
+        "idle": "Leerlauf",
+        "pending": "Ausstehend",
+        "drawing": "Zeichnen",
+        "loadedIn3d": "In 3D geladen",
+        "activeWithInterval": "Aktiv · {{interval}} m",
+        "measurementReady": "Volumenmessung bereit",
+        "pickingReferenceElevation": "Referenzhöhe für Volumen wird gewählt..."
+      },
+      "confidence": {
+        "high": "hoch",
+        "medium": "mittel",
+        "low": "niedrig",
+        "unknown": "unbekannt",
+        "lineHtml": "Vertrauen: <strong>{{confidence}}</strong> · {{baseSource}}"
+      },
+      "interpretation": {
+        "stockpile": "{{scenario}}: vergleicht die Analysefläche mit {{base}}, die für Haldenarbeiten meist aus den Höhen des gewählten Randes interpoliert wird.",
+        "planeCutFill": "{{scenario}}: vergleicht die Analysefläche mit {{base}}. Positiver Abtrag bedeutet Material oberhalb der festen Höhe; ein positives Netto bedeutet mehr Auftrag als Abtrag.",
+        "groundLocalCsf": "{{scenario}}: Es war keine zuverlässige Geländeunterstützung der Klasse 2 verfügbar, daher wurde die Basisfläche aus einer lokalen CSF-Geländeklassifikation im ausgewählten Bereich erstellt. Das ist meist robuster als der Niedrig-Perzentil-Ersatz, dennoch sollten Warnungen geprüft werden, wenn wenig sichtbares Gelände vorhanden ist.",
+        "groundQuantileFallback": "{{scenario}}: Es war keine Geländeunterstützung der Klasse 2 verfügbar, daher wurde die Basisfläche aus der Niedrig-Perzentil-Geländehülle der unklassifizierten Punktwolke angenähert. Behandeln Sie das Ergebnis als Schätzung und prüfen Sie die Warnungen.",
+        "groundBoundaryFallback": "{{scenario}}: Die Geländeunterstützung war für eine echte Gelände-Anpassung zu schwach, daher wurde auf Randinterpolation zurückgegriffen. Prüfen Sie die Warnungen, bevor Sie dem Ergebnis vertrauen.",
+        "groundLowSupport": "{{scenario}}: vergleicht mit einer angepassten geländeartigen Basis, aber der Geländeunterstützungsanteil ist niedrig. Prüfen Sie die Klassifikationsqualität, bevor Sie diese Basis verwenden.",
+        "groundFit": "{{scenario}}: vergleicht die Analysefläche mit einer angepassten geländeartigen Basis. Verwenden Sie dies, wenn eine Halde auf unebenem Gelände liegt und kein flacher Boden angenommen werden soll."
+      },
+      "workspace": {
+        "emptyTitle": "Noch keine Volumenbereiche",
+        "emptyCopyHtml": "Klicken Sie oben in der Werkzeugleiste auf <strong>Neu</strong>, zeichnen Sie im Ansichtsfenster eine Grenze und bestätigen Sie per Doppelklick.",
+        "drawingMetaHtml": "<strong>{{count}}</strong> Vertices gesetzt · per Doppelklick bestätigen"
+      },
+      "warnings": {
+        "summary": "{{count}} Warnungen · Vertrauen {{confidence}}"
+      },
+      "sections": {
+        "display3d": "3D-Anzeige",
+        "edgesOverlay": "Kanten und Overlay",
+        "meshExport": "Mesh-Export",
+        "source": "Quelle",
+        "surfacesDisplay": "3D-Flächen und Anzeige",
+        "advancedSettings": "Erweiterte Einstellungen",
+        "contours": "Konturen"
+      },
+      "surfaceDisplayMode": {
+        "analysis": "Analyse",
+        "base": "Basis",
+        "both": "Beide",
+        "none": "Keine",
+        "hidden": "Ausgeblendet"
+      },
+      "fields": {
+        "cellSize": "Zellgröße (m)",
+        "referenceHeight": "Referenzhöhe (m)",
+        "elevationPlaceholder": "Höhe",
+        "interval": "Intervall (m)",
+        "labelSize": "Beschriftungsgröße",
+        "baseSurfaceOverride": "Basisfläche überschreiben",
+        "pointFilter": "Punktfilter",
+        "surfaceMode": "Flächenmodus",
+        "aggregation": "Zusammenfassung",
+        "gapFill": "Lückenfüllung",
+        "displayDensity": "Anzeigedichte"
+      },
+      "actions": {
+        "deleteRegion": "Volumenbereich löschen",
+        "pickHeightTitle": "Klicken Sie auf einen Punkt in der Punktwolke, um seine Höhe zu wählen",
+        "pick": "Wählen",
+        "min": "Min.",
+        "avg": "Mittel",
+        "max": "Max.",
+        "overlayOn": "Overlay ein",
+        "overlayOff": "Overlay aus",
+        "analysisEdgesOn": "Analysekanten ein",
+        "analysisEdgesOff": "Analysekanten aus",
+        "baseEdgesOn": "Basiskanten ein",
+        "baseEdgesOff": "Basiskanten aus",
+        "refreshSurfaces": "Flächen aktualisieren",
+        "analysisObj": "Analyse-OBJ",
+        "baseObj": "Basis-OBJ",
+        "generate": "Erzeugen",
+        "labelsOn": "Beschriftungen ein",
+        "labelsOff": "Beschriftungen aus",
+        "exportDxf": "DXF exportieren",
+        "exportReport": "Bericht exportieren",
+        "rerun": "Erneut ausführen",
+        "redraw": "Neu zeichnen",
+        "startTitle": "Einheitliche serverseitige Volumenmessung starten"
+      },
+      "pointFilters": {
+        "all": "Alle Punkte",
+        "excludeVegetation": "Gras / Bäume ausschließen",
+        "excludeVegetationBuildings": "Vegetation / Gebäude ausschließen",
+        "groundOnly": "Nur Boden (Klasse 2)"
+      },
+      "surfaceTypes": {
+        "stockpile": "Halde",
+        "dsm": "Vollständige Oberfläche (DSM)",
+        "dtm": "Geländeniveau (DTM)"
+      },
+      "aggregationModes": {
+        "median": "Zentralwert",
+        "max": "Maximum",
+        "min": "Minimum"
+      },
+      "holeFill": {
+        "leave": "Lücken belassen",
+        "reference": "Mit Ref.-Höhe füllen",
+        "interpolate": "Interpolieren"
+      },
+      "history": {
+        "title": "Letzte Jobs",
+        "subtitle": "Ältere Bereiche bleiben kompakt, bis Sie sie erneut öffnen."
+      },
+      "toasts": {
+        "drawNewBoundary": "Zeichnen Sie eine neue Grenze für diesen Volumenjob.",
+        "computeFailed": "Volumenberechnung fehlgeschlagen: {{message}}",
+        "localMeshBuildFailed": "Lokaler Mesh-Aufbau fehlgeschlagen: {{message}}",
+        "reportSnapshotFailed": "Die aktuelle Ansicht konnte nicht in den Bericht eingebettet werden. Stattdessen wird der neueste verfügbare Bericht heruntergeladen.",
+        "loadSurfaceFailed": "{{label}} konnte nicht geladen werden: {{message}}",
+        "invalidReferenceElevation": "Ungültige Referenzhöhe",
+        "cellSizeMinimum": "Die Zellgröße muss mindestens 0,25 m betragen",
+        "invalidDisplayDensity": "Ungültige Anzeigedichte",
+        "pickElevationStart": "Klicken Sie auf einen Punkt in der Punktwolke, um die Höhe zu wählen. ESC bricht ab.",
+        "referenceElevationPicked": "Referenzhöhe gewählt: {{value}}",
+        "elevationPickingCancelled": "Höhenwahl abgebrochen",
+        "loadSurfaceBeforeContours": "Laden Sie zuerst {{label}}, und erzeugen Sie dann Konturen.",
+        "cancelled": "Aktuelle Volumenbereich-Zeichnung abgebrochen"
+      },
+      "confirm": {
+        "switchScenario": "Beim Wechsel der Volumenmethode werden Basisfläche, Punktfilter und Standardflächenmodus für diesen Bereich zurückgesetzt. Fortfahren?"
+      },
+      "panel": {
+        "metaDrawing": "Grenze zeichnen · {{count}} Vertices",
+        "metaJobs": "Volumenjobs · {{count}}",
+        "metaEmpty": "Noch keine Volumenjobs",
+        "noteActive": "Doppelklicken Sie, um die Grenze zu bestätigen. Der aktive Arbeitsbereich hält Methode und Ergebnisschritte zusammen.",
+        "noteEmpty": "Klicken Sie auf \"Neu\", um eine geführte Volumenmessung zu starten."
+      }
     },
     "scene": {
       "mobileScene": "☰ Szene"

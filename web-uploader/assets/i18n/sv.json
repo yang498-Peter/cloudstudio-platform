@@ -610,7 +610,9 @@
       "viewProfile": "Visa profil",
       "objectsTitle": "Klippande objekt",
       "emptyObjects": "Inga klippobjekt",
-      "profileClipAction": "Skapa Clip Box"
+      "profileClipAction": "Skapa Clip Box",
+      "hide": "Dölj",
+      "show": "Visa"
     },
     "clipBox": {
       "workspaceTitle": "Klippbox",
@@ -652,7 +654,8 @@
       "exportNote": "Bekräftade clipboxar: {{count}}. Export följer {{mode}}.",
       "exportFiltered": "Clip box filtrerade punkter: {{count}}",
       "toolHint": "⬜ Clipbox — placera rutan, justera storleken, bekräfta i Clip-panelen och exportera sedan med aktuellt klippläge | ESC avbryt",
-      "statusEditing": "Redigera klippruta... justera handtagen, bekräfta sedan denna omgång när du är klar"
+      "statusEditing": "Redigera klippruta... justera handtagen, bekräfta sedan denna omgång när du är klar",
+      "resumeEdit": "Fortsätt redigera den här klippboxen"
     },
     "profile": {
       "panelTitle": "✂ Tvärsnitt/profilvy",
@@ -872,7 +875,219 @@
     "volume": {
       "panelNote": "Klicka för att markera gränsen, dubbelklicka sedan för att ställa in referenshöjdsplanet.",
       "noPending": "Ingen väntande volymregion",
-      "new": "⛏ Nytt"
+      "new": "⛏ Nytt",
+      "newPlain": "Ny",
+      "pointCloudFallback": "Punktmoln",
+      "scenarios": {
+        "stockpile_boundary": {
+          "label": "Upplag",
+          "shortLabel": "Upplag"
+        },
+        "plane_cut_fill": {
+          "label": "Plan schakt/fyll",
+          "shortLabel": "Schakt/fyll"
+        },
+        "ground_fit_volume": {
+          "label": "Terränganpassad volym",
+          "shortLabel": "Terränganpassad"
+        }
+      },
+      "baseModes": {
+        "boundary": {
+          "label": "Gränsanpassning",
+          "option": "Gränsanpassning"
+        },
+        "fixed": {
+          "label": "Fast höjd",
+          "option": "Fast höjd"
+        },
+        "ground": {
+          "label": "Terränganpassning",
+          "option": "Terränganpassning"
+        }
+      },
+      "baseSources": {
+        "groundClass2Fit": "Terränganpassning (klass 2)",
+        "localCsfFit": "Lokal CSF-terränganpassning",
+        "groundQuantileFallback": "Terrängreserv",
+        "boundaryFallback": "Gränsreserv",
+        "fixedElevation": "Fast höjd",
+        "boundaryFit": "Gränsanpassning"
+      },
+      "surfaces": {
+        "baseSurfaceTitle": "Basyta",
+        "noBaseResult": "Inget resultat för basyta ännu",
+        "baseEmptyHint": "Koppla en anpassad/bas-/referensyta när volymjobbet returnerar den.",
+        "analysisSurfaceTitle": "Analysyta",
+        "noAnalysisResult": "Inget resultat för analysyta ännu",
+        "analysisEmptyHint": "Bygg eller beräkna volymjobbet för att skapa analysytan som används för volymberäkningen.",
+        "jobSource": "Jobb {{jobId}}",
+        "inlineMeshData": "Inbäddad meshData",
+        "dataUnavailable": "Mesh-/rutnätsdata saknas",
+        "baseSurface": "basyta",
+        "analysisSurface": "analysyta"
+      },
+      "metrics": {
+        "verts": "{{count}} vertexar",
+        "tris": "{{count}} trianglar",
+        "cells": "{{count}} celler",
+        "measuredFill": "Uppmätt fyll",
+        "measuredCut": "Uppmätt schakt",
+        "netVolume": "Nettovolym",
+        "measuredFillNote": "Material under basytan dominerar. Schakt och fyll visas fortfarande separat.",
+        "measuredCutNote": "Material över basytan dominerar. Schakt och fyll visas fortfarande separat.",
+        "netVolumeNote": "Fyll - schakt. Positivt värde betyder att fyll dominerar; negativt att schakt dominerar.",
+        "cellsCoverage": "{{count}} celler · {{coverage}}",
+        "cut": "Schakt",
+        "fill": "Fyll",
+        "coverage": "Täckning"
+      },
+      "recommendation": {
+        "using": "Använder rekommenderat {{value}} m",
+        "recommended": "Rekommenderat {{value}} m",
+        "range": "intervall {{min}}-{{max}} m",
+        "targetCells": "mål ~{{count}} celler"
+      },
+      "status": {
+        "running": "Körs",
+        "ready": "Klar",
+        "error": "Fel",
+        "idle": "Inaktiv",
+        "pending": "Väntar",
+        "drawing": "Ritar",
+        "loadedIn3d": "Laddad i 3D",
+        "activeWithInterval": "Aktiv · {{interval}} m",
+        "measurementReady": "Volymmätning klar",
+        "pickingReferenceElevation": "Väljer referenshöjd för volym..."
+      },
+      "confidence": {
+        "high": "hög",
+        "medium": "medel",
+        "low": "låg",
+        "unknown": "okänd",
+        "lineHtml": "Tillförlitlighet: <strong>{{confidence}}</strong> · {{baseSource}}"
+      },
+      "interpretation": {
+        "stockpile": "{{scenario}}: jämför analysytan med {{base}}, som vanligtvis interpoleras från de valda gränshöjderna för upplagsarbete.",
+        "planeCutFill": "{{scenario}}: jämför analysytan med {{base}}. Positiv schakt betyder material över den fasta höjden; positiv netto betyder mer fyll än schakt.",
+        "groundLocalCsf": "{{scenario}}: inget tillförlitligt klass-2-markstöd fanns, så basytan byggdes från lokal CSF-markklassificering inom det valda området. Detta är oftast starkare än lågpercentilreserven, men granska varningar om området innehåller lite synlig mark.",
+        "groundQuantileFallback": "{{scenario}}: inget klass-2-markstöd fanns, så basytan approximerades från lågpercentilterrängen i det oklassificerade punktmolnet. Behandla resultatet som en uppskattning och granska varningarna.",
+        "groundBoundaryFallback": "{{scenario}}: markstödet var för svagt för en verklig terränganpassning, så jobbet föll tillbaka till gränsinterpolering. Granska varningarna innan du litar på resultatet.",
+        "groundLowSupport": "{{scenario}}: jämför mot en anpassad terränglik bas, men markstödsandelen är låg. Kontrollera klassificeringskvaliteten innan du använder basen.",
+        "groundFit": "{{scenario}}: jämför analysytan med en anpassad terränglik bas. Använd detta när ett upplag ligger på ojämn mark och du inte vill anta ett plant golv."
+      },
+      "workspace": {
+        "emptyTitle": "Inga volymområden ännu",
+        "emptyCopyHtml": "Klicka på <strong>Ny</strong> i verktygsfältet, rita en gräns i vyn och dubbelklicka för att bekräfta.",
+        "drawingMetaHtml": "<strong>{{count}}</strong> vertexar placerade · dubbelklicka för att bekräfta"
+      },
+      "warnings": {
+        "summary": "{{count}} varningar · tillförlitlighet {{confidence}}"
+      },
+      "sections": {
+        "display3d": "3D-visning",
+        "edgesOverlay": "Kanter och överlägg",
+        "meshExport": "Mesh-export",
+        "source": "Källa",
+        "surfacesDisplay": "3D-ytor och visning",
+        "advancedSettings": "Avancerade inställningar",
+        "contours": "Konturer"
+      },
+      "surfaceDisplayMode": {
+        "analysis": "Analys",
+        "base": "Bas",
+        "both": "Båda",
+        "none": "Ingen",
+        "hidden": "Dold"
+      },
+      "fields": {
+        "cellSize": "Cellstorlek (m)",
+        "referenceHeight": "Referenshöjd (m)",
+        "elevationPlaceholder": "Höjd",
+        "interval": "Intervall (m)",
+        "labelSize": "Etikettstorlek",
+        "baseSurfaceOverride": "Åsidosätt basyta",
+        "pointFilter": "Punktfilter",
+        "surfaceMode": "Ytläge",
+        "aggregation": "Aggregering",
+        "gapFill": "Fyll luckor",
+        "displayDensity": "Visningstäthet"
+      },
+      "actions": {
+        "deleteRegion": "Ta bort volymområde",
+        "pickHeightTitle": "Klicka på en punkt i punktmolnet för att välja dess höjd",
+        "pick": "Välj",
+        "min": "Minsta",
+        "avg": "Medel",
+        "max": "Största",
+        "overlayOn": "Överlägg på",
+        "overlayOff": "Överlägg av",
+        "analysisEdgesOn": "Analyskanter på",
+        "analysisEdgesOff": "Analyskanter av",
+        "baseEdgesOn": "Baskanter på",
+        "baseEdgesOff": "Baskanter av",
+        "refreshSurfaces": "Uppdatera ytor",
+        "analysisObj": "Analys OBJ",
+        "baseObj": "Bas OBJ",
+        "generate": "Generera",
+        "labelsOn": "Etiketter på",
+        "labelsOff": "Etiketter av",
+        "exportDxf": "Exportera DXF",
+        "exportReport": "Exportera rapport",
+        "rerun": "Kör igen",
+        "redraw": "Rita om",
+        "startTitle": "Starta en enhetlig serverbaserad volymmätning"
+      },
+      "pointFilters": {
+        "all": "Alla punkter",
+        "excludeVegetation": "Exkludera gräs / träd",
+        "excludeVegetationBuildings": "Exkludera vegetation / byggnader",
+        "groundOnly": "Endast mark (klass 2)"
+      },
+      "surfaceTypes": {
+        "stockpile": "Upplag",
+        "dsm": "Full yta (DSM)",
+        "dtm": "Marknivå (DTM)"
+      },
+      "aggregationModes": {
+        "median": "Medianvärde",
+        "max": "Maximum",
+        "min": "Minimum"
+      },
+      "holeFill": {
+        "leave": "Lämna luckor",
+        "reference": "Fyll med ref. höjd",
+        "interpolate": "Interpolera"
+      },
+      "history": {
+        "title": "Senaste jobb",
+        "subtitle": "Äldre områden hålls kompakta tills du öppnar dem igen."
+      },
+      "toasts": {
+        "drawNewBoundary": "Rita en ny gräns för detta volymjobb.",
+        "computeFailed": "Volymberäkning misslyckades: {{message}}",
+        "localMeshBuildFailed": "Lokal meshbyggnad misslyckades: {{message}}",
+        "reportSnapshotFailed": "Kunde inte bädda in aktuell vybild. Hämtar senaste tillgängliga rapport i stället.",
+        "loadSurfaceFailed": "Kunde inte läsa in {{label}}: {{message}}",
+        "invalidReferenceElevation": "Ogiltig referenshöjd",
+        "cellSizeMinimum": "Cellstorleken måste vara minst 0,25 m",
+        "invalidDisplayDensity": "Ogiltig visningstäthet",
+        "pickElevationStart": "Klicka på en punkt i punktmolnet för att välja höjd. Tryck ESC för att avbryta.",
+        "referenceElevationPicked": "Referenshöjd vald: {{value}}",
+        "elevationPickingCancelled": "Höjdval avbrutet",
+        "loadSurfaceBeforeContours": "Läs in {{label}} först och generera sedan konturer.",
+        "cancelled": "Aktuell ritning av volymområde avbruten"
+      },
+      "confirm": {
+        "switchScenario": "Om du byter volymmetod återställs basyta, punktfilter och standardläge för yta i detta område. Fortsätta?"
+      },
+      "panel": {
+        "metaDrawing": "Ritar gräns · {{count}} vertexar",
+        "metaJobs": "Volymjobb · {{count}}",
+        "metaEmpty": "Inga volymjobb ännu",
+        "noteActive": "Dubbelklicka för att bekräfta gränsen. Den aktiva arbetsytan håller ihop metod och resultatsteg.",
+        "noteEmpty": "Klicka på \"Ny\" för att starta en guidad volymmätning."
+      }
     },
     "scene": {
       "mobileScene": "☰ Scen"

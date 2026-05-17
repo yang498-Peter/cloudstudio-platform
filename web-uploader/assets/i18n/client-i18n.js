@@ -79,13 +79,18 @@
   async function loadLocaleResources(locale) {
     const normalized = normalizeLocale(locale);
     if (!resources.en) {
-      resources.en = await fetchLocale('en');
+      try {
+        resources.en = await fetchLocale('en');
+      } catch (error) {
+        console.warn('[i18n] English locale unavailable. Falling back to raw UI text.', error);
+        resources.en = createEmptyLocaleResource('en');
+      }
     }
     if (!resources[normalized]) {
       try {
         resources[normalized] = await fetchLocale(normalized);
       } catch (error) {
-        console.warn('[i18n] Falling back to English:', error);
+        console.warn('[i18n] Falling back to English/raw UI text:', error);
         resources[normalized] = resources.en;
       }
     }
@@ -248,10 +253,18 @@
   }
 
   async function applyTranslations(root = global.document) {
-    await loadLocaleResources(currentLocale);
-    applyTextTranslations(root);
-    if (global.document && global.document.documentElement) {
-      global.document.documentElement.lang = currentLocale;
+    try {
+      await loadLocaleResources(currentLocale);
+      applyTextTranslations(root);
+      if (global.document && global.document.documentElement) {
+        global.document.documentElement.lang = currentLocale;
+      }
+    } catch (error) {
+      console.warn('[i18n] Failed to apply translations. Keeping original UI text.', error);
+    } finally {
+      if (global.document && global.document.body) {
+        global.document.body.dataset.i18nReady = '1';
+      }
     }
   }
 
@@ -280,8 +293,15 @@
   async function init() {
     if (isInitialized) return currentLocale;
     currentLocale = getStoredLocale();
-    await loadLocaleResources(currentLocale);
+    try {
+      await loadLocaleResources(currentLocale);
+    } catch (error) {
+      console.warn('[i18n] Locale init failed. Keeping original UI text.', error);
+    }
     isInitialized = true;
+    if (global.document && global.document.body) {
+      global.document.body.dataset.i18nReady = '1';
+    }
     return currentLocale;
   }
 

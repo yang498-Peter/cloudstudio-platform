@@ -610,7 +610,9 @@
       "viewProfile": "Visualizza profilo",
       "objectsTitle": "Ritaglio di oggetti",
       "emptyObjects": "Nessun oggetto di ritaglio",
-      "profileClipAction": "Crea casella di ritaglio"
+      "profileClipAction": "Crea casella di ritaglio",
+      "hide": "Nascondi",
+      "show": "Mostra"
     },
     "clipBox": {
       "workspaceTitle": "Casella di clip",
@@ -652,7 +654,8 @@
       "exportNote": "Scatole di clip confermate: {{count}}. L'esportazione segue {{mode}}.",
       "exportFiltered": "Punti filtrati della clip box: {{count}}",
       "toolHint": "⬜ Casella clip — posiziona la casella, regola la dimensione, confermala nel pannello Clip e poi esporta con la modalità Clip corrente | ESC per annullare",
-      "statusEditing": "Modifica casella di ritaglio... regola le maniglie, quindi conferma questo giro quando sei pronto"
+      "statusEditing": "Modifica casella di ritaglio... regola le maniglie, quindi conferma questo giro quando sei pronto",
+      "resumeEdit": "Riprendi la modifica di questo box di ritaglio"
     },
     "profile": {
       "panelTitle": "✂ Vista in sezione trasversale/profilo",
@@ -872,7 +875,219 @@
     "volume": {
       "panelNote": "Fare clic per delineare il confine, quindi fare doppio clic per impostare il piano di elevazione di riferimento.",
       "noPending": "Nessuna regione del volume in sospeso",
-      "new": "⛏ Novità"
+      "new": "⛏ Novità",
+      "newPlain": "Nuovo",
+      "pointCloudFallback": "Nuvola di punti",
+      "scenarios": {
+        "stockpile_boundary": {
+          "label": "Cumulo",
+          "shortLabel": "Cumulo"
+        },
+        "plane_cut_fill": {
+          "label": "Scavo/riporto piano",
+          "shortLabel": "Scavo/riporto"
+        },
+        "ground_fit_volume": {
+          "label": "Volume adattato al terreno",
+          "shortLabel": "Adattato terreno"
+        }
+      },
+      "baseModes": {
+        "boundary": {
+          "label": "Adattamento al bordo",
+          "option": "Adattamento al bordo"
+        },
+        "fixed": {
+          "label": "Quota fissa",
+          "option": "Quota fissa"
+        },
+        "ground": {
+          "label": "Adattamento al terreno",
+          "option": "Adattamento al terreno"
+        }
+      },
+      "baseSources": {
+        "groundClass2Fit": "Adattamento al terreno (classe 2)",
+        "localCsfFit": "Adattamento terreno CSF locale",
+        "groundQuantileFallback": "Fallback terreno",
+        "boundaryFallback": "Fallback bordo",
+        "fixedElevation": "Quota fissa",
+        "boundaryFit": "Adattamento al bordo"
+      },
+      "surfaces": {
+        "baseSurfaceTitle": "Superficie base",
+        "noBaseResult": "Nessun risultato della superficie base",
+        "baseEmptyHint": "Collega una superficie adattata/base/di riferimento quando il job volume la restituisce.",
+        "analysisSurfaceTitle": "Superficie di analisi",
+        "noAnalysisResult": "Nessun risultato della superficie di analisi",
+        "analysisEmptyHint": "Costruisci o calcola il job volume per produrre la superficie di analisi usata nel calcolo.",
+        "jobSource": "Job {{jobId}}",
+        "inlineMeshData": "meshData inline",
+        "dataUnavailable": "Dati mesh/griglia non disponibili",
+        "baseSurface": "superficie base",
+        "analysisSurface": "superficie di analisi"
+      },
+      "metrics": {
+        "verts": "{{count}} vertici",
+        "tris": "{{count}} triangoli",
+        "cells": "{{count}} celle",
+        "measuredFill": "Riporto misurato",
+        "measuredCut": "Scavo misurato",
+        "netVolume": "Volume netto",
+        "measuredFillNote": "Predomina il materiale sotto la superficie base. Scavo e riporto restano mostrati separatamente.",
+        "measuredCutNote": "Predomina il materiale sopra la superficie base. Scavo e riporto restano mostrati separatamente.",
+        "netVolumeNote": "Riporto - scavo. Un valore positivo indica prevalenza di riporto; negativo prevalenza di scavo.",
+        "cellsCoverage": "{{count}} celle · {{coverage}}",
+        "cut": "Scavo",
+        "fill": "Riporto",
+        "coverage": "Copertura"
+      },
+      "recommendation": {
+        "using": "Uso del valore consigliato {{value}} m",
+        "recommended": "Consigliato {{value}} m",
+        "range": "intervallo {{min}}-{{max}} m",
+        "targetCells": "obiettivo ~{{count}} celle"
+      },
+      "status": {
+        "running": "In esecuzione",
+        "ready": "Pronto",
+        "error": "Errore",
+        "idle": "Inattivo",
+        "pending": "In sospeso",
+        "drawing": "Disegno",
+        "loadedIn3d": "Caricato in 3D",
+        "activeWithInterval": "Attivo · {{interval}} m",
+        "measurementReady": "Misura volume pronta",
+        "pickingReferenceElevation": "Selezione quota di riferimento..."
+      },
+      "confidence": {
+        "high": "alta",
+        "medium": "media",
+        "low": "bassa",
+        "unknown": "sconosciuta",
+        "lineHtml": "Affidabilità: <strong>{{confidence}}</strong> · {{baseSource}}"
+      },
+      "interpretation": {
+        "stockpile": "{{scenario}}: confronta la superficie di analisi con {{base}}, di solito interpolata dalle quote del bordo selezionato per lavori su cumuli.",
+        "planeCutFill": "{{scenario}}: confronta la superficie di analisi con {{base}}. Uno scavo positivo indica materiale sopra la quota fissa; un netto positivo indica più riporto che scavo.",
+        "groundLocalCsf": "{{scenario}}: non era disponibile supporto terreno classe 2 affidabile, quindi la base è stata costruita da una classificazione CSF locale nell’area selezionata. Di solito è più robusta del fallback a basso percentile, ma controlla gli avvisi se c’è poco terreno visibile.",
+        "groundQuantileFallback": "{{scenario}}: non era disponibile supporto terreno classe 2, quindi la base è stata approssimata dall’inviluppo a basso percentile della nuvola non classificata. Considera il risultato una stima e controlla gli avvisi.",
+        "groundBoundaryFallback": "{{scenario}}: il supporto terreno era troppo debole per un vero adattamento, quindi il job è passato all’interpolazione del bordo. Controlla gli avvisi prima di fidarti del risultato.",
+        "groundLowSupport": "{{scenario}}: confronta con una base tipo terreno adattata, ma il rapporto di supporto terreno è basso. Verifica la qualità della classificazione prima di usarla.",
+        "groundFit": "{{scenario}}: confronta la superficie di analisi con una base tipo terreno adattata. Usalo quando un cumulo poggia su terreno irregolare e non vuoi assumere un piano piatto."
+      },
+      "workspace": {
+        "emptyTitle": "Nessuna regione di volume",
+        "emptyCopyHtml": "Fai clic su <strong>Nuovo</strong> nella barra in alto, traccia un bordo nella vista e conferma con doppio clic.",
+        "drawingMetaHtml": "<strong>{{count}}</strong> vertici inseriti · doppio clic per confermare"
+      },
+      "warnings": {
+        "summary": "{{count}} avvisi · affidabilità {{confidence}}"
+      },
+      "sections": {
+        "display3d": "Visualizzazione 3D",
+        "edgesOverlay": "Bordi e overlay",
+        "meshExport": "Esportazione mesh",
+        "source": "Sorgente",
+        "surfacesDisplay": "Superfici 3D e visualizzazione",
+        "advancedSettings": "Impostazioni avanzate",
+        "contours": "Curve di livello"
+      },
+      "surfaceDisplayMode": {
+        "analysis": "Analisi",
+        "base": "Base rif.",
+        "both": "Entrambe",
+        "none": "Nessuna",
+        "hidden": "Nascosto"
+      },
+      "fields": {
+        "cellSize": "Dimensione cella (m)",
+        "referenceHeight": "Quota di riferimento (m)",
+        "elevationPlaceholder": "Quota",
+        "interval": "Intervallo (m)",
+        "labelSize": "Dimensione etichetta",
+        "baseSurfaceOverride": "Override superficie base",
+        "pointFilter": "Filtro punti",
+        "surfaceMode": "Modalità superficie",
+        "aggregation": "Aggregazione",
+        "gapFill": "Riempimento vuoti",
+        "displayDensity": "Densità visualizzazione"
+      },
+      "actions": {
+        "deleteRegion": "Elimina regione volume",
+        "pickHeightTitle": "Fai clic su un punto della nuvola per prenderne la quota",
+        "pick": "Prendi",
+        "min": "Minimo",
+        "avg": "Media",
+        "max": "Massimo",
+        "overlayOn": "Overlay attivo",
+        "overlayOff": "Overlay non attivo",
+        "analysisEdgesOn": "Bordi analisi attivi",
+        "analysisEdgesOff": "Bordi analisi non attivi",
+        "baseEdgesOn": "Bordi base attivi",
+        "baseEdgesOff": "Bordi base non attivi",
+        "refreshSurfaces": "Aggiorna superfici",
+        "analysisObj": "OBJ analisi",
+        "baseObj": "OBJ base",
+        "generate": "Genera",
+        "labelsOn": "Etichette attive",
+        "labelsOff": "Etichette non attive",
+        "exportDxf": "Esporta DXF",
+        "exportReport": "Esporta report",
+        "rerun": "Riesegui",
+        "redraw": "Ridisegna",
+        "startTitle": "Avvia una misura volume server-side unificata"
+      },
+      "pointFilters": {
+        "all": "Tutti i punti",
+        "excludeVegetation": "Escludi erba / alberi",
+        "excludeVegetationBuildings": "Escludi vegetazione / edifici",
+        "groundOnly": "Solo terreno (classe 2)"
+      },
+      "surfaceTypes": {
+        "stockpile": "Cumulo",
+        "dsm": "Superficie completa (DSM)",
+        "dtm": "Livello terreno (DTM)"
+      },
+      "aggregationModes": {
+        "median": "Mediana",
+        "max": "Massimo",
+        "min": "Minimo"
+      },
+      "holeFill": {
+        "leave": "Lascia vuoti",
+        "reference": "Riempi con quota rif.",
+        "interpolate": "Interpola"
+      },
+      "history": {
+        "title": "Job recenti",
+        "subtitle": "Le regioni più vecchie restano compatte finché non le riapri."
+      },
+      "toasts": {
+        "drawNewBoundary": "Disegna un nuovo bordo per questo job volume.",
+        "computeFailed": "Calcolo volume non riuscito: {{message}}",
+        "localMeshBuildFailed": "Costruzione mesh locale non riuscita: {{message}}",
+        "reportSnapshotFailed": "Impossibile incorporare lo screenshot della vista corrente. Verrà scaricato l’ultimo report disponibile.",
+        "loadSurfaceFailed": "Caricamento di {{label}} non riuscito: {{message}}",
+        "invalidReferenceElevation": "Quota di riferimento non valida",
+        "cellSizeMinimum": "La dimensione cella deve essere almeno 0,25 m",
+        "invalidDisplayDensity": "Densità di visualizzazione non valida",
+        "pickElevationStart": "Fai clic su un punto della nuvola per prenderne la quota. Premi ESC per annullare.",
+        "referenceElevationPicked": "Quota di riferimento presa: {{value}}",
+        "elevationPickingCancelled": "Selezione quota annullata",
+        "loadSurfaceBeforeContours": "Carica prima {{label}}, poi genera le curve di livello.",
+        "cancelled": "Disegno della regione volume annullato"
+      },
+      "confirm": {
+        "switchScenario": "Cambiare metodo volume reimposterà superficie base, filtro punti e modalità superficie predefinite per questa regione. Continuare?"
+      },
+      "panel": {
+        "metaDrawing": "Disegno bordo · {{count}} vertici",
+        "metaJobs": "Job volume · {{count}}",
+        "metaEmpty": "Nessun job volume",
+        "noteActive": "Doppio clic per confermare il bordo. Lo spazio attivo mantiene insieme metodo e risultati.",
+        "noteEmpty": "Fai clic su \"Nuovo\" per avviare una misura volume guidata."
+      }
     },
     "scene": {
       "mobileScene": "☰ Scena"
