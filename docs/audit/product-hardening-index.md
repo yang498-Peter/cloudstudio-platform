@@ -37,7 +37,7 @@ Scope: P0-P2 findings across architecture, upload, security, i18n, viewer, 3DGS,
 | [#7 3DGS publishing reports ready before SOG optimization is complete](https://github.com/yang498-Peter/cloudstudio-platform/issues/7) | P1 | 3dgs/upload/tests | In audit | [#19](https://github.com/yang498-Peter/cloudstudio-platform/pull/19) |
 | [#8 3DGS rotation is hard-coded instead of stored per asset](https://github.com/yang498-Peter/cloudstudio-platform/issues/8) | P1 | 3dgs/viewer | In audit | [#19](https://github.com/yang498-Peter/cloudstudio-platform/pull/19) |
 | [#9 i18n failures can keep homepage and viewer hidden](https://github.com/yang498-Peter/cloudstudio-platform/issues/9) | P1 | i18n/viewer/tests | In audit | [#20](https://github.com/yang498-Peter/cloudstudio-platform/pull/20) |
-| [#10 Long-running conversion jobs lack timeouts and queryable job state](https://github.com/yang498-Peter/cloudstudio-platform/issues/10) | P1 | upload/3dgs/tests | Open | Pending |
+| [#10 Long-running conversion jobs lack timeouts and queryable job state](https://github.com/yang498-Peter/cloudstudio-platform/issues/10) | P1 | upload/3dgs/tests | In audit | [#23](https://github.com/yang498-Peter/cloudstudio-platform/pull/23) |
 | [#11 Volume and clip dynamic UI still leaks English in non-English locales](https://github.com/yang498-Peter/cloudstudio-platform/issues/11) | P1 | i18n/viewer | In audit | [#20](https://github.com/yang498-Peter/cloudstudio-platform/pull/20) |
 | [#12 Staging PM2 startup and rollback safeguards are incomplete](https://github.com/yang498-Peter/cloudstudio-platform/issues/12) | P1 | deploy | In audit | [#21](https://github.com/yang498-Peter/cloudstudio-platform/pull/21) |
 | [#13 Runtime storage is still colocated with application code on staging](https://github.com/yang498-Peter/cloudstudio-platform/issues/13) | P1 | storage/deploy | In audit | [#21](https://github.com/yang498-Peter/cloudstudio-platform/pull/21) |
@@ -52,6 +52,7 @@ Scope: P0-P2 findings across architecture, upload, security, i18n, viewer, 3DGS,
 - `npm run test:dxf-draw`: passed.
 - `npm run test:static-runtime`: passed.
 - `npm run test:runtime-storage`: passed.
+- `npm run test:long-jobs`: passed.
 - `npm run test:volume`: passed.
 - `npm run test:floorplan`: passed.
 - `npm audit --omit=dev --json`: 0 vulnerabilities after #21 lockfile patch updates.
