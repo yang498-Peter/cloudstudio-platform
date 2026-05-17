@@ -10701,8 +10701,16 @@ window.__CLOUDSTUDIO_THREE = THREE;
       }
     }
 
-    async function resolveVolumeRegionLasPath(region) {
-      if (region?.lasPath) return region.lasPath;
+    function buildLasSourcePayload(value) {
+      const source = String(value || '').trim();
+      return /^las_[a-z0-9]+$/i.test(source)
+        ? { lasSourceId: source }
+        : { lasPath: source };
+    }
+
+    async function resolveVolumeRegionLasSource(region) {
+      if (region?.lasSourceId) return region.lasSourceId;
+      if (region?.lasPath && /^las_[a-z0-9]+$/i.test(region.lasPath)) return region.lasPath;
       const projectId = region?.projectId || getCurrentScannerProjectId?.() || null;
       const cloudName = region?.cloudName || region?.datasetContext?.cloudName || null;
       let url = '/api/find-las';
@@ -10712,11 +10720,13 @@ window.__CLOUDSTUDIO_THREE = THREE;
       if (params.toString()) url += `?${params.toString()}`;
       const response = await fetch(url);
       const data = await response.json();
-      if (!response.ok || !data?.ok || !data?.lasPath) {
+      const sourceId = data?.lasSourceId || data?.sourceId || data?.lasPath;
+      if (!response.ok || !data?.ok || !sourceId) {
         throw new Error(data?.error || data?.message || 'Could not resolve a LAS source for this region.');
       }
-      region.lasPath = data.lasPath;
-      return region.lasPath;
+      region.lasSourceId = sourceId;
+      region.lasPath = sourceId;
+      return sourceId;
     }
 
     async function buildLocalSurfaceForVolumeRegion(region, { silent = false } = {}) {
@@ -10769,7 +10779,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
       refreshSceneTree();
 
       try {
-        const lasPath = await resolveVolumeRegionLasPath(region);
+        const lasSource = await resolveVolumeRegionLasSource(region);
         const scenarioMode = getVolumeRegionScenarioMode(region);
         const baseSurfaceMode = getVolumeRegionBaseSurfaceMode(region);
         const resolution = Math.max(Number(region.cellSize) || 0.25, 0.25);
@@ -10777,7 +10787,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
           throw new Error('Reference elevation is required for fixed-plane volume calculation.');
         }
         const requestBody = {
-          lasPath,
+          ...buildLasSourcePayload(lasSource),
           projectId: region.projectId || getCurrentScannerProjectId?.() || null,
           cloudName: region.cloudName || region.datasetContext?.cloudName || null,
           regionName: region.name || 'Volume Region',
@@ -18745,9 +18755,10 @@ window.__CLOUDSTUDIO_THREE = THREE;
         if (currentProjectId) url += `?projectId=${encodeURIComponent(currentProjectId)}`;
         else if (getActiveDatasetContext()?.cloudName) url += `?cloudName=${encodeURIComponent(getActiveDatasetContext().cloudName)}`;
         const data = await fetch(url).then(r => r.json());
-        if (data.ok && data.lasPath) {
-          inp.value = data.lasPath;
-          status.textContent = `✓ ${data.name || data.lasPath.split('/').pop()}`;
+        const sourceId = data.lasSourceId || data.sourceId || data.lasPath;
+        if (data.ok && sourceId) {
+          inp.value = sourceId;
+          status.textContent = `✓ ${data.name || data.projectName || sourceId}`;
           status.style.color = 'var(--success)';
         } else if (data.ok && data.lasFiles && data.lasFiles.length > 0) {
           inp.value = data.lasFiles[0];
@@ -18798,7 +18809,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
         const resp = await fetch('/api/generate-dtm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lasPath, dtmType, resolution }),
+          body: JSON.stringify({ ...buildLasSourcePayload(lasPath), dtmType, resolution }),
         });
         const data = await resp.json();
         if (!resp.ok || data.error) throw new Error(data.error || resp.statusText);
@@ -18997,9 +19008,10 @@ window.__CLOUDSTUDIO_THREE = THREE;
         if (currentProjectId) url += `?projectId=${encodeURIComponent(currentProjectId)}`;
         else if (getActiveDatasetContext()?.cloudName) url += `?cloudName=${encodeURIComponent(getActiveDatasetContext().cloudName)}`;
         const data = await fetch(url).then(r => r.json());
-        if (data.ok && data.lasPath) {
-          inp.value = data.lasPath;
-          status.textContent = `✓ ${data.name || data.lasPath.split('/').pop()}`;
+        const sourceId = data.lasSourceId || data.sourceId || data.lasPath;
+        if (data.ok && sourceId) {
+          inp.value = sourceId;
+          status.textContent = `✓ ${data.name || data.projectName || sourceId}`;
           status.style.color = 'var(--success)';
         } else {
           status.textContent = trText('Not found. Enter the path manually, then click search.');
@@ -19047,7 +19059,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
         const resp = await fetch('/api/classify-ground', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lasPath, gridSize, threshold }),
+          body: JSON.stringify({ ...buildLasSourcePayload(lasPath), gridSize, threshold }),
         });
         const data = await resp.json();
         clearInterval(ticker);
