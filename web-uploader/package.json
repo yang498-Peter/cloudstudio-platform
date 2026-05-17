@@ -10,6 +10,7 @@
     "test:runtime-storage": "node --test tests/runtime-storage.test.mjs",
     "test:static-runtime": "node --test tests/static-runtime-exposure.test.mjs",
     "test:long-jobs": "node --test tests/long-job-state.test.mjs",
+    "test:public-api-sanitize": "node --test tests/public-api-sanitize.test.mjs",
     "test:upload-security": "node --test tests/upload-security.test.mjs",
     "test:volume": "node --test tests/volume-compute.test.mjs tests/volume-ui.test.mjs tests/volume-job.integration.test.mjs",
     "test:volume-report": "node --test tests/volume-report-visual.test.mjs",

@@ -47,6 +47,7 @@ jobs:
           npm run test:runtime-storage
           npm run test:static-runtime
           npm run test:long-jobs
+          npm run test:public-api-sanitize
           npm run test:dxf-draw
           npm run test:volume
           npm run test:floorplan
