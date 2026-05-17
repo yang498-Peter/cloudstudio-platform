@@ -69,6 +69,8 @@ npm run test:viewer-smoke
 npm run test:viewer-volume
 ```
 
+`test:viewer-volume` depends on the real `BEL-JOEL` point cloud being present, so it is part of local/staging validation rather than the GitHub Actions smoke gate.
+
 Staging read-only checks:
 
 ```bash

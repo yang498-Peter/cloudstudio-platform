@@ -77,6 +77,4 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Run viewer smoke tests
-        run: |
-          npm run test:viewer-smoke
-          npm run test:viewer-volume
+        run: npm run test:viewer-smoke
