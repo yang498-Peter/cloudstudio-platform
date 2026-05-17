@@ -97,7 +97,8 @@
 - 推荐数据目录：`/srv/cloudstudio-data`（通过 `CLOUDSTUDIO_DATA_DIR` 配置）
 - PM2 进程：`cloudstudio`
 - Nginx 反代：`127.0.0.1:8090`
-- 外网地址：`http://8.209.66.134`
+- 客户访问地址：`https://cloudstudio.tersus-gnss.com`
+- 临时 IP 调试地址：`http://8.209.66.134`
 
 ---
 
@@ -127,6 +128,7 @@
 ### 3.3 升级前健康检查
 ```bash
 curl -s http://localhost:8090/health
+curl -I https://cloudstudio.tersus-gnss.com
 curl -I http://8.209.66.134
 ```
 
@@ -244,6 +246,7 @@ curl -s http://localhost:8090/health
 
 ### 8.2 外网健康
 ```bash
+curl -I https://cloudstudio.tersus-gnss.com
 curl -I http://8.209.66.134
 ```
 
@@ -290,6 +293,7 @@ curl -s "http://localhost:8090/api/crs/search?q=4326"
 ```bash
 df -h /
 curl -s http://localhost:8090/health
+curl -I https://cloudstudio.tersus-gnss.com
 curl -I http://8.209.66.134
 ```
 

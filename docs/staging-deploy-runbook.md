@@ -9,7 +9,8 @@ This runbook is for the staging/demo server only:
 - Web directory: `/opt/cloudstudio/web-uploader`
 - PM2 process: `cloudstudio`
 - Node listener: `127.0.0.1:8090`
-- Public URL: `http://8.209.66.134`
+- Customer URL: `https://cloudstudio.tersus-gnss.com`
+- Temporary IP debug URL: `http://8.209.66.134`
 
 Do not treat this host as production. Use it to validate reviewed GitHub branches before any production promotion.
 
@@ -61,15 +62,16 @@ pm2 describe cloudstudio
 systemctl is-active nginx
 curl -sS http://127.0.0.1:8090/health
 '
+curl -I https://cloudstudio.tersus-gnss.com
 curl -I http://8.209.66.134
 ```
 
 In `/health`, verify:
 
 - `ok: true`
-- `storage.configured: true`
-- `storage.env: "CLOUDSTUDIO_DATA_DIR"`
-- `storage.external: true`
+- `pathsExposed: false`
+- `storage.configured: true` and `storage.external: true` for new deployments using `CLOUDSTUDIO_DATA_DIR`
+- Existing staging data may temporarily report `storage.configured: false` while legacy colocated runtime directories are preserved for a separate migration task.
 - each `storage.directories.*.primaryWritable: true`
 
 ## Backup Before Deploy
@@ -156,13 +158,15 @@ curl -sS http://127.0.0.1:8090/health
 curl -sS http://127.0.0.1:8090/api/clouds
 curl -sS http://127.0.0.1:8090/api/grids
 '
+curl -I https://cloudstudio.tersus-gnss.com
 curl -I http://8.209.66.134
 ```
 
 Open these staging/demo pages in a browser:
 
-- `http://8.209.66.134/`
-- `http://8.209.66.134/viewer`
+- `https://cloudstudio.tersus-gnss.com/`
+- `https://cloudstudio.tersus-gnss.com/viewer`
+- `http://8.209.66.134/` for IP-only debugging
 - one known existing point cloud
 - one known existing 3DGS asset, if present
 

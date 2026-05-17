@@ -49,8 +49,9 @@ Servers should be deployment targets, not the source of truth. The intended work
 local development -> Git commit -> private GitHub repo -> staging deploy -> health check -> production deploy
 ```
 
-The current hardening target is the staging/demo host `8.209.66.134`. Use
-`docs/staging-deploy-runbook.md` for the reviewed deployment procedure.
+The current customer-facing URL is `https://cloudstudio.tersus-gnss.com`, backed
+by the staging/demo host `8.209.66.134`. Use `docs/staging-deploy-runbook.md`
+for the reviewed deployment procedure.
 
 For staging/demo deployments, set `CLOUDSTUDIO_DATA_DIR` so uploads, converted
 point clouds, 3DGS assets, exports, cache, and job artifacts live outside the

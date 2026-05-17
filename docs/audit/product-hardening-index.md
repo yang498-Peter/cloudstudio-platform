@@ -2,7 +2,8 @@
 
 Branch: `audit/product-hardening`  
 Repository: `yang498-Peter/cloudstudio-platform`  
-Staging target: `8.209.66.134`  
+Customer URL: `https://cloudstudio.tersus-gnss.com`  
+Staging host: `8.209.66.134`  
 Scope: P0-P2 findings across architecture, upload, security, i18n, viewer, 3DGS, storage, testing, and deployment.
 
 ## Operating Rules
@@ -79,6 +80,7 @@ Staging read-only checks:
 
 ```bash
 ssh cloudstudio-new 'pm2 status cloudstudio && systemctl is-active nginx && curl -s http://127.0.0.1:8090/health'
+curl -I https://cloudstudio.tersus-gnss.com
 curl -I http://8.209.66.134
 ```
 
