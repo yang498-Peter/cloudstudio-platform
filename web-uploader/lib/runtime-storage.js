@@ -165,13 +165,98 @@ export function listDirectoryEntries(candidates = [], { type = null } = {}) {
   return Array.from(entriesByName.values());
 }
 
-export function createStaticFallbackMiddleware(expressModule, candidates = []) {
-  const handlers = getExistingDirectories(candidates).map(dirPath => expressModule.static(dirPath));
+export function getStaticRequestPathInfo(req) {
+  const rawPath = String(req?.url || '').split('?')[0] || '/';
+  let decodedPath;
+  try {
+    decodedPath = decodeURIComponent(rawPath);
+  } catch {
+    return null;
+  }
+
+  const normalizedPath = decodedPath.replace(/\\/g, '/');
+  const segments = normalizedPath.split('/').filter(Boolean);
+  const basename = segments.at(-1) || '';
+  return {
+    rawPath,
+    decodedPath,
+    normalizedPath,
+    segments,
+    basename,
+    basenameLower: basename.toLowerCase(),
+    ext: path.posix.extname(basename).toLowerCase(),
+    hasDotSegment: segments.some(segment => segment === '.' || segment === '..'),
+    hasDotfile: segments.some(segment => segment.startsWith('.')),
+    hasNulByte: decodedPath.includes('\0'),
+  };
+}
+
+const DEFAULT_BLOCKED_STATIC_BASENAMES = new Set([
+  '.env',
+  '.env.local',
+  '.env.production',
+  '.env.staging',
+  'source.json',
+  'scan_roots.json',
+  'request_payload.json',
+  'log.txt',
+  'npm-debug.log',
+  'package-lock.json',
+  'package.json',
+]);
+
+const DEFAULT_BLOCKED_STATIC_EXTENSIONS = new Set([
+  '.bak',
+  '.backup',
+  '.crt',
+  '.key',
+  '.log',
+  '.old',
+  '.orig',
+  '.pem',
+  '.tmp',
+]);
+
+export function isSafePublicStaticRequest(req, options = {}) {
+  const info = getStaticRequestPathInfo(req);
+  if (!info) return false;
+  if (!info.segments.length) return false;
+  if (info.hasNulByte || info.hasDotSegment || info.hasDotfile) return false;
+
+  const blockedBasenames = options.blockedBasenames || DEFAULT_BLOCKED_STATIC_BASENAMES;
+  const blockedExtensions = options.blockedExtensions || DEFAULT_BLOCKED_STATIC_EXTENSIONS;
+  const allowedExtensions = options.allowedExtensions || null;
+
+  if (blockedBasenames.has(info.basenameLower)) return false;
+  if (blockedExtensions.has(info.ext)) return false;
+  if (info.basenameLower.endsWith('~')) return false;
+  if (allowedExtensions && !allowedExtensions.has(info.ext)) return false;
+  return true;
+}
+
+export function createStaticFallbackMiddleware(expressModule, candidates = [], options = {}) {
+  const {
+    allowRequest = null,
+    denyStatus = 404,
+    staticOptions = {},
+  } = options;
+  const effectiveStaticOptions = {
+    dotfiles: 'deny',
+    fallthrough: true,
+    index: false,
+    redirect: false,
+    ...staticOptions,
+  };
+  const handlers = getExistingDirectories(candidates).map(dirPath => expressModule.static(dirPath, effectiveStaticOptions));
   if (!handlers.length) {
     return (_req, _res, next) => next();
   }
 
   return (req, res, next) => {
+    if (typeof allowRequest === 'function' && !allowRequest(req)) {
+      return res.sendStatus(denyStatus);
+    }
+
     let index = 0;
     const run = (error) => {
       if (error) return next(error);

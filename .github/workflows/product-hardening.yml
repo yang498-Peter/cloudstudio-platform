@@ -45,6 +45,7 @@ jobs:
       - name: Run unit tests
         run: |
           npm run test:runtime-storage
+          npm run test:static-runtime
           npm run test:dxf-draw
           npm run test:volume
           npm run test:floorplan
