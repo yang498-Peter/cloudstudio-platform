@@ -49,6 +49,17 @@ Servers should be deployment targets, not the source of truth. The intended work
 local development -> Git commit -> private GitHub repo -> staging deploy -> health check -> production deploy
 ```
 
+The current hardening target is the staging/demo host `8.209.66.134`. Use
+`docs/staging-deploy-runbook.md` for the reviewed deployment procedure.
+
+For staging/demo deployments, set `CLOUDSTUDIO_DATA_DIR` so uploads, converted
+point clouds, 3DGS assets, exports, cache, and job artifacts live outside the
+application code directory. The recommended staging value is:
+
+```bash
+CLOUDSTUDIO_DATA_DIR=/srv/cloudstudio-data
+```
+
 When syncing to a server, protect runtime data directories and server-local configuration. Never run a deploy command that deletes:
 
 - `uploads/`
@@ -70,4 +81,3 @@ Recommended branch model:
 - `fix/*` - targeted bug fixes
 
 Add a heavier `develop` branch only when team collaboration needs it.
-

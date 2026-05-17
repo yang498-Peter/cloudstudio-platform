@@ -23,10 +23,25 @@ function uniqPaths(paths = []) {
   return result;
 }
 
-function resolveConfiguredStorageRoot(appDir, rawValue) {
-  const value = String(rawValue || '').trim();
-  if (!value) return null;
-  return path.isAbsolute(value) ? path.resolve(value) : path.resolve(appDir, value);
+function resolveConfiguredStorageRoot(appDir, env = {}) {
+  const entries = [
+    ['CLOUDSTUDIO_DATA_DIR', env.CLOUDSTUDIO_DATA_DIR],
+    ['CLOUDSTUDIO_STORAGE_ROOT', env.CLOUDSTUDIO_STORAGE_ROOT],
+  ];
+
+  for (const [envName, rawValue] of entries) {
+    const value = String(rawValue || '').trim();
+    if (!value) continue;
+    return {
+      root: path.isAbsolute(value) ? path.resolve(value) : path.resolve(appDir, value),
+      envName,
+    };
+  }
+
+  return {
+    root: null,
+    envName: null,
+  };
 }
 
 function buildDirConfig(appDir, rootDir, key) {
@@ -48,7 +63,8 @@ export function buildRuntimeStorageLayout({ appDir, env = process.env } = {}) {
   }
 
   const legacyRoot = path.resolve(appDir);
-  const configuredRoot = resolveConfiguredStorageRoot(legacyRoot, env.CLOUDSTUDIO_STORAGE_ROOT);
+  const configured = resolveConfiguredStorageRoot(legacyRoot, env);
+  const configuredRoot = configured.root;
   const storageRoot = configuredRoot || legacyRoot;
   const usesExternalStorage = Boolean(configuredRoot && configuredRoot !== legacyRoot);
 
@@ -63,6 +79,7 @@ export function buildRuntimeStorageLayout({ appDir, env = process.env } = {}) {
     appDir: legacyRoot,
     storageRoot,
     configuredStorageRoot: configuredRoot,
+    configuredStorageEnv: configured.envName,
     usesExternalStorage,
     uploads,
     pointclouds,
