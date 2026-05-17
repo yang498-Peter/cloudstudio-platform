@@ -908,6 +908,21 @@
     if (!silent) toast(tx('Surface mesh removed from the 3D viewer'), 'info', 2400);
   }
 
+  function getLasSourceValue(data = {}) {
+    return data.lasSourceId || data.sourceId || data.lasPath || '';
+  }
+
+  function getLasSourceLabel(data = {}) {
+    return data.name || data.projectName || getLasSourceValue(data) || tx('LAS/LAZ source');
+  }
+
+  function buildLasSourcePayload(value) {
+    const source = String(value || '').trim();
+    return /^las_[a-z0-9]+$/i.test(source)
+      ? { lasSourceId: source }
+      : { lasPath: source };
+  }
+
   async function autoDetectLas() {
     const input = document.getElementById('inp-las-path');
     const status = document.getElementById('dtm-las-status');
@@ -922,10 +937,19 @@
       else if (activeDatasetContext?.cloudName) url += `?cloudName=${encodeURIComponent(activeDatasetContext.cloudName)}`;
 
       const data = await fetchImpl(url).then(r => r.json());
-      if (data.ok && data.lasPath) {
-        input.value = data.lasPath;
-        status.textContent = `${tx('Ready')}: ${data.name || data.lasPath.split('/').pop()}`;
+      const sourceValue = getLasSourceValue(data);
+      if (data.ok && sourceValue) {
+        input.value = sourceValue;
+        status.textContent = `${tx('Ready')}: ${getLasSourceLabel(data)}`;
         status.style.color = 'var(--success)';
+        const select = document.getElementById('sel-las-pick');
+        const options = Array.isArray(data.sourceOptions) ? data.sourceOptions : [];
+        if (select && options.length > 1) {
+          select.innerHTML = options
+            .map(item => `<option value="${item.lasSourceId || item.sourceId}">${item.name || item.projectName || item.lasSourceId || item.sourceId}</option>`)
+            .join('');
+          select.style.display = '';
+        }
       } else if (data.ok && Array.isArray(data.lasFiles) && data.lasFiles.length > 0) {
         input.value = data.lasFiles[0];
         const select = document.getElementById('sel-las-pick');
@@ -975,7 +999,7 @@
       const response = await fetchImpl('/api/generate-dtm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lasPath, dtmType, resolution }),
+        body: JSON.stringify({ ...buildLasSourcePayload(lasPath), dtmType, resolution }),
       });
       const data = await response.json();
       if (!response.ok || data.error) throw new Error(data.error || response.statusText);
@@ -1046,7 +1070,7 @@
       const response = await fetchImpl('/api/generate-surface', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lasPath, surfaceType, resolution, holeMode, fixedHeight }),
+        body: JSON.stringify({ ...buildLasSourcePayload(lasPath), surfaceType, resolution, holeMode, fixedHeight }),
       });
       const data = await response.json();
       if (!response.ok || data.error) throw new Error(data.error || response.statusText);
@@ -1358,9 +1382,10 @@
       else if (activeDatasetContext?.cloudName) url += `?cloudName=${encodeURIComponent(activeDatasetContext.cloudName)}`;
 
       const data = await fetchImpl(url).then(r => r.json());
-      if (data.ok && data.lasPath) {
-        input.value = data.lasPath;
-        status.textContent = `${tx('Ready')}: ${data.name || data.lasPath.split('/').pop()}`;
+      const sourceValue = getLasSourceValue(data);
+      if (data.ok && sourceValue) {
+        input.value = sourceValue;
+        status.textContent = `${tx('Ready')}: ${getLasSourceLabel(data)}`;
         status.style.color = 'var(--success)';
       } else {
         status.textContent = tx('No LAS/LAZ file found. Pick a file manually.');
@@ -1449,7 +1474,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          lasPath,
+          ...buildLasSourcePayload(lasPath),
           clothResolution,
           classThreshold,
           rigidness,
@@ -1675,7 +1700,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          lasPath,
+          ...buildLasSourcePayload(lasPath),
           groundClass: 2,
           hagNeighborCount,
           geometryNeighborCount,
@@ -1802,7 +1827,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          lasPath,
+          ...buildLasSourcePayload(lasPath),
           seedMinHeight,
           seedMaxHeight,
           clusterRadius,

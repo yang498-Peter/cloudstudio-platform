@@ -5833,6 +5833,108 @@ function findLasFilesInDir(dirPath, maxDepth = 3) {
   return results;
 }
 
+const LAS_SOURCE_REGISTRY = new Map();
+
+function buildLasSourceId(absPath) {
+  const realPath = resolveRealPathForBoundary(absPath);
+  return `las_${hashStringToBase36(realPath)}`;
+}
+
+function registerLasSource(absPath, metadata = {}) {
+  if (!absPath || !fs.existsSync(absPath)) return null;
+  if (!/\.(las|laz)$/i.test(absPath)) return null;
+  if (!isPathWithinCloudStudioBounds(absPath)) return null;
+  const realPath = resolveRealPathForBoundary(absPath);
+  const sourceId = buildLasSourceId(realPath);
+  const record = {
+    sourceId,
+    lasSourceId: sourceId,
+    lasPath: realPath,
+    name: metadata.name || path.basename(realPath),
+    projectName: metadata.projectName || null,
+    scannerProjectId: metadata.scannerProjectId || null,
+  };
+  LAS_SOURCE_REGISTRY.set(sourceId, record);
+  return record;
+}
+
+function registerLasSourceList(paths = [], metadata = {}) {
+  return paths
+    .map(candidate => registerLasSource(candidate, metadata))
+    .filter(Boolean);
+}
+
+function buildLasSourceClientRecord(record) {
+  if (!record) return null;
+  return {
+    sourceId: record.sourceId,
+    lasSourceId: record.lasSourceId,
+    name: record.name,
+    projectName: record.projectName,
+    scannerProjectId: record.scannerProjectId,
+    ...(EXPOSE_SERVER_PATHS ? { lasPath: record.lasPath } : {}),
+  };
+}
+
+function buildFindLasResponse(source) {
+  const primary = registerLasSource(source?.lasPath, source);
+  if (!primary) return null;
+  const sources = registerLasSourceList(source.allPaths || [source.lasPath], source)
+    .map(buildLasSourceClientRecord);
+  return {
+    ok: true,
+    ...buildLasSourceClientRecord(primary),
+    allSources: sources,
+    sourceOptions: sources,
+    pathsExposed: EXPOSE_SERVER_PATHS,
+    ...(EXPOSE_SERVER_PATHS ? { allPaths: source.allPaths || [source.lasPath] } : {}),
+  };
+}
+
+function refreshLasSourceRegistry() {
+  discoverScanProjects();
+  for (const [, project] of scanProjectRegistry) {
+    if (project?.dirPath) {
+      registerLasSourceList(findLasFilesInDir(project.dirPath), {
+        projectName: project.name,
+        scannerProjectId: project.projectId,
+      });
+    }
+  }
+  registerLasSourceList(findLasFilesInDir(UPLOADS_DIR, 1));
+}
+
+function resolveLasSourceFromRequest(body = {}) {
+  const rawSourceId = String(body.lasSourceId || body.sourceId || '').trim();
+  const legacyLasPath = String(body.lasPath || '').trim();
+  const sourceId = rawSourceId || (/^las_[a-z0-9]+$/i.test(legacyLasPath) ? legacyLasPath : '');
+  if (sourceId) {
+    let record = LAS_SOURCE_REGISTRY.get(sourceId);
+    if (!record) {
+      refreshLasSourceRegistry();
+      record = LAS_SOURCE_REGISTRY.get(sourceId);
+    }
+    if (!record?.lasPath || !fs.existsSync(record.lasPath)) {
+      const error = new Error('LAS source token is invalid or expired. Please auto-detect the source again.');
+      error.code = 'FILE_NOT_FOUND';
+      throw error;
+    }
+    return record.lasPath;
+  }
+
+  if (legacyLasPath && EXPOSE_SERVER_PATHS) {
+    return ensureExistingAbsoluteFile(legacyLasPath, {
+      fieldName: 'lasPath',
+      missingCode: 'FILE_NOT_FOUND',
+      enforceStorageBounds: true,
+    });
+  }
+
+  const error = new Error('LAS source token is required. Use /api/find-las to resolve a source before submitting this job.');
+  error.code = 'BAD_REQUEST';
+  throw error;
+}
+
 function resolveBestLasPathForContext({ projectId = null, cloudName = null } = {}) {
   if (projectId) {
     const project = getScannerProjectById(String(projectId));
@@ -5955,109 +6057,16 @@ function resolveBestLasPathForContext({ projectId = null, cloudName = null } = {
 app.get('/api/find-las', (req, res) => {
   try {
     const { projectId, cloudName } = req.query;
-
-    // Strategy 1: Known scanner project
-    if (projectId) {
-      const project = getScannerProjectById(String(projectId));
-      if (project?.dirPath) {
-        const files = findLasFilesInDir(project.dirPath);
-        if (files.length > 0) {
-          return res.json({
-            ok: true, lasPath: files[0], name: path.basename(files[0]),
-            allPaths: files.slice(0, 8)
-          });
-        }
-      }
-    }
-
-    // Strategy 2: Uploaded cloud's original LAS
-    if (cloudName) {
-      const manifest = readUploadSourceManifest(String(cloudName));
-
-      // 2a: If source.json has the original scanner project path stored, use it directly
-      if (manifest?.originalPath && fs.existsSync(manifest.originalPath)) {
-        const allPaths = [manifest.originalPath];
-        // Also include other LAS files from the same project dir for the dropdown
-        if (manifest.scannerProjectId) {
-          const proj = getScannerProjectById(manifest.scannerProjectId);
-          if (proj) {
-            const extras = findLasFilesInDir(proj.dirPath).filter(p => p !== manifest.originalPath);
-            allPaths.push(...extras.slice(0, 7));
-          }
-        }
-        return res.json({
-          ok: true, lasPath: manifest.originalPath,
-          name: path.basename(manifest.originalPath),
-          projectName: manifest.scannerProjectName,
-          scannerProjectId: manifest.scannerProjectId,
-          allPaths
-        });
-      }
-
-      // 2b: Check for upload file copy in uploads dir
-      const sources = getCloudSourceFiles(String(cloudName));
-      if (sources.length > 0) {
-        const best = sources[0];
-        const lasPath = path.join(UPLOADS_DIR, best.relPath);
-        if (fs.existsSync(lasPath)) {
-          return res.json({
-            ok: true, lasPath, name: best.originalName || best.name,
-            allPaths: [lasPath]
-          });
-        }
-      }
-
-      // 2c: Search all scanner projects for a file matching the original name
-      const originalName = manifest?.originalName || (cloudName.replace(/[^a-zA-Z0-9._-]/g, '') + '.las');
-      discoverScanProjects();
-      for (const [, proj] of scanProjectRegistry) {
-        // Direct filename match
-        const candidate = path.join(proj.dirPath, originalName);
-        if (fs.existsSync(candidate)) {
-          const allPaths = findLasFilesInDir(proj.dirPath).slice(0, 8);
-          return sendApiSuccess(res, {
-            lasPath: candidate, name: originalName,
-            projectName: proj.name, scannerProjectId: proj.projectId, allPaths
-          });
-        }
-        // Also search recursively for any LAS with matching name
-        const files = findLasFilesInDir(proj.dirPath);
-        const match = files.find(f => path.basename(f).toLowerCase() === originalName.toLowerCase());
-        if (match) {
-          return sendApiSuccess(res, {
-            lasPath: match, name: path.basename(match),
-            projectName: proj.name, scannerProjectId: proj.projectId,
-            allPaths: files.slice(0, 8)
-          });
-        }
-      }
-    }
-
-    // Strategy 3: Scan all registered projects
-    const allProjects = discoverScanProjects();
-    for (const [, proj] of scanProjectRegistry) {
-      const files = findLasFilesInDir(proj.dirPath);
-      if (files.length > 0) {
-        return sendApiSuccess(res, {
-          lasPath: files[0], name: path.basename(files[0]),
-          projectName: proj.name, allPaths: files.slice(0, 8)
-        });
-      }
-    }
-
-    // Strategy 4: Check uploads directory
-    const uploadLas = findLasFilesInDir(UPLOADS_DIR, 1);
-    if (uploadLas.length > 0) {
-      return sendApiSuccess(res, {
-        lasPath: uploadLas[0], name: path.basename(uploadLas[0]),
-        allPaths: uploadLas.slice(0, 8)
-      });
-    }
+    const response = buildFindLasResponse(resolveBestLasPathForContext({ projectId, cloudName }));
+    if (response) return sendApiSuccess(res, response);
 
     return res.json({
-      ok: false, lasPath: null,
+      ok: false,
+      lasSourceId: null,
       message: '未找到 LAS/LAZ 文件。请在下方手动输入文件路径。',
-      allPaths: []
+      allSources: [],
+      sourceOptions: [],
+      pathsExposed: EXPOSE_SERVER_PATHS,
     });
   } catch (error) {
     return sendApiError(res, error, { fallbackCode: 'INTERNAL_ERROR' });
@@ -6178,7 +6187,7 @@ app.post('/api/floorplan/extract', async (req, res) => {
 
     return sendApiSuccess(res, {
       jobId,
-      sourcePath: source.lasPath,
+      sourcePath: redactServerPath(source.lasPath, { expose: EXPOSE_SERVER_PATHS, basename: true }),
       sourceName: source.name,
       projectName: source.projectName || null,
       scannerProjectId: source.scannerProjectId || null,
@@ -6335,11 +6344,7 @@ app.post('/api/generate-volume-surface', async (req, res) => {
   let payloadPath = null;
   let volumeSlotAcquired = false;
   try {
-    const lasPath = ensureExistingAbsoluteFile(req.body?.lasPath, {
-      fieldName: 'lasPath',
-      missingCode: 'FILE_NOT_FOUND',
-      enforceStorageBounds: true,
-    });
+    const lasPath = resolveLasSourceFromRequest(req.body);
     assertVolumeSourceWithinLimits(lasPath);
     const validation = validateVolumeSurfaceRequest({
       polygon: req.body?.polygon,
@@ -6543,11 +6548,7 @@ app.use('/volume-surface-jobs', createGuardedStaticDirectory(VOLUME_SURFACE_DIR)
 app.post('/api/volume-jobs', async (req, res) => {
   let volumeSlotAcquired = false;
   try {
-    const lasPath = ensureExistingAbsoluteFile(req.body?.lasPath, {
-      fieldName: 'lasPath',
-      missingCode: 'FILE_NOT_FOUND',
-      enforceStorageBounds: true,
-    });
+    const lasPath = resolveLasSourceFromRequest(req.body);
     assertVolumeSourceWithinLimits(lasPath);
     const validation = validateVolumeJobRequest({
       polygon: req.body?.polygon,
