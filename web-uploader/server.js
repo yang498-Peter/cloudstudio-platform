@@ -29,9 +29,7 @@ const DEFAULT_UPLOAD_PASSWORD_SHA256 = '4beb94958cd5b507d6b013c89964bf72c5434bdd
 const SPLAT_TRANSFORM_VERSION = '2.0.3';
 const GAUSSIAN_CONVERT_ROTATION = String(process.env.GAUSSIAN_CONVERT_ROTATION || '90,0,180').trim();
 let gaussianConversionQueue = Promise.resolve();
-const UPLOAD_PASSWORD_SHA256 = String(
-  process.env.UPLOAD_REVIEW_PASSWORD_SHA256 || DEFAULT_UPLOAD_PASSWORD_SHA256
-).trim().toLowerCase();
+const UPLOAD_PASSWORD_SHA256 = resolveUploadPasswordHash(process.env);
 const GIB = 1024 * 1024 * 1024;
 const MIB = 1024 * 1024;
 const UPLOAD_MAX_BYTES = parsePositiveIntegerEnv('CLOUDSTUDIO_UPLOAD_MAX_BYTES', 50 * GIB);
@@ -77,8 +75,27 @@ function sha256Hex(value) {
   return createHash('sha256').update(String(value || ''), 'utf8').digest('hex');
 }
 
-function verifyUploadPassword(rawPassword) {
-  if (!UPLOAD_PASSWORD_SHA256) {
+function isTruthyEnv(value) {
+  return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
+}
+
+function requiresExplicitUploadPasswordEnv(env = process.env) {
+  const nodeEnv = String(env.NODE_ENV || '').trim().toLowerCase();
+  const cloudstudioEnv = String(env.CLOUDSTUDIO_ENV || '').trim().toLowerCase();
+  return isTruthyEnv(env.CLOUDSTUDIO_REQUIRE_UPLOAD_PASSWORD_ENV)
+    || ['production', 'staging'].includes(nodeEnv)
+    || ['production', 'staging'].includes(cloudstudioEnv);
+}
+
+function resolveUploadPasswordHash(env = process.env) {
+  const configured = String(env.UPLOAD_REVIEW_PASSWORD_SHA256 || '').trim().toLowerCase();
+  if (configured) return configured;
+  return requiresExplicitUploadPasswordEnv(env) ? '' : DEFAULT_UPLOAD_PASSWORD_SHA256;
+}
+
+function verifyUploadPassword(rawPassword, passwordHash = UPLOAD_PASSWORD_SHA256) {
+  const normalizedPasswordHash = String(passwordHash || '').trim().toLowerCase();
+  if (!normalizedPasswordHash) {
     const error = new Error('Upload password not configured on server');
     error.code = 'UPLOAD_PASSWORD_NOT_CONFIGURED';
     throw error;
@@ -90,7 +107,7 @@ function verifyUploadPassword(rawPassword) {
     throw error;
   }
 
-  if (sha256Hex(rawPassword).toLowerCase() !== UPLOAD_PASSWORD_SHA256) {
+  if (sha256Hex(rawPassword).toLowerCase() !== normalizedPasswordHash) {
     const error = new Error('Wrong password');
     error.code = 'WRONG_PASSWORD';
     throw error;
@@ -165,6 +182,18 @@ function uploadCredentialPrecheck(req, res, next) {
   }
 }
 
+function uploadCredentialJsonPrecheck(req, res, next) {
+  try {
+    verifyUploadCredentialFromRequest(req);
+    return next();
+  } catch (error) {
+    return sendApiError(res, error, {
+      fallbackCode: error?.code || 'WRONG_PASSWORD',
+      fallbackStatus: 403,
+    });
+  }
+}
+
 function canRunCommand(command, args = ['--version']) {
   if (!command) return false;
   try {
@@ -221,9 +250,9 @@ function resolveFirstRunnableCommand(candidates = [], args = ['--version']) {
   }) || filtered[0] || null;
 }
 
-function getDefaultScanRoots() {
+function getDefaultScanRootCandidates() {
   const homeDir = process.env.USERPROFILE || process.env.HOME || '';
-  const candidates = IS_WINDOWS
+  return IS_WINDOWS
     ? [
         path.join(homeDir, 'Desktop', 'AI', 'MVPS1'),
         path.join(homeDir, 'Desktop', 'AI'),
@@ -232,8 +261,10 @@ function getDefaultScanRoots() {
         path.join(homeDir || '/Users/yangqi', 'Desktop', 'AI', 'MVPS1'),
         path.join(homeDir || '/Users/yangqi', 'Desktop', 'AI'),
       ];
+}
 
-  return candidates.filter(p => {
+function getDefaultScanRoots() {
+  return getDefaultScanRootCandidates().filter(p => {
     try {
       return fs.existsSync(p) && fs.statSync(p).isDirectory();
     } catch {
@@ -328,6 +359,149 @@ ensureRuntimeStorageLayout(RUNTIME_STORAGE);
 
 for (const d of [PYTHON_VENDOR_SITE].filter(Boolean)) {
   fs.mkdirSync(d, { recursive: true });
+}
+
+function splitPathListEnv(value) {
+  return String(value || '')
+    .split(path.delimiter)
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
+function uniqResolvedPaths(paths = []) {
+  const seen = new Set();
+  const result = [];
+  for (const candidate of paths) {
+    if (!candidate) continue;
+    const resolved = path.resolve(candidate);
+    const key = IS_WINDOWS ? resolved.toLowerCase() : resolved;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(resolved);
+  }
+  return result;
+}
+
+function resolveRealPathForBoundary(candidate) {
+  const resolved = path.resolve(candidate);
+  try {
+    return fs.realpathSync.native(resolved);
+  } catch {
+    return resolved;
+  }
+}
+
+function isPathWithinRoot(candidatePath, rootPath) {
+  if (!candidatePath || !rootPath) return false;
+  const candidate = resolveRealPathForBoundary(candidatePath);
+  const root = resolveRealPathForBoundary(rootPath);
+  const normalizedCandidate = IS_WINDOWS ? candidate.toLowerCase() : candidate;
+  const normalizedRoot = IS_WINDOWS ? root.toLowerCase() : root;
+  if (normalizedCandidate === normalizedRoot) return true;
+  const relative = path.relative(normalizedRoot, normalizedCandidate);
+  return Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
+
+function getConfiguredProjectBoundaryRoots() {
+  return [
+    ...splitPathListEnv(process.env.CLOUDSTUDIO_ALLOWED_PROJECT_ROOTS),
+    ...splitPathListEnv(process.env.CLOUDSTUDIO_ALLOWED_LOCAL_ROOTS),
+  ];
+}
+
+function getRuntimeBoundaryRoots() {
+  return uniqResolvedPaths([
+    ...RUNTIME_STORAGE.uploads.candidates,
+    ...RUNTIME_STORAGE.pointclouds.candidates,
+    ...RUNTIME_STORAGE.gaussians.candidates,
+    ...RUNTIME_STORAGE.projects.candidates,
+    ...RUNTIME_STORAGE.exports.candidates,
+    ...RUNTIME_STORAGE.cache.candidates,
+    ...RUNTIME_STORAGE.gridStorage.candidates,
+    path.join(ASSETS_DIR, 'grids', 'builtin'),
+    path.join(__dirname, 'dtm_jobs'),
+    path.join(__dirname, 'floorplan_jobs'),
+    path.join(__dirname, 'surface_jobs'),
+    path.join(__dirname, 'volume_surface_jobs'),
+    path.join(__dirname, 'volume_jobs'),
+    path.join(__dirname, 'contour_jobs'),
+  ]);
+}
+
+function getProjectBoundaryRoots({ includeScanRoots = true } = {}) {
+  const localImportRoots = [];
+  try {
+    for (const entry of listLocalImportEntries()) {
+      if (entry?.dirPath) localImportRoots.push(entry.dirPath);
+      if (entry?.originalPath) localImportRoots.push(path.dirname(entry.originalPath));
+      if (entry?.metadataPath) localImportRoots.push(path.dirname(entry.metadataPath));
+    }
+  } catch { }
+
+  return uniqResolvedPaths([
+    ...RUNTIME_STORAGE.projects.candidates,
+    ...getDefaultScanRootCandidates(),
+    ...getConfiguredProjectBoundaryRoots(),
+    ...(includeScanRoots && Array.isArray(SCAN_PROJECT_ROOTS) ? SCAN_PROJECT_ROOTS : []),
+    ...localImportRoots,
+  ]);
+}
+
+function getCloudStudioBoundaryRoots({ includeScanRoots = true } = {}) {
+  return uniqResolvedPaths([
+    ...getRuntimeBoundaryRoots(),
+    ...getProjectBoundaryRoots({ includeScanRoots }),
+  ]);
+}
+
+function isPathWithinCloudStudioBounds(candidatePath, options = {}) {
+  const roots = options.roots || getCloudStudioBoundaryRoots(options);
+  return roots.some(root => isPathWithinRoot(candidatePath, root));
+}
+
+function assertPathWithinCloudStudioBounds(candidatePath, {
+  fieldName = 'path',
+  roots = null,
+  includeScanRoots = true,
+} = {}) {
+  const allowedRoots = roots || getCloudStudioBoundaryRoots({ includeScanRoots });
+  if (isPathWithinCloudStudioBounds(candidatePath, { roots: allowedRoots })) {
+    return path.resolve(candidatePath);
+  }
+  const error = new Error(`${fieldName} is outside configured CloudStudio storage/project roots`);
+  error.code = 'STORAGE_BOUNDARY_VIOLATION';
+  throw error;
+}
+
+function ensureExistingBoundedPath(filePath, {
+  fieldName = 'path',
+  missingCode = 'FILE_NOT_FOUND',
+  missingMessage = null,
+  type = null,
+  roots = null,
+  includeScanRoots = true,
+} = {}) {
+  const normalizedPath = requireNonEmptyString(filePath, fieldName, { code: 'BAD_REQUEST' });
+  const absPath = path.resolve(normalizedPath);
+  if (!fs.existsSync(absPath)) {
+    const error = new Error(missingMessage || `Path not found: ${absPath}`);
+    error.code = missingCode;
+    throw error;
+  }
+  const realPath = resolveRealPathForBoundary(absPath);
+  assertPathWithinCloudStudioBounds(realPath, { fieldName, roots, includeScanRoots });
+  const stats = fs.statSync(realPath);
+  if (type === 'file' && !stats.isFile()) {
+    const error = new Error(`${fieldName} must be a file`);
+    error.code = 'BAD_REQUEST';
+    throw error;
+  }
+  if (type === 'directory' && !stats.isDirectory()) {
+    const error = new Error(`${fieldName} must be a directory`);
+    error.code = 'BAD_REQUEST';
+    throw error;
+  }
+  return realPath;
 }
 
 const storage = multer.diskStorage({
@@ -1450,9 +1624,13 @@ function getCloudSourceFiles(cloudName) {
   const manifest = readUploadSourceManifest(cloudName) || inferUploadSourceFromLog(cloudName);
   if (!manifest) return [];
   if (Array.isArray(manifest.sourceFiles) && manifest.sourceFiles.length) {
-    return manifest.sourceFiles.filter(item => item?.absPath && fs.existsSync(item.absPath));
+    return manifest.sourceFiles.filter(item =>
+      item?.absPath
+      && fs.existsSync(item.absPath)
+      && isPathWithinCloudStudioBounds(item.absPath)
+    );
   }
-  if (manifest.originalPath && fs.existsSync(manifest.originalPath)) {
+  if (manifest.originalPath && fs.existsSync(manifest.originalPath) && isPathWithinCloudStudioBounds(manifest.originalPath)) {
     return [buildLocalSourceFileInfo(manifest.originalPath)].filter(Boolean);
   }
   if (!manifest.uploadFilename) return [];
@@ -1502,6 +1680,7 @@ const API_ERROR_STATUS = Object.freeze({
   NOT_FOUND: 404,
   PROJECT_NOT_FOUND: 404,
   CRS_NOT_FOUND: 404,
+  STORAGE_BOUNDARY_VIOLATION: 403,
   TERRAIN_JOB_FAILED: 500,
   VOLUME_JOB_BUSY: 429,
   VOLUME_SOURCE_TOO_LARGE: 413,
@@ -2022,12 +2201,11 @@ function buildForestryRunId() {
 }
 
 function resolveProjectDirectory(projectPath) {
-  const absPath = path.resolve(requireNonEmptyString(projectPath, 'projectPath', { code: 'BAD_REQUEST' }));
-  if (!fs.existsSync(absPath)) {
-    const error = new Error(`Project path not found: ${absPath}`);
-    error.code = 'FILE_NOT_FOUND';
-    throw error;
-  }
+  const absPath = ensureExistingBoundedPath(projectPath, {
+    fieldName: 'projectPath',
+    missingCode: 'FILE_NOT_FOUND',
+    missingMessage: `Project path not found: ${path.resolve(String(projectPath || ''))}`,
+  });
   const stats = fs.statSync(absPath);
   return stats.isDirectory() ? absPath : path.dirname(absPath);
 }
@@ -2062,6 +2240,7 @@ function resolveForestryInputLasPath(lasPath, projectContext) {
       fieldName: 'lasPath',
       missingCode: 'FILE_NOT_FOUND',
       missingMessage: lasPath ? `LAS file not found: ${path.resolve(lasPath)}` : 'lasPath is required',
+      enforceStorageBounds: true,
     });
   }
 
@@ -2209,6 +2388,9 @@ function ensureExistingAbsoluteFile(filePath, {
   fieldName = 'filePath',
   missingCode = 'FILE_NOT_FOUND',
   missingMessage = null,
+  enforceStorageBounds = false,
+  roots = null,
+  includeScanRoots = true,
 } = {}) {
   const normalizedPath = requireNonEmptyString(filePath, fieldName, { code: 'BAD_REQUEST' });
   const absPath = path.resolve(normalizedPath);
@@ -2217,6 +2399,15 @@ function ensureExistingAbsoluteFile(filePath, {
     error.code = missingCode;
     throw error;
   }
+  if (enforceStorageBounds) {
+    return ensureExistingBoundedPath(absPath, {
+      fieldName,
+      missingCode,
+      missingMessage,
+      roots,
+      includeScanRoots,
+    });
+  }
   return absPath;
 }
 
@@ -2224,6 +2415,7 @@ function parseObjMeshFile(filePath) {
   const absPath = ensureExistingAbsoluteFile(filePath, {
     fieldName: 'path',
     missingCode: 'FILE_NOT_FOUND',
+    enforceStorageBounds: true,
   });
   if (!/\.obj$/i.test(absPath)) {
     const error = new Error('Only OBJ files are supported.');
@@ -3064,6 +3256,7 @@ async function importLocalDirectoryPath(absDirPath, {
 async function importLocalEntryPath(absPath, {
   displayName = '',
 } = {}) {
+  absPath = ensureExistingBoundedPath(absPath, { fieldName: 'path' });
   if (!fs.existsSync(absPath)) {
     const error = new Error(`Path not found: ${absPath}`);
     error.code = 'FILE_NOT_FOUND';
@@ -3279,12 +3472,17 @@ app.get('/api/scan-projects/photos', (req, res) => {
 });
 
 // ── API: Register a new scan project directory ──
-app.post('/api/scan-projects/register', (req, res) => {
+// Local desktop compatibility is preserved by accepting the development upload
+// credential when no explicit password env is required. Production/staging
+// deployments must configure UPLOAD_REVIEW_PASSWORD_SHA256 before this write
+// endpoint can be used.
+app.post('/api/scan-projects/register', uploadCredentialJsonPrecheck, (req, res) => {
   try {
-    const dirPath = ensureExistingAbsoluteFile(req.body?.dirPath, {
+    const dirPath = ensureExistingBoundedPath(req.body?.dirPath, {
       fieldName: 'dirPath',
       missingCode: 'BAD_REQUEST',
       missingMessage: 'Directory not found',
+      type: 'directory',
     });
     if (!SCAN_PROJECT_ROOTS.includes(dirPath)) {
       SCAN_PROJECT_ROOTS.push(dirPath);
@@ -4432,9 +4630,19 @@ app.post('/api/upload-by-path', (req, res) => {
     return sendApiError(res, new Error('filePath is required'), { fallbackCode: 'MISSING_FILE_PATH', fallbackStatus: 400 });
   }
 
-  const absPath = path.resolve(filePath);
-  if (!fs.existsSync(absPath)) {
-    return sendApiError(res, new Error(`File not found: ${absPath}`), { fallbackCode: 'FILE_NOT_FOUND', fallbackStatus: 400 });
+  let absPath;
+  try {
+    absPath = ensureExistingBoundedPath(filePath, {
+      fieldName: 'filePath',
+      missingCode: 'FILE_NOT_FOUND',
+      type: 'file',
+    });
+  } catch (error) {
+    return sendApiError(res, error, { fallbackCode: error?.code || 'FILE_NOT_FOUND', fallbackStatus: 400 });
+  }
+
+  if (!/\.(las|laz)$/i.test(absPath)) {
+    return sendApiError(res, new Error('Only LAS/LAZ files can be imported by path'), { fallbackCode: 'BAD_REQUEST', fallbackStatus: 400 });
   }
 
   if (!fs.existsSync(CONVERTER)) {
@@ -5621,6 +5829,7 @@ app.post('/api/generate-volume-surface', async (req, res) => {
     const lasPath = ensureExistingAbsoluteFile(req.body?.lasPath, {
       fieldName: 'lasPath',
       missingCode: 'FILE_NOT_FOUND',
+      enforceStorageBounds: true,
     });
     assertVolumeSourceWithinLimits(lasPath);
     const validation = validateVolumeSurfaceRequest({
@@ -5830,6 +6039,7 @@ app.post('/api/volume-jobs', async (req, res) => {
     const lasPath = ensureExistingAbsoluteFile(req.body?.lasPath, {
       fieldName: 'lasPath',
       missingCode: 'FILE_NOT_FOUND',
+      enforceStorageBounds: true,
     });
     assertVolumeSourceWithinLimits(lasPath);
     const validation = validateVolumeJobRequest({
@@ -6742,6 +6952,8 @@ if (process.env.CLOUDSTUDIO_SKIP_SERVER_LISTEN !== '1') {
 }
 
 export {
+  app,
+  assertPathWithinCloudStudioBounds,
   UPLOAD_LIMITS,
   GAUSSIAN_UPLOAD_EXTENSIONS,
   ZIP_MAX_FILE_BYTES,
@@ -6750,7 +6962,13 @@ export {
   buildPreconvertedZipExtractScript,
   buildScannerProjectZipExtractScript,
   createUploadFileFilter,
+  ensureExistingBoundedPath,
   getUploadPasswordCandidate,
+  isPathWithinCloudStudioBounds,
+  requiresExplicitUploadPasswordEnv,
+  resolveUploadPasswordHash,
+  uploadCredentialJsonPrecheck,
+  verifyUploadPassword,
   verifyPreMulterUploadCredential,
   verifyUploadCredentialFromRequest,
 };
