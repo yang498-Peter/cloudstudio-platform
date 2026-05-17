@@ -28,8 +28,8 @@ Scope: P0-P2 findings across architecture, upload, security, i18n, viewer, 3DGS,
 
 | Issue | Priority | Area | Status | PR |
 | --- | --- | --- | --- | --- |
-| [#1 ZIP uploads can write outside the extraction directory](https://github.com/yang498-Peter/cloudstudio-platform/issues/1) | P0 | upload/security | Open | Pending |
-| [#2 Multipart uploads are accepted before authentication and size limits](https://github.com/yang498-Peter/cloudstudio-platform/issues/2) | P0 | upload/security | Open | Pending |
+| [#1 ZIP uploads can write outside the extraction directory](https://github.com/yang498-Peter/cloudstudio-platform/issues/1) | P0 | upload/security | In review | [#17](https://github.com/yang498-Peter/cloudstudio-platform/pull/17) |
+| [#2 Multipart uploads are accepted before authentication and size limits](https://github.com/yang498-Peter/cloudstudio-platform/issues/2) | P0 | upload/security | In review | [#17](https://github.com/yang498-Peter/cloudstudio-platform/pull/17) |
 | [#3 Default upload password hash is used when production secret is missing](https://github.com/yang498-Peter/cloudstudio-platform/issues/3) | P1 | upload/security/deploy | Open | Pending |
 | [#4 Unauthenticated scan root registration can expose server directories](https://github.com/yang498-Peter/cloudstudio-platform/issues/4) | P1 | security/storage | Open | Pending |
 | [#5 Absolute path APIs can read or write outside CloudStudio storage](https://github.com/yang498-Peter/cloudstudio-platform/issues/5) | P1 | security/storage | Open | Pending |
