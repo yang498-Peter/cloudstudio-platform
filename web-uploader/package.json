@@ -7,6 +7,7 @@
     "start": "node server.js",
     "test:dxf-draw": "node --test tests/dxf-draw-topology.test.mjs",
     "test:floorplan": "node --test tests/job-result.test.mjs && python3 -m unittest tests.extract_floorplan_regression",
+    "test:upload-security": "node --test tests/upload-security.test.mjs",
     "test:volume": "node --test tests/volume-compute.test.mjs tests/volume-ui.test.mjs tests/volume-job.integration.test.mjs",
     "test:volume-report": "node --test tests/volume-report-visual.test.mjs",
     "test:viewer-smoke": "node --test tests/viewer-smoke.test.mjs",

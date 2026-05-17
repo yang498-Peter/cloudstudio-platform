@@ -32,11 +32,25 @@ let gaussianConversionQueue = Promise.resolve();
 const UPLOAD_PASSWORD_SHA256 = String(
   process.env.UPLOAD_REVIEW_PASSWORD_SHA256 || DEFAULT_UPLOAD_PASSWORD_SHA256
 ).trim().toLowerCase();
+const GIB = 1024 * 1024 * 1024;
+const MIB = 1024 * 1024;
+const UPLOAD_MAX_BYTES = parsePositiveIntegerEnv('CLOUDSTUDIO_UPLOAD_MAX_BYTES', 50 * GIB);
+const ZIP_MAX_TOTAL_BYTES = parsePositiveIntegerEnv('CLOUDSTUDIO_ZIP_MAX_TOTAL_BYTES', 50 * GIB);
+const ZIP_MAX_FILE_BYTES = parsePositiveIntegerEnv('CLOUDSTUDIO_ZIP_MAX_FILE_BYTES', 10 * GIB);
+const ZIP_MAX_FILES = parsePositiveIntegerEnv('CLOUDSTUDIO_ZIP_MAX_FILES', 100000);
+const GRID_UPLOAD_MAX_BYTES = parsePositiveIntegerEnv('CLOUDSTUDIO_GRID_UPLOAD_MAX_BYTES', 2 * GIB);
 
 const ROOT = path.resolve(__dirname, '..');
 const POTREE_ROOT = path.join(ROOT, 'potree');
 const PYTHON_VENDOR_SITE = '';
 const RUNTIME_STORAGE = buildRuntimeStorageLayout({ appDir: __dirname, env: process.env });
+
+function parsePositiveIntegerEnv(name, fallback) {
+  const raw = process.env[name];
+  if (raw == null || raw === '') return fallback;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+}
 
 function pathExists(candidate) {
   try {
@@ -80,6 +94,74 @@ function verifyUploadPassword(rawPassword) {
     const error = new Error('Wrong password');
     error.code = 'WRONG_PASSWORD';
     throw error;
+  }
+}
+
+function firstNonEmptyValue(values = []) {
+  for (const value of values) {
+    if (Array.isArray(value)) {
+      const nested = firstNonEmptyValue(value);
+      if (nested) return nested;
+      continue;
+    }
+    const normalized = String(value || '').trim();
+    if (normalized) return normalized;
+  }
+  return '';
+}
+
+function getUploadPasswordCandidate(req, { includeBody = true } = {}) {
+  const headerPassword = firstNonEmptyValue([
+    req?.headers?.['x-cloudstudio-upload-password'],
+    req?.headers?.['x-upload-password'],
+    req?.headers?.['x-upload-token'],
+  ]);
+  if (headerPassword) {
+    return { source: 'header', value: headerPassword };
+  }
+
+  const queryPassword = firstNonEmptyValue([
+    req?.query?.uploadPassword,
+    req?.query?.password,
+  ]);
+  if (queryPassword) {
+    return { source: 'query', value: queryPassword };
+  }
+
+  if (includeBody) {
+    const bodyPassword = firstNonEmptyValue([
+      req?.body?.uploadPassword,
+      req?.body?.password,
+    ]);
+    if (bodyPassword) {
+      return { source: 'body', value: bodyPassword };
+    }
+  }
+
+  return null;
+}
+
+function verifyUploadCredentialFromRequest(req, { includeBody = true } = {}) {
+  const candidate = getUploadPasswordCandidate(req, { includeBody });
+  verifyUploadPassword(candidate?.value);
+  return candidate;
+}
+
+function verifyPreMulterUploadCredential(req) {
+  const candidate = getUploadPasswordCandidate(req, { includeBody: false });
+  verifyUploadPassword(candidate?.value);
+  return candidate;
+}
+
+function uploadCredentialPrecheck(req, res, next) {
+  try {
+    verifyPreMulterUploadCredential(req);
+    return next();
+  } catch (error) {
+    return sendApiError(res, error, {
+      fallbackCode: error?.code || 'WRONG_PASSWORD',
+      fallbackStatus: 403,
+    });
   }
 }
 
@@ -256,7 +338,46 @@ const storage = multer.diskStorage({
     cb(null, `${stamp}_${safe}`);
   }
 });
-const upload = multer({ storage });
+const POINTCLOUD_UPLOAD_EXTENSIONS = new Set(['.las', '.laz']);
+const GAUSSIAN_UPLOAD_EXTENSIONS = new Set(['.ply', '.splat', '.ksplat']);
+const ZIP_UPLOAD_EXTENSIONS = new Set(['.zip']);
+const GRID_UPLOAD_EXTENSIONS = new Set(['.gsb', '.gtx', '.ggf', '.grd', '.tif', '.tiff', '.json', '.csv', '.txt', '.prj', '.wkt']);
+const UPLOAD_LIMITS = Object.freeze({
+  fileSize: UPLOAD_MAX_BYTES,
+  files: 1,
+  fields: 20,
+  parts: 25,
+});
+const GRID_UPLOAD_LIMITS = Object.freeze({
+  ...UPLOAD_LIMITS,
+  fileSize: GRID_UPLOAD_MAX_BYTES,
+});
+
+function createUploadFileFilter(allowedByField) {
+  return (_req, file, cb) => {
+    const allowed = allowedByField[file.fieldname];
+    if (!allowed) return cb(null, true);
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    if (allowed.has(ext)) return cb(null, true);
+    const error = new Error(`Unsupported upload file type: ${ext || 'unknown'}`);
+    error.code = 'INVALID_UPLOAD_FILE_TYPE';
+    return cb(error);
+  };
+}
+
+const uploadFileFilter = createUploadFileFilter({
+  pointcloud: POINTCLOUD_UPLOAD_EXTENSIONS,
+  gaussianFile: GAUSSIAN_UPLOAD_EXTENSIONS,
+});
+const gridFileFilter = createUploadFileFilter({
+  gridFile: GRID_UPLOAD_EXTENSIONS,
+});
+const zipFileFilter = createUploadFileFilter({
+  projectzip: ZIP_UPLOAD_EXTENSIONS,
+  potreezip: ZIP_UPLOAD_EXTENSIONS,
+});
+
+const upload = multer({ storage, limits: UPLOAD_LIMITS, fileFilter: uploadFileFilter });
 
 const gridStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, GRID_STORAGE_DIR),
@@ -266,7 +387,7 @@ const gridStorage = multer.diskStorage({
     cb(null, `${stamp}_${safe}`);
   }
 });
-const gridUpload = multer({ storage: gridStorage });
+const gridUpload = multer({ storage: gridStorage, limits: GRID_UPLOAD_LIMITS, fileFilter: gridFileFilter });
 
 // Multer config for ZIP project uploads (stored in uploads/ with timestamp prefix)
 const zipStorage = multer.diskStorage({
@@ -277,7 +398,7 @@ const zipStorage = multer.diskStorage({
     cb(null, `${stamp}_${safe}`);
   }
 });
-const zipUpload = multer({ storage: zipStorage });
+const zipUpload = multer({ storage: zipStorage, limits: UPLOAD_LIMITS, fileFilter: zipFileFilter });
 
 app.use(express.json({ limit: '50mb' }));
 app.use('/potree', express.static(POTREE_ROOT));
@@ -1365,7 +1486,12 @@ const API_ERROR_STATUS = Object.freeze({
   GRID_BAD_REQUEST: 400,
   GRID_INTERNAL_ERROR: 500,
   INVALID_FORMAT: 400,
+  INVALID_UPLOAD_FILE_TYPE: 400,
   INVALID_POTREE_ZIP: 400,
+  LIMIT_FIELD_COUNT: 400,
+  LIMIT_FILE_COUNT: 400,
+  LIMIT_FILE_SIZE: 413,
+  LIMIT_PART_COUNT: 400,
   LAS_NOT_FOUND: 500,
   MISSING_DATASET_CONTEXT: 400,
   MISSING_FILE_PATH: 400,
@@ -1381,11 +1507,13 @@ const API_ERROR_STATUS = Object.freeze({
   VOLUME_SOURCE_TOO_LARGE: 413,
   UPLOAD_PASSWORD_NOT_CONFIGURED: 500,
   UPLOAD_PASSWORD_REQUIRED: 403,
+  UNSAFE_ZIP_ENTRY: 400,
   EXPORT_ENV_MISSING: 500,
   EXPORT_SCRIPT_MISSING: 500,
   CONVERTER_NOT_FOUND: 500,
   CONVERSION_FAILED: 500,
   WRONG_PASSWORD: 403,
+  ZIP_TOO_LARGE: 413,
   INTERNAL_ERROR: 500,
 });
 
@@ -2388,7 +2516,7 @@ function createGaussianDirectManifest(assetName, {
     viewerRotation: { rx: 90, ry: 0, rz: 180 },
     optimizationStatus: 'pending',
   });
-  manifest.note = 'Published immediately in direct PLY browse mode. SOG optimization may continue in the background.';
+  manifest.note = 'Published immediately in direct 3DGS browse mode. SOG optimization may continue in the background for PLY uploads.';
   if (assetDir) {
     writeGaussianManifest(assetDir, manifest);
   }
@@ -3372,7 +3500,9 @@ app.get('/api/grids', async (_req, res) => {
   }
 });
 
-app.post('/api/grids/import', gridUpload.single('gridFile'), async (req, res) => {
+// Multipart grid imports are API-facing; callers must send the upload password
+// in X-CloudStudio-Upload-Password or query params so multer can reject before disk writes.
+app.post('/api/grids/import', uploadCredentialPrecheck, gridUpload.single('gridFile'), async (req, res) => {
   const uploadedPath = req.file?.path;
   try {
     if (!req.file) {
@@ -3558,11 +3688,290 @@ app.get('/api/export-sources', (req, res) => {
   }
 });
 
+function buildSafeZipPythonHelpers() {
+  return `
+import os, re, stat
+
+ZIP_MAX_FILES = ${ZIP_MAX_FILES}
+ZIP_MAX_TOTAL_BYTES = ${ZIP_MAX_TOTAL_BYTES}
+ZIP_MAX_FILE_BYTES = ${ZIP_MAX_FILE_BYTES}
+
+class ZipValidationError(Exception):
+    def __init__(self, code, message):
+        super().__init__(message)
+        self.code = code
+
+def zip_error_payload(error):
+    code = getattr(error, 'code', 'UNSAFE_ZIP_ENTRY')
+    return {'errorCode': code, 'error': str(error)}
+
+def should_skip_zip_member(filename):
+    parts = filename.replace('\\\\', '/').split('/')
+    return any(p == '__MACOSX' or p.startswith('._') for p in parts)
+
+def validate_zip_member(member):
+    raw = member.filename or ''
+    name = raw.replace('\\\\', '/')
+    stripped = name.rstrip('/')
+    if not stripped:
+        raise ZipValidationError('UNSAFE_ZIP_ENTRY', 'ZIP entry has an empty path.')
+    if name.startswith('/') or name.startswith('//') or re.match(r'^[A-Za-z]:', name):
+        raise ZipValidationError('UNSAFE_ZIP_ENTRY', 'ZIP entry uses an absolute path: ' + raw)
+    parts = stripped.split('/')
+    if any(p in ('', '.', '..') for p in parts):
+        raise ZipValidationError('UNSAFE_ZIP_ENTRY', 'ZIP entry contains unsafe path segments: ' + raw)
+
+    mode = (member.external_attr >> 16) & 0o177777
+    if mode:
+        file_type = stat.S_IFMT(mode)
+        if file_type and file_type not in (stat.S_IFREG, stat.S_IFDIR):
+            raise ZipValidationError('UNSAFE_ZIP_ENTRY', 'ZIP entry is not a regular file or directory: ' + raw)
+    return '/'.join(parts)
+
+def assert_safe_zip_archive(zf):
+    file_count = 0
+    total_size = 0
+    for member in zf.infolist():
+        if should_skip_zip_member(member.filename or ''):
+            continue
+        validate_zip_member(member)
+        if member.is_dir():
+            continue
+        file_count += 1
+        if file_count > ZIP_MAX_FILES:
+            raise ZipValidationError('ZIP_TOO_LARGE', 'ZIP contains too many files.')
+        size = int(getattr(member, 'file_size', 0) or 0)
+        if size < 0:
+            raise ZipValidationError('UNSAFE_ZIP_ENTRY', 'ZIP entry has an invalid size: ' + member.filename)
+        if size > ZIP_MAX_FILE_BYTES:
+            raise ZipValidationError('ZIP_TOO_LARGE', 'ZIP entry is too large: ' + member.filename)
+        total_size += size
+        if total_size > ZIP_MAX_TOTAL_BYTES:
+            raise ZipValidationError('ZIP_TOO_LARGE', 'ZIP extracted size is too large.')
+
+def safe_zip_target(dest_dir, rel_path):
+    rel = rel_path.replace('\\\\', '/')
+    stripped = rel.rstrip('/')
+    if not stripped:
+        raise ZipValidationError('UNSAFE_ZIP_ENTRY', 'ZIP entry has an empty extraction path.')
+    parts = stripped.split('/')
+    if any(p in ('', '.', '..') for p in parts):
+        raise ZipValidationError('UNSAFE_ZIP_ENTRY', 'ZIP entry contains unsafe extraction path: ' + rel_path)
+    dest_real = os.path.realpath(dest_dir)
+    target = os.path.join(dest_dir, *parts)
+    target_real = os.path.realpath(target)
+    if os.path.commonpath([dest_real, target_real]) != dest_real:
+        raise ZipValidationError('UNSAFE_ZIP_ENTRY', 'ZIP entry would escape extraction directory: ' + rel_path)
+    return target
+
+def write_zip_member(zf, member, dest_dir, rel_path):
+    target = safe_zip_target(dest_dir, rel_path)
+    if member.is_dir():
+        os.makedirs(target, exist_ok=True)
+        return
+    os.makedirs(os.path.dirname(target), exist_ok=True)
+    with zf.open(member) as src, open(target, 'wb') as dst:
+        shutil.copyfileobj(src, dst)
+`;
+}
+
+function buildScannerProjectZipExtractScript() {
+  return `
+import zipfile, os, sys, json, shutil, re
+${buildSafeZipPythonHelpers()}
+
+zip_path   = sys.argv[1]
+projects_dir = sys.argv[2]
+name_override = sys.argv[3]   # may be empty string
+
+def safe_name(s):
+    return re.sub(r'[^a-zA-Z0-9._-]', '_', s)
+
+try:
+    with zipfile.ZipFile(zip_path, 'r') as zf:
+        assert_safe_zip_archive(zf)
+        names = zf.namelist()
+        # Detect if all entries share a common root folder (ignore Mac __MACOSX metadata)
+        roots = set()
+        for n in names:
+            if should_skip_zip_member(n):
+                continue
+            safe_rel = validate_zip_member(zf.getinfo(n))
+            parts = safe_rel.split('/')
+            if parts[0]:
+                roots.add(parts[0])
+        real_names = [n for n in names if not should_skip_zip_member(n)]
+        has_root_folder = len(roots) == 1 and any('/' in n for n in real_names)
+        detected_root = list(roots)[0] if has_root_folder else None
+
+        # Determine project name
+        if name_override:
+            project_name = safe_name(name_override)
+        elif detected_root:
+            project_name = safe_name(detected_root)
+        else:
+            project_name = safe_name(os.path.splitext(os.path.basename(zip_path))[0])
+            # Strip timestamp prefix if any (e.g. "1234567890_scan" -> "scan")
+            project_name = re.sub(r'^\\d+_', '', project_name)
+
+        dest_dir = os.path.join(projects_dir, project_name)
+        os.makedirs(dest_dir, exist_ok=True)
+
+        if has_root_folder:
+            # Strip the root folder prefix when extracting
+            prefix = detected_root + '/'
+            for member in zf.infolist():
+                rel = member.filename
+                if should_skip_zip_member(rel):
+                    continue
+                safe_rel = validate_zip_member(member)
+                if not safe_rel.startswith(prefix):
+                    continue
+                rel_stripped = safe_rel[len(prefix):]
+                if not rel_stripped:
+                    continue
+                write_zip_member(zf, member, dest_dir, rel_stripped)
+        else:
+            # Flat: extract everything directly into dest_dir
+            for member in zf.infolist():
+                rel = member.filename
+                if should_skip_zip_member(rel):
+                    continue
+                if member.is_dir():
+                    continue
+                safe_rel = validate_zip_member(member)
+                write_zip_member(zf, member, dest_dir, safe_rel)
+
+        # Find LAS/LAZ files in the extracted directory
+        las_files = []
+        for root, dirs, files in os.walk(dest_dir):
+            # Skip converted potree data and Mac metadata folders
+            dirs[:] = [d for d in dirs if d not in ('converted', '__MACOSX')]
+            for f in files:
+                # Skip Mac resource fork files (._filename)
+                if f.startswith('._'):
+                    continue
+                if f.lower().endswith(('.las', '.laz')):
+                    las_files.append(os.path.relpath(os.path.join(root, f), dest_dir))
+
+        # Pick best LAS: prefer colorized > uncolorized > any
+        # IMPORTANT: check 'uncolorized' BEFORE 'colorized' because 'colorized' is a substring.
+        def las_priority(p):
+            n = os.path.basename(p).lower()
+            if 'uncolorized' in n: return 2
+            if 'colorized' in n: return 1
+            if 'scan_resumer' in n: return 3
+            return 2
+
+        las_files.sort(key=las_priority)
+
+        print(json.dumps({
+            'projectName': project_name,
+            'destDir': dest_dir,
+            'lasFiles': las_files,
+            'bestLas': las_files[0] if las_files else None,
+            'hasGeo': os.path.exists(os.path.join(dest_dir, 'geo_info.csv')),
+            'hasOdom': os.path.exists(os.path.join(dest_dir, 'odom.csv')),
+            'hasCameras': os.path.exists(os.path.join(dest_dir, 'ImgPose.txt')),
+        }))
+except zipfile.BadZipFile:
+    print(json.dumps({'errorCode': 'INVALID_POTREE_ZIP', 'error': 'File is not a valid ZIP archive.'}))
+except ZipValidationError as e:
+    print(json.dumps(zip_error_payload(e)))
+`;
+}
+
+function buildPreconvertedZipExtractScript() {
+  return `
+import zipfile, os, sys, json, shutil, re
+${buildSafeZipPythonHelpers()}
+
+zip_path = sys.argv[1]
+pointclouds_dir = sys.argv[2]
+name_override = sys.argv[3]
+
+def safe_name(s):
+    return re.sub(r'[^a-zA-Z0-9._-]', '_', s)
+
+try:
+    with zipfile.ZipFile(zip_path, 'r') as zf:
+        assert_safe_zip_archive(zf)
+        names = zf.namelist()
+        real_names = [n for n in names if not should_skip_zip_member(n)]
+
+        # Find metadata.json (Potree 2.0 marker)
+        meta_paths = []
+        for n in real_names:
+            member = zf.getinfo(n)
+            safe_rel = validate_zip_member(member)
+            if os.path.basename(safe_rel) == 'metadata.json' and not member.is_dir():
+                meta_paths.append(safe_rel)
+        if not meta_paths:
+            print(json.dumps({'errorCode': 'INVALID_POTREE_ZIP', 'error': 'No metadata.json found in ZIP. This does not appear to be a Potree 2.0 octree. Please convert your LAS file with PotreeConverter first, then ZIP the output folder.'}))
+            sys.exit(0)
+
+        # Use the shallowest metadata.json
+        meta_paths.sort(key=lambda x: x.count('/'))
+        meta_path = meta_paths[0]
+
+        # Determine prefix (folder inside ZIP) and cloud name
+        parts = meta_path.split('/')
+        if len(parts) == 1:
+            prefix = ''
+            zip_stem = os.path.splitext(os.path.basename(zip_path))[0]
+            detected_name = safe_name(re.sub(r'^\\d+_', '', zip_stem))
+        else:
+            prefix = '/'.join(parts[:-1]) + '/'
+            detected_name = safe_name(parts[0])
+
+        cloud_name = safe_name(name_override) if name_override else detected_name
+        dest_dir = os.path.join(pointclouds_dir, cloud_name)
+
+        if os.path.exists(dest_dir):
+            shutil.rmtree(dest_dir)
+        os.makedirs(dest_dir, exist_ok=True)
+
+        for member in zf.infolist():
+            rel = member.filename
+            if should_skip_zip_member(rel):
+                continue
+            safe_rel = validate_zip_member(member)
+            if prefix:
+                if not safe_rel.startswith(prefix):
+                    continue
+                rel_stripped = safe_rel[len(prefix):]
+            else:
+                rel_stripped = safe_rel
+            if not rel_stripped or member.is_dir():
+                continue
+            write_zip_member(zf, member, dest_dir, rel_stripped)
+
+        meta_dest = os.path.join(dest_dir, 'metadata.json')
+        if not os.path.exists(meta_dest):
+            print(json.dumps({'errorCode': 'INVALID_POTREE_ZIP', 'error': 'Extraction failed: metadata.json not found in extracted output. Check ZIP structure.'}))
+            sys.exit(0)
+
+        points = None
+        try:
+            with open(meta_dest) as f:
+                meta = json.load(f)
+            points = meta.get('points')
+        except:
+            pass
+
+        print(json.dumps({'cloudName': cloud_name, 'destDir': dest_dir, 'points': points}))
+except zipfile.BadZipFile:
+    print(json.dumps({'errorCode': 'INVALID_POTREE_ZIP', 'error': 'File is not a valid ZIP archive.'}))
+except ZipValidationError as e:
+    print(json.dumps(zip_error_payload(e)))
+`;
+}
+
 // ── Upload and convert ──
-app.post('/api/upload', upload.single('pointcloud'), (req, res) => {
+app.post('/api/upload', uploadCredentialPrecheck, upload.single('pointcloud'), (req, res) => {
   const uploadedPath = req.file?.path;
   try {
-    verifyUploadPassword(req.body?.uploadPassword);
+    verifyUploadCredentialFromRequest(req);
   } catch (error) {
     if (uploadedPath && fs.existsSync(uploadedPath)) {
       try { fs.unlinkSync(uploadedPath); } catch { }
@@ -3664,10 +4073,10 @@ app.post('/api/upload', upload.single('pointcloud'), (req, res) => {
 // ── Upload scanner project folder as ZIP ────────────────────────────
 // Extracts zip → projects/{name}/, auto-discovers as scanner project,
 // then runs PotreeConverter on any LAS found inside.
-app.post('/api/upload-project', zipUpload.single('projectzip'), (req, res) => {
+app.post('/api/upload-project', uploadCredentialPrecheck, zipUpload.single('projectzip'), (req, res) => {
   const uploadedPath = req.file?.path;
   try {
-    verifyUploadPassword(req.body?.uploadPassword);
+    verifyUploadCredentialFromRequest(req);
   } catch (error) {
     if (uploadedPath && fs.existsSync(uploadedPath)) {
       try { fs.unlinkSync(uploadedPath); } catch { }
@@ -3686,114 +4095,9 @@ app.post('/api/upload-project', zipUpload.single('projectzip'), (req, res) => {
 
   // ── Step 1: Determine project name from zip or override ──────────
   const nameOverride = (req.body.name || '').trim();
-  const zipBaseName = path.parse(req.file.originalname).name.replace(/[^a-zA-Z0-9._-]/g, '_');
 
   // ── Step 2: Use Python3 zipfile to peek at zip structure, then extract ──
-  // Python script: detect root folder vs flat structure, choose project name, extract.
-  const extractScript = `
-import zipfile, os, sys, json, shutil, re
-
-zip_path   = sys.argv[1]
-projects_dir = sys.argv[2]
-name_override = sys.argv[3]   # may be empty string
-
-def safe_name(s):
-    return re.sub(r'[^a-zA-Z0-9._-]', '_', s)
-
-with zipfile.ZipFile(zip_path, 'r') as zf:
-    names = zf.namelist()
-    # Detect if all entries share a common root folder (ignore Mac __MACOSX metadata)
-    roots = set()
-    for n in names:
-        parts = n.split('/')
-        if parts[0] and parts[0] != '__MACOSX':
-            roots.add(parts[0])
-    real_names = [n for n in names if not n.startswith('__MACOSX/')]
-    has_root_folder = len(roots) == 1 and any('/' in n for n in real_names)
-    detected_root = list(roots)[0] if has_root_folder else None
-
-    # Determine project name
-    if name_override:
-        project_name = safe_name(name_override)
-    elif detected_root:
-        project_name = safe_name(detected_root)
-    else:
-        project_name = safe_name(os.path.splitext(os.path.basename(zip_path))[0])
-        # Strip timestamp prefix if any (e.g. "1234567890_scan" → "scan")
-        project_name = re.sub(r'^\\d+_', '', project_name)
-
-    dest_dir = os.path.join(projects_dir, project_name)
-    os.makedirs(dest_dir, exist_ok=True)
-
-    # Extract (always skip Mac __MACOSX metadata and ._* resource forks)
-    def should_skip(filename):
-        parts = filename.replace('\\\\', '/').split('/')
-        return any(p == '__MACOSX' or p.startswith('._') for p in parts)
-
-    if has_root_folder:
-        # Strip the root folder prefix when extracting
-        prefix = detected_root + '/'
-        for member in zf.infolist():
-            rel = member.filename
-            if not rel.startswith(prefix):
-                continue
-            if should_skip(rel):
-                continue
-            rel_stripped = rel[len(prefix):]
-            if not rel_stripped:
-                continue
-            target = os.path.join(dest_dir, rel_stripped)
-            if member.is_dir():
-                os.makedirs(target, exist_ok=True)
-            else:
-                os.makedirs(os.path.dirname(target), exist_ok=True)
-                with zf.open(member) as src, open(target, 'wb') as dst:
-                    shutil.copyfileobj(src, dst)
-    else:
-        # Flat: extract everything directly into dest_dir
-        for member in zf.infolist():
-            if not member.filename or member.filename.endswith('/'):
-                continue
-            if should_skip(member.filename):
-                continue
-            target = os.path.join(dest_dir, member.filename)
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-            with zf.open(member) as src, open(target, 'wb') as dst:
-                shutil.copyfileobj(src, dst)
-
-    # Find LAS/LAZ files in the extracted directory
-    las_files = []
-    for root, dirs, files in os.walk(dest_dir):
-        # Skip converted potree data and Mac metadata folders
-        dirs[:] = [d for d in dirs if d not in ('converted', '__MACOSX')]
-        for f in files:
-            # Skip Mac resource fork files (._filename)
-            if f.startswith('._'):
-                continue
-            if f.lower().endswith(('.las', '.laz')):
-                las_files.append(os.path.relpath(os.path.join(root, f), dest_dir))
-
-    # Pick best LAS: prefer colorized > uncolorized > any
-    # IMPORTANT: check 'uncolorized' BEFORE 'colorized' — 'colorized' is a substring of 'uncolorized'!
-    def las_priority(p):
-        n = os.path.basename(p).lower()
-        if 'uncolorized' in n: return 2   # lower priority
-        if 'colorized' in n: return 1     # prefer colorized
-        if 'scan_resumer' in n: return 3
-        return 2                          # anything else: same as uncolorized
-
-    las_files.sort(key=las_priority)      # sort ascending → index 0 is best
-
-    print(json.dumps({
-        'projectName': project_name,
-        'destDir': dest_dir,
-        'lasFiles': las_files,
-        'bestLas': las_files[0] if las_files else None,
-        'hasGeo': os.path.exists(os.path.join(dest_dir, 'geo_info.csv')),
-        'hasOdom': os.path.exists(os.path.join(dest_dir, 'odom.csv')),
-        'hasCameras': os.path.exists(os.path.join(dest_dir, 'ImgPose.txt')),
-    }))
-`;
+  const extractScript = buildScannerProjectZipExtractScript();
 
   const pyProc = spawn(SYSTEM_PYTHON_BIN, ['-c', extractScript, zipPath, PROJECTS_DIR, nameOverride], { env: buildPythonEnv() });
   let pyOut = '';
@@ -3814,6 +4118,11 @@ with zipfile.ZipFile(zip_path, 'r') as zf:
       info = JSON.parse(pyOut.trim());
     } catch (e) {
       return sendApiError(res, new Error('解析解压信息失败: ' + pyOut), { fallbackCode: 'EXTRACT_PARSE_FAILED' });
+    }
+    if (info.error) {
+      const error = new Error(info.error);
+      error.code = info.errorCode || 'EXTRACT_FAILED';
+      return sendApiError(res, error, { fallbackCode: error.code, fallbackStatus: 400 });
     }
 
     const { projectName, destDir, bestLas } = info;
@@ -3946,10 +4255,10 @@ with zipfile.ZipFile(zip_path, 'r') as zf:
 // ── Upload pre-converted Potree octree ZIP ──────────────────────────
 // User already ran PotreeConverter locally and zipped the output folder.
 // This just extracts the ZIP into pointclouds/ and verifies the structure.
-app.post('/api/upload-preconverted', zipUpload.single('potreezip'), (req, res) => {
+app.post('/api/upload-preconverted', uploadCredentialPrecheck, zipUpload.single('potreezip'), (req, res) => {
   const uploadedPath = req.file?.path;
   try {
-    verifyUploadPassword(req.body?.uploadPassword);
+    verifyUploadCredentialFromRequest(req);
   } catch (error) {
     if (uploadedPath && fs.existsSync(uploadedPath)) {
       try { fs.unlinkSync(uploadedPath); } catch { }
@@ -3966,87 +4275,7 @@ app.post('/api/upload-preconverted', zipUpload.single('potreezip'), (req, res) =
 
   const zipPath = req.file.path;
   const nameOverride = (req.body.name || '').trim();
-  const extractScript = `
-import zipfile, os, sys, json, shutil, re
-
-zip_path = sys.argv[1]
-pointclouds_dir = sys.argv[2]
-name_override = sys.argv[3]
-
-def safe_name(s):
-    return re.sub(r'[^a-zA-Z0-9._-]', '_', s)
-
-def should_skip(filename):
-    parts = filename.replace('\\\\', '/').split('/')
-    return any(p == '__MACOSX' or p.startswith('._') for p in parts)
-
-try:
-    with zipfile.ZipFile(zip_path, 'r') as zf:
-        names = zf.namelist()
-        real_names = [n for n in names if not should_skip(n)]
-
-        # Find metadata.json (Potree 2.0 marker)
-        meta_paths = [n for n in real_names if os.path.basename(n) == 'metadata.json' and not n.endswith('/')]
-        if not meta_paths:
-            print(json.dumps({'error': 'No metadata.json found in ZIP. This does not appear to be a Potree 2.0 octree. Please convert your LAS file with PotreeConverter first, then ZIP the output folder.'}))
-            sys.exit(0)
-
-        # Use the shallowest metadata.json
-        meta_paths.sort(key=lambda x: x.count('/'))
-        meta_path = meta_paths[0]
-
-        # Determine prefix (folder inside ZIP) and cloud name
-        parts = meta_path.split('/')
-        if len(parts) == 1:
-            prefix = ''
-            zip_stem = os.path.splitext(os.path.basename(zip_path))[0]
-            detected_name = safe_name(re.sub(r'^\\d+_', '', zip_stem))
-        else:
-            prefix = '/'.join(parts[:-1]) + '/'
-            detected_name = safe_name(parts[0])
-
-        cloud_name = safe_name(name_override) if name_override else detected_name
-        dest_dir = os.path.join(pointclouds_dir, cloud_name)
-
-        if os.path.exists(dest_dir):
-            shutil.rmtree(dest_dir)
-        os.makedirs(dest_dir, exist_ok=True)
-
-        for member in zf.infolist():
-            rel = member.filename
-            if should_skip(rel):
-                continue
-            if prefix:
-                if not rel.startswith(prefix):
-                    continue
-                rel_stripped = rel[len(prefix):]
-            else:
-                rel_stripped = rel
-            if not rel_stripped or rel_stripped.endswith('/'):
-                continue
-            target = os.path.join(dest_dir, rel_stripped)
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-            with zf.open(member) as src, open(target, 'wb') as dst:
-                shutil.copyfileobj(src, dst)
-
-        meta_dest = os.path.join(dest_dir, 'metadata.json')
-        if not os.path.exists(meta_dest):
-            print(json.dumps({'error': 'Extraction failed: metadata.json not found in extracted output. Check ZIP structure.'}))
-            sys.exit(0)
-
-        points = None
-        try:
-            with open(meta_dest) as f:
-                meta = json.load(f)
-            points = meta.get('points')
-        except:
-            pass
-
-        print(json.dumps({'cloudName': cloud_name, 'destDir': dest_dir, 'points': points}))
-except zipfile.BadZipFile:
-    print(json.dumps({'error': 'File is not a valid ZIP archive.'}))
-    sys.exit(0)
-`;
+  const extractScript = buildPreconvertedZipExtractScript();
 
   const pyProc = spawn(SYSTEM_PYTHON_BIN, ['-c', extractScript, zipPath, POINTCLOUDS_DIR, nameOverride], { env: buildPythonEnv() });
   let pyOut = '';
@@ -4069,7 +4298,9 @@ except zipfile.BadZipFile:
     }
 
     if (info.error) {
-      return sendApiError(res, new Error(info.error), { fallbackCode: 'INVALID_POTREE_ZIP', fallbackStatus: 400 });
+      const error = new Error(info.error);
+      error.code = info.errorCode || 'INVALID_POTREE_ZIP';
+      return sendApiError(res, error, { fallbackCode: error.code, fallbackStatus: 400 });
     }
 
     const { cloudName, destDir, points } = info;
@@ -4097,10 +4328,10 @@ except zipfile.BadZipFile:
 
 
 // ── Upload Gaussian / 3DGS asset ──────────────────────────────────
-app.post('/api/upload-gaussian', upload.single('gaussianFile'), async (req, res) => {
+app.post('/api/upload-gaussian', uploadCredentialPrecheck, upload.single('gaussianFile'), async (req, res) => {
   const uploadedPath = req.file?.path;
   try {
-    verifyUploadPassword(req.body?.uploadPassword);
+    verifyUploadCredentialFromRequest(req);
   } catch (error) {
     if (uploadedPath && fs.existsSync(uploadedPath)) {
       try { fs.unlinkSync(uploadedPath); } catch {}
@@ -4117,10 +4348,9 @@ app.post('/api/upload-gaussian', upload.single('gaussianFile'), async (req, res)
 
   const originalName = req.file.originalname || '';
   const ext = path.extname(originalName).toLowerCase();
-  const supportedFormats = ['.ply'];
-  if (!supportedFormats.includes(ext)) {
+  if (!GAUSSIAN_UPLOAD_EXTENSIONS.has(ext)) {
     try { fs.unlinkSync(req.file.path); } catch {}
-    return sendApiError(res, new Error(`Unsupported Gaussian file format: ${ext || 'unknown'}. Upload the original 3DGS PLY file.`), {
+    return sendApiError(res, new Error(`Unsupported Gaussian file format: ${ext || 'unknown'}. Upload a supported 3DGS file.`), {
       fallbackCode: 'BAD_REQUEST',
       fallbackStatus: 400,
     });
@@ -4129,7 +4359,7 @@ app.post('/api/upload-gaussian', upload.single('gaussianFile'), async (req, res)
   const { assetName, assetDir } = getUniqueGaussianAssetDir(req.body.name || path.parse(originalName).name);
   fs.mkdirSync(assetDir, { recursive: true });
 
-  const targetName = 'scene.ply';
+  const targetName = `scene${ext}`;
   const targetPath = path.join(assetDir, targetName);
   try {
     fs.renameSync(req.file.path, targetPath);
@@ -4152,20 +4382,22 @@ app.post('/api/upload-gaussian', upload.single('gaussianFile'), async (req, res)
     uploadedAt,
   });
 
-  const runtimeName = 'scene.sog';
-  const runtimePath = path.join(assetDir, runtimeName);
-  void enqueueGaussianConversion(() => optimizeGaussianAssetToSog({
-    assetName,
-    assetDir,
-    originalName,
-    targetName,
-    targetPath,
-    runtimeName,
-    runtimePath,
-    sourceBytes,
-  })).catch(error => {
-    console.warn(`[Gaussian] Queue execution failed for ${assetName}:`, error?.message || error);
-  });
+  if (ext === '.ply') {
+    const runtimeName = 'scene.sog';
+    const runtimePath = path.join(assetDir, runtimeName);
+    void enqueueGaussianConversion(() => optimizeGaussianAssetToSog({
+      assetName,
+      assetDir,
+      originalName,
+      targetName,
+      targetPath,
+      runtimeName,
+      runtimePath,
+      sourceBytes,
+    })).catch(error => {
+      console.warn(`[Gaussian] Queue execution failed for ${assetName}:`, error?.message || error);
+    });
+  }
 
   return sendApiSuccess(res, {
     assetName,
@@ -6487,22 +6719,38 @@ app.use((error, req, res, next) => {
   });
 });
 
-// ── Initial project discovery ──
-const initialProjects = discoverScanProjects();
-cleanupOldExports();
-cleanupOldVolumeJobs();
-setInterval(() => cleanupOldVolumeJobs(), VOLUME_JOB_CLEANUP_INTERVAL_MS).unref?.();
-ensureBuiltinGridsRegistered().catch(error => {
-  console.warn('[Grid] Failed to preload built-in grids:', error.message);
-});
-console.log(`[Scanner] Discovered ${initialProjects.length} scanner project(s):`,
-  initialProjects.map(p => p.name).join(', ') || 'none');
+if (process.env.CLOUDSTUDIO_SKIP_SERVER_LISTEN !== '1') {
+  // ── Initial project discovery ──
+  const initialProjects = discoverScanProjects();
+  cleanupOldExports();
+  cleanupOldVolumeJobs();
+  setInterval(() => cleanupOldVolumeJobs(), VOLUME_JOB_CLEANUP_INTERVAL_MS).unref?.();
+  ensureBuiltinGridsRegistered().catch(error => {
+    console.warn('[Grid] Failed to preload built-in grids:', error.message);
+  });
+  console.log(`[Scanner] Discovered ${initialProjects.length} scanner project(s):`,
+    initialProjects.map(p => p.name).join(', ') || 'none');
 
-const server = app.listen(PORT, HOST, () => {
-  console.log(`Potree local uploader running: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
-});
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`Potree local uploader running: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
+  });
 
-server.on('error', (error) => {
-  console.error('[Server] Failed to start:', error);
-  process.exit(1);
-});
+  server.on('error', (error) => {
+    console.error('[Server] Failed to start:', error);
+    process.exit(1);
+  });
+}
+
+export {
+  UPLOAD_LIMITS,
+  GAUSSIAN_UPLOAD_EXTENSIONS,
+  ZIP_MAX_FILE_BYTES,
+  ZIP_MAX_FILES,
+  ZIP_MAX_TOTAL_BYTES,
+  buildPreconvertedZipExtractScript,
+  buildScannerProjectZipExtractScript,
+  createUploadFileFilter,
+  getUploadPasswordCandidate,
+  verifyPreMulterUploadCredential,
+  verifyUploadCredentialFromRequest,
+};

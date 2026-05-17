@@ -17020,15 +17020,32 @@ window.__CLOUDSTUDIO_THREE = THREE;
       refreshCoordinateSystem({ notify: true }, projectId);
     }
 
+    let cachedGridUploadPassword = '';
+
+    function getGridUploadPasswordForSession() {
+      if (cachedGridUploadPassword) return cachedGridUploadPassword;
+      const value = window.prompt(tr('index.upload.passwordPlaceholder', {}, 'Enter upload password'), '');
+      const password = String(value || '').trim();
+      if (!password) {
+        throw new Error(tr('index.upload.errors.passwordRequired', {}, 'Please enter the upload password'));
+      }
+      cachedGridUploadPassword = password;
+      return cachedGridUploadPassword;
+    }
+
     async function uploadBinaryGridToServer(file) {
+      const uploadPassword = getGridUploadPasswordForSession();
       const body = new FormData();
       body.append('gridFile', file);
+      body.append('uploadPassword', uploadPassword);
       const response = await fetch('/api/grids/import', {
         method: 'POST',
+        headers: { 'X-CloudStudio-Upload-Password': uploadPassword },
         body,
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data?.ok === false) {
+        if (response.status === 403) cachedGridUploadPassword = '';
         throw new Error(data?.error || `HTTP ${response.status}`);
       }
       if (data?.grid) {
