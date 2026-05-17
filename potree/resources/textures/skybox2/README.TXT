@@ -1,15 +1,9 @@
-THIS SKY WAS UPDATED AT THE 27TH
-THE ORIG HAD SOME ERRORS
+CloudStudio default point-cloud viewer skybox.
 
-MIRAMAR
-high res 1024^2 environment map
-ships as TGA.
+Asset: Kloofendal 48d Partly Cloudy (Pure Sky)
+Source: https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky
+License: Poly Haven CC0
 
-
-By Jockum Skoglund aka hipshot
-hipshot@zfight.com
-www.zfight.com
-Stockholm, 2005 08 25
-
-
-Modify however you like, just cred me for my work, maybe link to my page.
+The original HDRI is available as a large EXR. CloudStudio uses six lightweight
+1024 x 1024 JPG cube-map faces generated from the Poly Haven tonemapped JPG so
+the default Potree skybox stays fast for customer links.
