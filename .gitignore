@@ -1,0 +1,78 @@
+# macOS / editor noise
+.DS_Store
+._*
+.idea/
+.vscode/*
+!.vscode/settings.json
+
+# Local recovery / agent worktrees
+.claude/
+.recovery/
+handoff/
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+id_rsa*
+id_ed25519*
+
+# Archives and temporary packages
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+.tmp/
+
+# Node / Python dependencies
+node_modules/
+.venv/
+.pydeps/
+.playwright-cli/
+.local-dev/
+__pycache__/
+*.pyc
+
+# CloudStudio runtime data: never commit customer or generated datasets.
+web-uploader/uploads/
+web-uploader/projects/
+web-uploader/pointclouds/
+web-uploader/gaussians/
+web-uploader/exports/
+web-uploader/cache/
+web-uploader/dtm_jobs/
+web-uploader/contour_jobs/
+web-uploader/surface_jobs/
+web-uploader/volume_jobs/
+web-uploader/volume_surface_jobs/
+web-uploader/floorplan_jobs/
+
+# Large optional geospatial data. Keep placeholders/docs in Git.
+web-uploader/assets/grids/builtin/*.tif
+web-uploader/assets/grids/builtin/*.tiff
+web-uploader/assets/grids/builtin/**/*.tif
+web-uploader/assets/grids/builtin/**/*.tiff
+
+# Potree / PotreeConverter generated outputs
+PotreeConverter/build*/
+PotreeConverter/out*/
+potree/node_modules/
+potree/build/potree/
+potree/pointclouds/*
+!potree/pointclouds/README.md
+
+# Local screenshots / visual QA artifacts
+output-*.png
+*-screenshot.png
+playwright-report/
+test-results/

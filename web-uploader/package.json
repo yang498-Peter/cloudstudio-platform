@@ -1,0 +1,27 @@
+{
+  "name": "potree-local-uploader",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test:dxf-draw": "node --test tests/dxf-draw-topology.test.mjs",
+    "test:floorplan": "node --test tests/job-result.test.mjs && python3 -m unittest tests.extract_floorplan_regression",
+    "test:volume": "node --test tests/volume-compute.test.mjs tests/volume-ui.test.mjs tests/volume-job.integration.test.mjs",
+    "test:volume-report": "node --test tests/volume-report-visual.test.mjs",
+    "test:viewer-smoke": "node --test tests/viewer-smoke.test.mjs",
+    "test:viewer-volume": "node --test tests/viewer-volume-flow.test.mjs",
+    "check:i18n": "node scripts/check-i18n.js",
+    "setup:local": "node ./setup-local-runner.cjs",
+    "start:local": "node ./start-local-runner.cjs",
+    "setup:local:win": "powershell -ExecutionPolicy Bypass -File .\\setup-local.ps1",
+    "start:local:win": "powershell -ExecutionPolicy Bypass -File .\\start-local.ps1",
+    "setup:local:unix": "bash ./setup-local.sh",
+    "start:local:unix": "PYTHON_BIN=\"$PWD/.venv/bin/python\" PYTHON3_BIN=python3 node server.js"
+  },
+  "dependencies": {
+    "@playcanvas/splat-transform": "^2.0.3",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}

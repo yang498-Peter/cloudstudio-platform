@@ -1,0 +1,3174 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CloudStudio — Professional point cloud delivery platform</title>
+  <meta name="description" content="CloudStudio is a browser-first delivery platform for survey teams. Upload, publish, and review point clouds, scanner projects, and 3DGS scenes in a branded web workflow." />
+  <meta property="og:title" content="CloudStudio — Professional point cloud delivery platform" />
+  <meta property="og:description" content="Browser-first delivery for point clouds, scanner projects, and 3DGS scenes, backed by a practical workflow for survey teams." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://eu.lidar361.com" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --surface2: #fbfcfe;
+      --surface3: #f2f4f7;
+      --border: rgba(15, 23, 42, 0.09);
+      --bdr2: rgba(15, 23, 42, 0.15);
+      --accent: #e60027;
+      --accent-dim: rgba(230, 0, 39, 0.08);
+      --accent-txt: #b8001f;
+      --brand: #e60027;
+      --brand-dim: rgba(230, 0, 39, 0.08);
+      --brand-txt: #b8001f;
+      --ok: #34c759;
+      --err: #e60027;
+      --warn: #c47b07;
+      --cyan: #e60027;
+      --text: #101828;
+      --text2: #475467;
+      --text3: #98a2b3;
+      --radius: 16px;
+      --font: -apple-system, "SF Pro Text", "SF Pro Display", "PingFang SC", "Segoe UI", "Inter", sans-serif;
+      --elev-1: 0 8px 24px rgba(16, 24, 40, 0.05);
+      --elev-2: 0 18px 40px rgba(16, 24, 40, 0.08);
+      --elev-3: 0 28px 68px rgba(16, 24, 40, 0.12);
+      --elev-4: 0 36px 84px rgba(16, 24, 40, 0.16);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--bg);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      letter-spacing: -0.01em;
+    }
+
+    body[data-i18n-ready="0"] {
+      visibility: hidden;
+    }
+
+    /* ── Dot-grid texture — subtle on light ── */
+    .bg-dots {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image: radial-gradient(rgba(0, 0, 0, 0.045) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(ellipse 110% 90% at 50% 0%, #000 30%, transparent 90%);
+      -webkit-mask-image: radial-gradient(ellipse 110% 90% at 50% 0%, #000 30%, transparent 90%);
+    }
+
+    /* ── Hero ambient glow — soft Apple-marketing aurora ── */
+    .hero-glow {
+      position: absolute;
+      inset: -10% 0 auto 0;
+      height: 760px;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .hero-glow::before,
+    .hero-glow::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.55;
+    }
+    .hero-glow::before {
+      width: 720px;
+      height: 720px;
+      left: 50%;
+      top: -260px;
+      transform: translateX(-58%);
+      background: radial-gradient(circle at center, rgba(0, 122, 255, 0.28) 0%, rgba(0, 122, 255, 0) 70%);
+    }
+    .hero-glow::after {
+      width: 540px;
+      height: 540px;
+      left: 50%;
+      top: 80px;
+      transform: translateX(-30%);
+      background: radial-gradient(circle at center, rgba(232, 150, 58, 0.18) 0%, rgba(232, 150, 58, 0) 70%);
+    }
+
+    /* ── Reveal-on-scroll ── */
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity .7s cubic-bezier(.22,.61,.36,1), transform .7s cubic-bezier(.22,.61,.36,1);
+      will-change: opacity, transform;
+    }
+    [data-reveal].is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* stagger children inside revealed sections */
+    [data-reveal] .feat-card,
+    [data-reveal] .adv-card,
+    [data-reveal] .stat-item {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .6s cubic-bezier(.22,.61,.36,1), transform .6s cubic-bezier(.22,.61,.36,1);
+    }
+    [data-reveal].is-visible .feat-card,
+    [data-reveal].is-visible .adv-card,
+    [data-reveal].is-visible .stat-item {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    [data-reveal].is-visible .feat-card:nth-child(1)  { transition-delay: 40ms; }
+    [data-reveal].is-visible .feat-card:nth-child(2)  { transition-delay: 90ms; }
+    [data-reveal].is-visible .feat-card:nth-child(3)  { transition-delay: 140ms; }
+    [data-reveal].is-visible .feat-card:nth-child(4)  { transition-delay: 190ms; }
+    [data-reveal].is-visible .feat-card:nth-child(5)  { transition-delay: 240ms; }
+    [data-reveal].is-visible .feat-card:nth-child(6)  { transition-delay: 290ms; }
+    [data-reveal].is-visible .feat-card:nth-child(7)  { transition-delay: 340ms; }
+    [data-reveal].is-visible .feat-card:nth-child(8)  { transition-delay: 390ms; }
+    [data-reveal].is-visible .adv-card:nth-child(1)   { transition-delay: 60ms; }
+    [data-reveal].is-visible .adv-card:nth-child(2)   { transition-delay: 160ms; }
+    [data-reveal].is-visible .adv-card:nth-child(3)   { transition-delay: 260ms; }
+    [data-reveal].is-visible .stat-item:nth-child(1)  { transition-delay: 40ms; }
+    [data-reveal].is-visible .stat-item:nth-child(2)  { transition-delay: 110ms; }
+    [data-reveal].is-visible .stat-item:nth-child(3)  { transition-delay: 180ms; }
+    [data-reveal].is-visible .stat-item:nth-child(4)  { transition-delay: 250ms; }
+
+    @media (prefers-reduced-motion: reduce) {
+      [data-reveal],
+      [data-reveal] .feat-card,
+      [data-reveal] .adv-card,
+      [data-reveal] .stat-item {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+    }
+
+    /* ── Hero entrance ── */
+    @keyframes heroFadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero .hero-eyebrow { animation: heroFadeUp .7s .05s cubic-bezier(.22,.61,.36,1) backwards; }
+    .hero h1            { animation: heroFadeUp .8s .15s cubic-bezier(.22,.61,.36,1) backwards; }
+    .hero > p           { animation: heroFadeUp .8s .25s cubic-bezier(.22,.61,.36,1) backwards; }
+    .hero-buttons       { animation: heroFadeUp .8s .35s cubic-bezier(.22,.61,.36,1) backwards; }
+    @media (prefers-reduced-motion: reduce) {
+      .hero .hero-eyebrow,
+      .hero h1,
+      .hero > p,
+      .hero-buttons { animation: none; }
+    }
+
+    /* ── Panel icons ── */
+    .panel-icon svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+    .feat-card {
+      position: relative;
+      overflow: hidden;
+    }
+    .feat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 122, 255, 0.45), transparent);
+      opacity: 0;
+      transition: opacity .25s ease;
+    }
+    .feat-card:hover::before { opacity: 1; }
+
+    .feat-media {
+      position: relative;
+      overflow: hidden;
+      border-radius: 14px;
+      aspect-ratio: 4 / 3;
+      margin-bottom: 14px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 22%),
+        linear-gradient(180deg, rgba(248, 250, 252, 0.96) 0%, rgba(243, 245, 248, 0.9) 100%);
+      border: 1px solid rgba(230, 0, 39, 0.08);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
+    }
+    .feat-media img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    /* ── Panel header with inline SVG icon ── */
+    .panel-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .panel-icon svg { width: 13px; height: 13px; }
+    .panel-title {
+      letter-spacing: .08em;
+    }
+
+    /* ── Header — translucent Apple toolbar ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 56px;
+      background: rgba(255, 255, 255, 0.78);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -.015em;
+      text-decoration: none;
+    }
+
+    .logo svg { width: 22px; height: 22px; flex-shrink: 0; }
+    /* Recolor logo svg strokes for light bg via filter — keeps SVG inline markup intact */
+    .logo svg ellipse,
+    .logo svg path { stroke: var(--text); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .nav-links a {
+      color: var(--text2);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color .15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff !important;
+      font-weight: 600;
+      font-size: 12px;
+      border: none;
+      text-decoration: none;
+      letter-spacing: .01em;
+      transition: background .15s, transform .15s, box-shadow .15s;
+      box-shadow: 0 1px 2px rgba(0, 122, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    .nav-cta:hover {
+      background: #0066d6;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 122, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+
+    .locale-switcher {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.04);
+      color: var(--text2);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .locale-switcher select {
+      border: none;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      outline: none;
+      cursor: pointer;
+      min-width: 86px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 104px 24px 56px;
+    }
+
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 26px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: var(--accent-dim);
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5.2vw, 3.7rem);
+      font-weight: 700;
+      letter-spacing: -.035em;
+      line-height: 1.07;
+      color: var(--text);
+      margin-bottom: 22px;
+    }
+
+    /* Muted second line — contrast without gradient */
+    .hero h1 .h1-sub { color: var(--text2); font-weight: 600; }
+
+    .hero > p {
+      color: var(--text2);
+      font-size: 15px;
+      max-width: 580px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+      font-weight: 400;
+    }
+
+    .hero-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-hero {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background .16s, transform .16s, box-shadow .16s, border-color .16s, color .16s;
+      border: none;
+      letter-spacing: .01em;
+    }
+    .btn-hero.primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 1px 2px rgba(0, 122, 255, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.20);
+    }
+    .btn-hero.primary:hover {
+      background: #0066d6;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(0, 122, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.20);
+    }
+    .btn-hero.secondary {
+      background: var(--surface);
+      border: 1px solid var(--bdr2);
+      color: var(--text);
+      box-shadow: var(--elev-1);
+    }
+    .btn-hero.secondary:hover {
+      color: var(--accent);
+      border-color: rgba(0, 122, 255, 0.35);
+      background: #fafafa;
+      transform: translateY(-1px);
+      box-shadow: var(--elev-2);
+    }
+
+    .hero-note {
+      max-width: 1080px;
+      margin: 14px auto 10px;
+      padding: 0 22px;
+      color: var(--text2);
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: center;
+      opacity: 0.92;
+    }
+
+    /* ── Stats strip ── */
+    .stats-strip {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      padding: 0 24px 72px;
+    }
+
+    .stats-inner {
+      display: flex;
+      gap: 0;
+      flex-wrap: wrap;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--surface);
+      max-width: 980px;
+      width: 100%;
+      box-shadow: var(--elev-2);
+    }
+
+    .stat-item {
+      flex: 1 1 0;
+      min-width: 160px;
+      text-align: center;
+      padding: 22px 28px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-right: none; }
+
+    .stat-val {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -.03em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text3);
+      font-weight: 500;
+      margin-top: 4px;
+      letter-spacing: .025em;
+    }
+
+    /* ── Section chrome ── */
+    .section-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+    #workflow,
+    #features,
+    #advantages {
+      scroll-margin-top: 96px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      margin-bottom: 36px;
+    }
+    .section-title h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+      letter-spacing: -.025em;
+    }
+    .section-title p {
+      color: var(--text2);
+      font-size: 14px;
+      max-width: 480px;
+      line-height: 1.6;
+    }
+
+    /* Layout fix: align separator with section-wrap container instead of
+       arbitrary 32px margins so it lines up with section content above/below. */
+    .section-sep {
+      border: none;
+      border-top: 1px solid var(--border);
+      max-width: 1100px;
+      margin: 0 auto 72px;
+      width: calc(100% - 64px);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Feature grid — soft Apple cards on light bg ── */
+    .feat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 64px;
+    }
+    @media (max-width: 1200px) {
+      .feat-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 920px) {
+      .feat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .feat-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(252,252,253,0.96) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 14px 16px;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      transition: transform .16s, box-shadow .16s, border-color .16s;
+      box-shadow: var(--elev-1);
+    }
+    .feat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--elev-2);
+      border-color: var(--bdr2);
+    }
+
+    .feat-card h3 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 7px;
+      color: var(--text);
+      letter-spacing: -.01em;
+      line-height: 1.4;
+    }
+    .feat-card p {
+      font-size: 11px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    /* ── Workflow / Upload section ── */
+    .workflow-section { margin-bottom: 80px; }
+
+    /* minmax(0, ...) prevents long cloud names from pushing the right
+       track wider than its share; the upload panel keeps a stable width
+       even when progress / status text grows after submission. */
+    .work-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--elev-1);
+      min-width: 0;            /* allow grid track to shrink to 0; prevents track expansion */
+      overflow: hidden;        /* clip stray child overflow (long URLs, log lines) */
+    }
+    .panel-collapsible {
+      padding: 18px 20px;
+    }
+    .panel-fold-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+    }
+    .panel-fold-meta {
+      min-width: 0;
+    }
+    .panel-fold-meta .panel-title {
+      margin-bottom: 8px;
+    }
+    .upload-preview-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .upload-preview-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(16, 24, 40, 0.08);
+      background: rgba(255, 255, 255, 0.84);
+      color: var(--text2);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .01em;
+      white-space: nowrap;
+      transition: background .2s, border-color .2s, color .2s, box-shadow .2s;
+    }
+    .upload-preview-chip.active {
+      background: rgba(230, 0, 39, 0.08);
+      border-color: rgba(230, 0, 39, 0.18);
+      color: var(--accent);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+    .panel-fold-toggle {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      border: 1px solid rgba(230, 0, 39, 0.16);
+      background: linear-gradient(180deg, rgba(230, 0, 39, 0.10) 0%, rgba(230, 0, 39, 0.05) 100%);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(230, 0, 39, 0.10), inset 0 1px 0 rgba(255,255,255,0.8);
+      cursor: pointer;
+      transition: transform .18s, box-shadow .18s, border-color .18s, background .18s;
+      flex-shrink: 0;
+    }
+    .panel-fold-toggle:hover {
+      transform: translateY(-1px);
+      border-color: rgba(230, 0, 39, 0.24);
+      box-shadow: 0 12px 28px rgba(230, 0, 39, 0.14), inset 0 1px 0 rgba(255,255,255,0.82);
+    }
+    .panel-fold-toggle svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+      transition: transform .22s ease;
+    }
+    .panel-collapsible.is-open .panel-fold-toggle svg {
+      transform: rotate(180deg);
+    }
+    .upload-panel-shell {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows .26s ease;
+    }
+    .panel-collapsible.is-open .upload-panel-shell {
+      grid-template-rows: 1fr;
+    }
+    .upload-panel-body {
+      min-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      padding-top: 0;
+      transition: opacity .18s ease, padding-top .18s ease;
+    }
+    .panel-collapsible.is-open .upload-panel-body {
+      opacity: 1;
+      padding-top: 18px;
+    }
+
+    .panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    /* ── Form ── */
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 11px;
+      color: var(--text2);
+      margin-bottom: 6px;
+      font-weight: 500;
+      letter-spacing: .02em;
+    }
+    .field input[type="file"],
+    .field input[type="text"],
+    .field input[type="password"] {
+      width: 100%;
+      background: #ffffff;
+      color: var(--text);
+      border: 1px solid var(--bdr2);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .16s, box-shadow .16s;
+      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.02);
+    }
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.18);
+    }
+    /* Style the file picker button so it doesn't look like a default OS chip */
+    .field input[type="file"]::-webkit-file-upload-button,
+    .field input[type="file"]::file-selector-button {
+      margin-right: 10px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      background: #fafafa;
+      border-radius: 6px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .field input[type="file"]::-webkit-file-upload-button:hover,
+    .field input[type="file"]::file-selector-button:hover {
+      background: #f0f0f0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--bdr2);
+      background: #ffffff;
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+      transition: background .16s, border-color .16s, color .16s, box-shadow .16s, transform .16s;
+      font-family: inherit;
+      font-weight: 600;
+      box-shadow: var(--elev-1);
+    }
+    .btn:hover {
+      background: #fafafa;
+      border-color: rgba(0, 0, 0, 0.18);
+      box-shadow: var(--elev-2);
+    }
+    .btn.pri {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(0, 122, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    .btn.pri:hover {
+      background: #0066d6;
+      border-color: #0066d6;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    .btn:disabled,
+    .btn.pri:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: var(--elev-1);
+    }
+
+    /* ── Status / Log ── */
+    .status-bar {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.025);
+      color: var(--text2);
+      transition: border-color .2s, color .2s, background .2s;
+      /* Containment so long backend messages / file paths can never
+         widen the upload panel or push neighbouring elements. */
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      max-width: 100%;
+      min-width: 0;
+    }
+    .status-bar.ok  {
+      border-color: rgba(52, 199, 89, 0.32);
+      background: rgba(52, 199, 89, 0.08);
+      color: #1e7d3a;
+    }
+    .status-bar.err {
+      border-color: rgba(255, 59, 48, 0.32);
+      background: rgba(255, 59, 48, 0.08);
+      color: #c4302b;
+    }
+    .status-bar.work {
+      border-color: rgba(255, 149, 0, 0.34);
+      background: rgba(255, 149, 0, 0.08);
+      color: #b06a18;
+    }
+
+    .log-box {
+      margin-top: 10px;
+      min-height: 60px;
+      max-height: 180px;
+      overflow-y: auto;
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%);
+      color: var(--text2);
+      padding: 12px 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, "JetBrains Mono", monospace;
+      font-size: 11px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.6;
+      box-shadow: inset 0 1px 1px rgba(16, 24, 40, 0.02);
+      max-width: 100%;
+      min-width: 0;
+    }
+    .log-box.is-terminal {
+      background: #1d1d1f;
+      color: #7dd3fc;
+      border-color: rgba(16, 24, 40, 0.18);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.30);
+    }
+
+    /* ── Cloud list ── */
+    .cloud-list-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 8px;
+    }
+    .cloud-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .cloud-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface2);
+      padding: 10px 12px;
+      transition: background .16s, border-color .16s, transform .16s, box-shadow .16s;
+      min-width: 0;             /* let flex children with overflow:hidden actually shrink */
+      max-width: 100%;
+    }
+    .cloud-item:hover {
+      border-color: var(--bdr2);
+      background: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: var(--elev-1);
+    }
+    .cloud-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      background: var(--accent-dim);
+      border: 1px solid rgba(0, 122, 255, 0.18);
+    }
+    .cloud-info { flex: 1; min-width: 0; }
+    .cloud-name-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+    .cloud-name-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .cloud-name {
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .cloud-meta {
+      font-size: 11px;
+      color: var(--text2);
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .badge {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 10px;
+      padding: 2px 7px;
+      color: var(--text2);
+      background: rgba(0, 0, 0, 0.04);
+      white-space: nowrap;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .empty-state {
+      border: 1px dashed var(--bdr2);
+      border-radius: 10px;
+      padding: 28px;
+      text-align: center;
+      color: var(--text2);
+      font-size: 12px;
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    /* Scanner cloud overrides — keep amber as a brand differentiator */
+    .cloud-item-scanner {
+      border-color: rgba(232, 150, 58, 0.28);
+      background: rgba(232, 150, 58, 0.04);
+    }
+    .cloud-item-scanner:hover {
+      border-color: rgba(232, 150, 58, 0.45);
+      background: rgba(232, 150, 58, 0.08);
+    }
+    .cloud-item-scanner .cloud-icon {
+      background: rgba(232, 150, 58, 0.14);
+      border-color: rgba(232, 150, 58, 0.32);
+    }
+    .cloud-type-tag {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 5px;
+      vertical-align: middle;
+      margin-left: 6px;
+      letter-spacing: .3px;
+    }
+    .scanner-tag {
+      background: rgba(232, 150, 58, 0.14);
+      border: 1px solid rgba(232, 150, 58, 0.32);
+      color: var(--brand-txt);
+    }
+    .cloud-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .feat-tag {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      white-space: nowrap;
+    }
+
+    /* Pre-converted cloud tag */
+    .preconverted-tag {
+      background: rgba(0, 122, 255, 0.08);
+      border: 1px solid rgba(0, 122, 255, 0.24);
+      color: #0a66c2;
+    }
+    .supersplat-tag {
+      background: rgba(52, 199, 89, 0.10);
+      border: 1px solid rgba(52, 199, 89, 0.30);
+      color: #1e7d3a;
+    }
+    .cloud-meta-detail {
+      color: var(--text3);
+      font-size: 10px;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cloud-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .cloud-open {
+      min-width: 110px;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 11px;
+      padding-inline: 14px;
+    }
+    .gaussian-publish-panel {
+      margin-bottom: 14px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.025);
+    }
+    .gaussian-publish-title {
+      color: var(--text);
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 5px;
+      letter-spacing: -0.01em;
+    }
+    .gaussian-publish-text {
+      color: var(--text2);
+      font-size: 12px;
+      line-height: 1.55;
+      margin-bottom: 10px;
+    }
+    .gaussian-secondary-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .gaussian-secondary-actions .btn {
+      font-size: 11px;
+      min-height: 32px;
+      padding: 7px 10px;
+    }
+    .gaussian-result {
+      display: none;
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid rgba(52, 199, 89, 0.30);
+      border-radius: 10px;
+      background: rgba(52, 199, 89, 0.08);
+    }
+    .gaussian-result.is-visible { display: block; }
+    .gaussian-result-title {
+      color: #1e7d3a;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 7px;
+    }
+    .gaussian-result-meta {
+      color: var(--text2);
+      font-size: 11px;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    .gaussian-result .btn {
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    /* Delete button on cloud cards */
+    .btn-delete {
+      background: transparent;
+      border: 1px solid rgba(255, 59, 48, 0.22);
+      color: rgba(255, 59, 48, 0.72);
+      border-radius: 10px;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-delete:hover {
+      background: rgba(255, 59, 48, 0.10);
+      border-color: rgba(255, 59, 48, 0.50);
+      color: var(--err);
+    }
+
+    /* Delete confirmation modal overlay */
+    .modal-overlay-del {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.36);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay-del.open { display: flex; }
+    .modal-box-del {
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 26px 28px;
+      width: 380px;
+      max-width: 94vw;
+      box-shadow: var(--elev-4);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+    }
+    .modal-box-del h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--err);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .modal-box-del p {
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 14px;
+      line-height: 1.65;
+    }
+    .modal-box-del label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 6px;
+    }
+    .modal-box-del input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--bdr2);
+      background: #ffffff;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      margin-bottom: 8px;
+      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.02);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .modal-box-del input[type="password"]:focus {
+      border-color: var(--err);
+      box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.18);
+    }
+    .modal-del-err {
+      font-size: 11px;
+      color: var(--err);
+      min-height: 16px;
+      margin-bottom: 12px;
+    }
+    .modal-del-footer {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .btn-del-confirm {
+      background: var(--err);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s, transform .15s, box-shadow .15s;
+      box-shadow: 0 1px 2px rgba(255, 59, 48, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    .btn-del-confirm:hover {
+      background: #d92e25;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 59, 48, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    .btn-del-confirm:disabled {
+      opacity: .45;
+      cursor: default;
+      transform: none;
+    }
+
+    /* ── Advantages — Apple-card grid (no shared borders) ── */
+    .adv-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 80px;
+    }
+    @media (max-width: 768px) { .adv-grid { grid-template-columns: 1fr; } }
+
+    .adv-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 30px 26px;
+      transition: transform .16s, box-shadow .16s, border-color .16s;
+      box-shadow: var(--elev-1);
+    }
+    .adv-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--elev-2);
+      border-color: var(--bdr2);
+    }
+
+    .adv-num {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .adv-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text);
+      letter-spacing: -.018em;
+    }
+    .adv-card p {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.72;
+    }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+    }
+    footer p { color: var(--text2); font-size: 11px; }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    .footer-credit { color: var(--text3); font-size: 11px; }
+
+    /* ── Toasts ── */
+    #toasts {
+      position: fixed;
+      right: 16px;
+      top: 72px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
+    }
+    .toast {
+      min-width: 230px;
+      max-width: 340px;
+      padding: 11px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.95);
+      font-size: 12px;
+      color: var(--text);
+      box-shadow: var(--elev-3);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      animation: toastIn .2s ease-out;
+    }
+    .toast.ok  {
+      border-color: rgba(52, 199, 89, 0.40);
+      background: rgba(52, 199, 89, 0.10);
+      color: #1e7d3a;
+    }
+    .toast.err {
+      border-color: rgba(255, 59, 48, 0.40);
+      background: rgba(255, 59, 48, 0.10);
+      color: #c4302b;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(14px); }
+      to   { opacity: 1; transform: translateX(0);    }
+    }
+
+    /* ── Scrollbar — Apple translucent ── */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-corner { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(60, 60, 67, 0.28);
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+      min-height: 24px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(60, 60, 67, 0.45);
+      background-clip: padding-box;
+    }
+    ::-webkit-scrollbar-button { display: none; height: 0; width: 0; }
+    * { scrollbar-width: thin; scrollbar-color: rgba(60, 60, 67, 0.32) transparent; }
+
+    /* ── Upload tabs ── */
+    .up-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .up-tab {
+      flex: 1 1 calc(50% - 6px);
+      min-width: 0;
+      padding: 9px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--bdr2);
+      background: #ffffff;
+      color: var(--text2);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .16s, border-color .16s, color .16s, box-shadow .16s;
+      box-shadow: var(--elev-1);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .up-tab.active {
+      background: linear-gradient(180deg, rgba(0, 122, 255, 0.10) 0%, rgba(0, 122, 255, 0.04) 100%);
+      border-color: rgba(0, 122, 255, 0.40);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(0, 122, 255, 0.18), var(--elev-1);
+    }
+    .up-tab:hover:not(.active) {
+      background: #fafafa;
+      border-color: rgba(0, 0, 0, 0.18);
+      color: var(--text);
+    }
+    .zip-hint {
+      font-size: 11px;
+      color: var(--text2);
+      background: rgba(0, 122, 255, 0.05);
+      border: 1px solid rgba(0, 122, 255, 0.16);
+      border-radius: 10px;
+      padding: 11px 13px;
+      line-height: 1.72;
+      margin-bottom: 14px;
+    }
+    .zip-hint b { color: var(--text); font-weight: 600; }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      display: none;
+      margin-top: 14px;
+      max-width: 100%;
+      min-width: 0;
+    }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text2);
+      margin-bottom: 6px;
+      min-width: 0;
+    }
+    .progress-header > span:first-child {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .progress-pct { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .progress-track {
+      height: 4px;
+      background: rgba(0, 0, 0, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width .25s ease;
+    }
+    @keyframes idx-pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .35; }
+    }
+    .progress-fill.converting {
+      width: 100% !important;
+      background: var(--accent);
+      animation: idx-pulse 1.4s ease-in-out infinite;
+      transition: none;
+    }
+    .progress-speed {
+      font-size: 10px;
+      color: var(--text3);
+      margin-top: 6px;
+      text-align: right;
+      min-height: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+    /* ── Mobile responsive (iPhone priority) ────────────────────────── */
+    @media (max-width: 767px) {
+      /* Header: shrink padding, hide nav links, show hamburger */
+      header {
+        padding: 0 16px;
+        height: 48px;
+      }
+
+      .nav-links {
+        display: none;
+        position: fixed;
+        top: 48px;
+        left: 0;
+        width: 100vw;
+        height: calc(100vh - 48px);
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        flex-direction: column;
+        align-items: stretch;
+        padding: 20px 24px;
+        gap: 4px;
+        z-index: 9999;
+        overflow-y: auto;
+        box-shadow: var(--elev-3);
+      }
+      .nav-links.mobile-open { display: flex; }
+
+      .nav-links a {
+        font-size: 15px;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+      }
+      .nav-links .nav-cta {
+        text-align: center;
+        padding: 12px;
+        margin-top: 12px;
+        font-size: 14px;
+        border-radius: 999px;
+        border-bottom: none;
+      }
+      .nav-links .locale-switcher {
+        margin-top: 14px;
+        justify-content: center;
+        border-bottom: none;
+      }
+
+      /* Hamburger button (injected by JS) */
+      .mobile-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: rgba(0, 0, 0, 0.03);
+        color: var(--text);
+        font-size: 18px;
+        cursor: pointer;
+        transition: background .15s, border-color .15s;
+      }
+      .mobile-menu-btn:hover {
+        background: rgba(0, 0, 0, 0.06);
+        border-color: var(--bdr2);
+      }
+
+      /* Hero: reduce top padding */
+      .hero { padding: 56px 16px 36px; }
+      .hero h1 { font-size: clamp(1.6rem, 7vw, 2.4rem); }
+      .hero > p { font-size: 13px; margin-bottom: 24px; }
+      .hero-buttons { gap: 8px; }
+      .btn-hero { padding: 11px 18px; font-size: 12px; }
+      .hero-note { font-size: 11px; padding: 0 16px; }
+
+      /* Stats strip: 2x2 grid instead of 4 in a row */
+      .stats-strip { padding: 0 16px 40px; }
+      .stats-inner { flex-wrap: wrap; }
+      .stat-item {
+        flex: 1 1 45%;
+        min-width: 0;
+        padding: 16px 14px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .stat-item:nth-child(odd) { border-right: 1px solid var(--border); }
+      .stat-item:nth-last-child(-n+2) { border-bottom: none; }
+      .stat-val { font-size: 22px; }
+
+      /* Section wrap: tighter padding */
+      .section-wrap { padding: 0 16px; }
+      .section-sep { width: calc(100% - 32px); margin: 0 auto 48px; }
+
+      /* Feature grid: single column on small screens */
+      .feat-grid {
+        grid-template-columns: 1fr;
+        margin-bottom: 48px;
+      }
+
+      /* Advantages grid: stacked, reduce padding */
+      .adv-card { padding: 24px 20px; }
+      .adv-grid { margin-bottom: 48px; gap: 12px; }
+
+      /* Workflow section */
+      .workflow-section { margin-bottom: 48px; }
+      .panel-collapsible {
+        padding: 16px;
+      }
+      .panel-fold-head {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+      .panel-fold-toggle {
+        justify-self: end;
+      }
+      .upload-preview-chips {
+        gap: 6px;
+      }
+      .upload-preview-chip {
+        max-width: 100%;
+      }
+
+      /* Upload tabs: scroll horizontally so 4 chips don't crush */
+      .up-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        margin-left: -4px;
+        margin-right: -4px;
+        padding: 4px;
+        scrollbar-width: none;
+      }
+      .up-tabs::-webkit-scrollbar { display: none; }
+      .up-tab {
+        flex: 0 0 auto;
+      }
+
+      /* Footer */
+      footer {
+        padding: 16px;
+        flex-direction: column;
+        text-align: center;
+        gap: 6px;
+      }
+
+      /* Cloud list items */
+      .cloud-item { padding: 8px 10px; gap: 8px; }
+      .cloud-icon { width: 32px; height: 32px; font-size: 14px; }
+
+      /* Toasts: full width on mobile */
+      #toasts { right: 8px; left: 8px; top: 60px; }
+      .toast { min-width: 0; max-width: 100%; }
+
+      /* Modal */
+      .modal-box-del { padding: 22px; border-radius: 16px; }
+    }
+
+    /* ── 2026-05 Tersus homepage brand refresh overrides ──────────── */
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(230, 0, 39, 0.07), transparent 26%),
+        linear-gradient(180deg, #f8f9fb 0%, #f6f7f9 100%);
+      letter-spacing: 0;
+    }
+    .bg-dots {
+      background-image:
+        linear-gradient(rgba(16, 24, 40, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16, 24, 40, 0.03) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: radial-gradient(ellipse 120% 100% at 50% 0%, #000 46%, transparent 92%);
+      -webkit-mask-image: radial-gradient(ellipse 120% 100% at 50% 0%, #000 46%, transparent 92%);
+    }
+    .hero-glow::before {
+      width: 820px;
+      height: 820px;
+      top: -360px;
+      background: radial-gradient(circle at center, rgba(230, 0, 39, 0.16) 0%, rgba(230, 0, 39, 0) 72%);
+    }
+    .hero-glow::after {
+      width: 560px;
+      height: 560px;
+      left: auto;
+      right: -120px;
+      top: 0;
+      transform: none;
+      background: radial-gradient(circle at center, rgba(184, 0, 31, 0.09) 0%, rgba(184, 0, 31, 0) 74%);
+    }
+    header {
+      height: 68px;
+      padding: 0 34px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 1px 0 rgba(16, 24, 40, 0.04);
+    }
+    .logo {
+      gap: 14px;
+    }
+    .logo-mark {
+      width: 110px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(230, 0, 39, 0.10);
+      background: #fff;
+      box-shadow: 0 10px 22px rgba(230, 0, 39, 0.08);
+      flex-shrink: 0;
+    }
+    .logo-mark img {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+    .logo-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .logo-kicker {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+    .logo-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -.03em;
+      line-height: 1.1;
+    }
+    .logo-subtitle {
+      font-size: 11px;
+      line-height: 1.2;
+      color: var(--text2);
+      font-weight: 500;
+    }
+    .nav-links {
+      gap: 16px;
+    }
+    .nav-links a {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .02em;
+    }
+    .nav-cta,
+    .btn.pri,
+    .btn-hero.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 12px 28px rgba(230, 0, 39, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    .nav-cta:hover,
+    .btn.pri:hover,
+    .btn-hero.primary:hover {
+      background: var(--accent-txt);
+      border-color: var(--accent-txt);
+      box-shadow: 0 16px 34px rgba(230, 0, 39, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    .locale-switcher {
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.84);
+      font-weight: 600;
+    }
+    .hero {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 88px 32px 36px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(360px, .9fr);
+      gap: 42px;
+      align-items: end;
+      text-align: left;
+    }
+    .hero-copy {
+      min-width: 0;
+    }
+    .hero-side {
+      min-width: 0;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .hero-eyebrow {
+      margin-bottom: 18px;
+      border: 1px solid rgba(230, 0, 39, 0.14);
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--accent);
+      padding: 6px 12px;
+    }
+    .hero h1 {
+      max-width: 11ch;
+      font-size: clamp(2.2rem, 4.4vw, 3.85rem);
+      line-height: .98;
+      letter-spacing: -.055em;
+      margin-bottom: 18px;
+    }
+    .hero h1 .h1-sub {
+      display: block;
+      margin-top: 12px;
+      font-size: .35em;
+      line-height: 1.35;
+      color: var(--text2);
+      max-width: 18ch;
+      letter-spacing: -.02em;
+    }
+    .hero > p,
+    .hero-copy > p {
+      margin: 0 0 26px;
+      max-width: 700px;
+      font-size: 16px;
+      line-height: 1.72;
+      font-weight: 500;
+    }
+    .hero-buttons {
+      justify-content: flex-start;
+      gap: 12px;
+    }
+    .btn-hero.secondary:hover {
+      border-color: rgba(230, 0, 39, 0.34);
+      color: var(--accent);
+      background: #fff;
+    }
+    .hero-brief {
+      width: 100%;
+      max-width: 408px;
+      padding: 24px 22px 22px;
+      border-radius: 20px;
+      border: 1px solid rgba(230, 0, 39, 0.10);
+      background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(251,252,254,0.96) 100%);
+      box-shadow: var(--elev-2);
+    }
+    .hero-brief-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .hero-brief-kicker {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .16em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+    .hero-brief-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(230, 0, 39, 0.05);
+      border: 1px solid rgba(230, 0, 39, 0.12);
+      color: var(--accent-txt);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .hero-brief h3 {
+      font-size: 22px;
+      line-height: 1.12;
+      letter-spacing: -.04em;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+    .hero-brief p {
+      margin-bottom: 18px;
+      font-size: 13px;
+      line-height: 1.68;
+      color: var(--text2);
+    }
+    .hero-flow {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .hero-flow-step {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+    .hero-flow-num {
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: rgba(230, 0, 39, 0.06);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .hero-flow-step strong {
+      display: block;
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .hero-flow-step span {
+      display: block;
+      font-size: 11px;
+      line-height: 1.55;
+      color: var(--text2);
+    }
+    .hero-brief-meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .hero-meta-item {
+      padding: 10px;
+      border-radius: 12px;
+      background: var(--surface3);
+      border: 1px solid rgba(16, 24, 40, 0.05);
+    }
+    .hero-meta-item strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.1;
+      letter-spacing: -.02em;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .hero-meta-item span {
+      display: block;
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 700;
+    }
+    .hero-note {
+      max-width: 1240px;
+      margin: 6px auto 26px;
+      padding: 12px 16px;
+      font-size: 12px;
+      line-height: 1.72;
+      text-align: left;
+      border: 1px solid rgba(230, 0, 39, 0.10);
+      border-left: 3px solid rgba(230, 0, 39, 0.72);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.78);
+      box-shadow: var(--elev-1);
+    }
+    .stats-strip {
+      padding: 0 32px 50px;
+    }
+    .stats-inner {
+      max-width: 1240px;
+      box-shadow: var(--elev-1);
+      border-radius: 18px;
+    }
+    .stat-item {
+      padding: 18px 24px;
+    }
+    .stat-label {
+      color: var(--text2);
+    }
+    .section-wrap {
+      max-width: 1240px;
+    }
+    #features .section-title {
+      margin-bottom: 22px;
+    }
+    #features .section-title p {
+      max-width: 640px;
+    }
+    .section-title {
+      margin-bottom: 28px;
+    }
+    .section-title h2 {
+      font-size: 28px;
+      letter-spacing: -.04em;
+    }
+    .section-title p {
+      max-width: 560px;
+    }
+    .section-sep {
+      max-width: 1240px;
+      margin-bottom: 48px;
+    }
+    .panel,
+    .feat-card,
+    .adv-card {
+      border-radius: 18px;
+      box-shadow: var(--elev-1);
+    }
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(251,252,254,0.96) 100%);
+      border: 1px solid rgba(16, 24, 40, 0.08);
+      box-shadow: var(--elev-2);
+    }
+    .panel-title,
+    .section-label,
+    .adv-num {
+      color: var(--accent);
+    }
+    .panel-icon,
+    .cloud-icon {
+      background: rgba(230, 0, 39, 0.05);
+      border-color: rgba(230, 0, 39, 0.12);
+      color: var(--accent);
+    }
+    .field input:focus,
+    .modal-box-del input[type=\"password\"]:focus {
+      box-shadow: 0 0 0 3px rgba(230, 0, 39, 0.12);
+    }
+    .zip-hint,
+    .gaussian-publish-panel {
+      background: rgba(230, 0, 39, 0.03);
+      border-color: rgba(230, 0, 39, 0.10);
+    }
+    .up-tab.active {
+      background: linear-gradient(180deg, rgba(230, 0, 39, 0.10) 0%, rgba(230, 0, 39, 0.04) 100%);
+      border-color: rgba(230, 0, 39, 0.24);
+      box-shadow: 0 0 0 1px rgba(230, 0, 39, 0.10), var(--elev-1);
+    }
+    .cloud-item:hover,
+    .feat-card:hover,
+    .adv-card:hover {
+      border-color: rgba(230, 0, 39, 0.14);
+    }
+    .cloud-list {
+      gap: 12px;
+    }
+    .cloud-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border-radius: 14px;
+    }
+    .badge {
+      display: none;
+    }
+    .cloud-name {
+      font-size: 13px;
+    }
+    .cloud-meta {
+      margin-top: 0;
+    }
+    .cloud-meta,
+    .cloud-meta-detail {
+      line-height: 1.45;
+    }
+    .cloud-item-scanner .cloud-icon {
+      background: rgba(230, 0, 39, 0.07);
+      border-color: rgba(230, 0, 39, 0.14);
+    }
+    .preconverted-tag {
+      background: rgba(230, 0, 39, 0.06);
+      border-color: rgba(230, 0, 39, 0.14);
+      color: var(--accent-txt);
+    }
+    .scanner-tag {
+      background: rgba(16, 24, 40, 0.04);
+      border-color: rgba(16, 24, 40, 0.08);
+      color: var(--text2);
+    }
+    .progress-fill {
+      background: linear-gradient(90deg, var(--accent) 0%, #ff4d6d 100%);
+    }
+    .progress-fill.converting {
+      background: linear-gradient(90deg, var(--accent) 0%, #ff4d6d 100%);
+    }
+    .toast.err,
+    .status-bar.err,
+    .btn-delete:hover {
+      color: var(--accent-txt);
+    }
+    @media (max-width: 767px) {
+      header {
+        height: 58px;
+      }
+      .nav-links {
+        top: 58px;
+        height: calc(100vh - 58px);
+      }
+      .logo-mark {
+        width: 98px;
+        height: 34px;
+        padding: 6px 10px;
+      }
+      .logo-kicker,
+      .logo-subtitle {
+        display: none;
+      }
+      .logo-title {
+        font-size: 16px;
+      }
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 48px 16px 22px;
+      }
+      .hero h1 {
+        font-size: clamp(2rem, 9vw, 2.85rem);
+        max-width: none;
+      }
+      .hero-copy > p {
+        max-width: 100%;
+        font-size: 13px;
+        margin-bottom: 20px;
+      }
+      .hero-side {
+        justify-content: stretch;
+      }
+      .hero-brief {
+        max-width: none;
+        padding: 18px;
+        border-radius: 18px;
+      }
+      .hero-brief h3 {
+        font-size: 19px;
+      }
+      .hero-brief-meta {
+        grid-template-columns: 1fr;
+      }
+      .hero-note,
+      .stats-strip,
+      .section-wrap {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+      .hero-note {
+        padding: 12px 14px;
+      }
+      .section-sep {
+        width: calc(100% - 32px);
+      }
+      .cloud-item {
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: start;
+      }
+      .cloud-actions {
+        grid-column: 2;
+        justify-content: flex-start;
+        padding-top: 4px;
+      }
+      .cloud-open {
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+
+<body data-i18n-auto-root data-i18n-ready="0" data-page-title="CloudStudio — Professional point cloud delivery platform">
+  <div class="bg-dots"></div>
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div id="toasts"></div>
+
+  <!-- ── Header ── -->
+  <header>
+    <a class="logo" href="/">
+      <span class="logo-mark" aria-hidden="true">
+        <img src="/potree/resources/tersus-logo.png" alt="">
+      </span>
+      <span class="logo-copy">
+        <span class="logo-kicker">Tersus GNSS</span>
+        <span class="logo-title">CloudStudio</span>
+        <span class="logo-subtitle" data-i18n="index.hero.brandSupport">Professional point cloud delivery platform</span>
+      </span>
+    </a>
+    <nav class="nav-links">
+      <a href="#features" data-i18n="index.nav.features">Capabilities</a>
+      <a href="#workflow" data-i18n="index.nav.start">Get Started</a>
+      <a href="#advantages" data-i18n="index.nav.advantages">Why CloudStudio</a>
+      <a href="/viewer" target="_blank" class="nav-cta" data-i18n="index.nav.openViewer">Open Viewer</a>
+      <label class="locale-switcher" for="locale-select">
+        <span data-i18n="common.locale.label">Language</span>
+        <select id="locale-select" aria-label="Language">
+          <option value="en">English</option>
+          <option value="zh-CN">Chinese</option>
+          <option value="ko-KR">한국어</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+          <option value="es">Español</option>
+          <option value="it">Italiano</option>
+          <option value="fi">Suomi</option>
+          <option value="sv">Svenska</option>
+        </select>
+      </label>
+    </nav>
+  </header>
+
+  <!-- ── Hero ── -->
+  <section class="hero" data-reveal>
+    <div class="hero-copy">
+      <div class="hero-eyebrow" data-i18n="index.hero.eyebrow">BROWSER-READY SURVEY DELIVERY</div>
+      <h1 data-i18n-html="index.hero.title">Upload, publish, and review survey data in one place.<br><span class="h1-sub">Open point clouds and 3D Gaussian scenes directly in the browser, with the control surface your delivery team actually needs.</span></h1>
+      <p data-i18n="index.hero.subtitle">CloudStudio helps survey and mobile scanning teams move from raw capture to shareable web viewing faster. Publish LAS, scanner projects, and 3DGS scenes with a workflow designed for real project delivery, not just demo playback.</p>
+      <div class="hero-buttons">
+        <a class="btn-hero primary" href="/viewer" target="_blank" data-i18n="index.hero.launchViewer">Open Viewer</a>
+        <a class="btn-hero secondary" href="#workflow" data-i18n="index.hero.uploadPointCloud">Upload Data</a>
+      </div>
+    </div>
+    <div class="hero-side">
+      <div class="hero-brief">
+        <div class="hero-brief-top">
+          <div class="hero-brief-kicker" data-i18n="index.hero.sideKicker">Workflow</div>
+          <div class="hero-brief-badge" data-i18n="index.hero.sideBadge">Tersus-ready</div>
+        </div>
+        <h3 data-i18n="index.hero.sideTitle">A practical publish flow for point clouds and 3DGS.</h3>
+        <p data-i18n="index.hero.sideText">Keep the homepage operational: upload source data, watch conversion state, and open the published scene without leaving the platform.</p>
+        <div class="hero-flow">
+          <div class="hero-flow-step">
+            <div class="hero-flow-num">01</div>
+            <div>
+              <strong data-i18n="index.hero.step1Title">Upload source data</strong>
+              <span data-i18n="index.hero.step1Text">Send LAS, scanner ZIPs, pre-converted octrees, or Gaussian PLY files.</span>
+            </div>
+          </div>
+          <div class="hero-flow-step">
+            <div class="hero-flow-num">02</div>
+            <div>
+              <strong data-i18n="index.hero.step2Title">Publish browser output</strong>
+              <span data-i18n="index.hero.step2Text">Convert or register assets so teams can open them instantly in the web viewer.</span>
+            </div>
+          </div>
+          <div class="hero-flow-step">
+            <div class="hero-flow-num">03</div>
+            <div>
+              <strong data-i18n="index.hero.step3Title">Review and deliver</strong>
+              <span data-i18n="index.hero.step3Text">Open the final scene, validate status, and hand over a shareable viewing path.</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-brief-meta">
+          <div class="hero-meta-item">
+            <strong>LAS</strong>
+            <span data-i18n="index.hero.meta1">Upload format</span>
+          </div>
+          <div class="hero-meta-item">
+            <strong>3DGS</strong>
+            <span data-i18n="index.hero.meta2">Browser ready</span>
+          </div>
+          <div class="hero-meta-item">
+            <strong>Web</strong>
+            <span data-i18n="index.hero.meta3">Project delivery</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-strip" data-reveal>
+    <div class="stats-inner">
+      <div class="stat-item">
+        <div class="stat-val">1B+</div>
+        <div class="stat-label" data-i18n="index.stats.maxPoints">Points per scene</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">15+</div>
+        <div class="stat-label" data-i18n="index.stats.tools">Pro analysis tools</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">&lt;5s</div>
+        <div class="stat-label" data-i18n="index.stats.loadTime">First-frame latency</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val" id="stat-clouds">—</div>
+        <div class="stat-label" data-i18n="index.stats.clouds">Scenes published</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-sep">
+
+  <!-- ── Workflow: Upload + Cloud list ── -->
+  <div class="section-wrap workflow-section" id="workflow" data-reveal>
+    <div class="section-label" data-i18n="index.workflow.label">Get Started</div>
+    <div class="section-title">
+      <h2 data-i18n="index.workflow.title">Upload &amp; publish</h2>
+      <p data-i18n="index.workflow.subtitle">Drop a LAS/LAZ file or a full scanner project — CloudStudio prepares a streaming-ready scene and a shareable browser link.</p>
+    </div>
+    <div class="work-grid">
+
+      <!-- Cloud list panel -->
+      <div class="panel">
+        <div class="cloud-list-hd">
+          <div class="panel-title" style="margin:0;">
+            <span class="panel-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a5 5 0 010-10 6 6 0 0111.6 1.5A4 4 0 0118 18z"/></svg>
+            </span>
+            <span data-i18n="index.clouds.title">Published Scenes</span>
+          </div>
+          <button class="btn" id="refreshBtn" data-i18n="index.clouds.refresh">Refresh</button>
+        </div>
+        <div class="cloud-list" id="cloudList"></div>
+      </div>
+
+      <!-- Upload panel -->
+      <div class="panel panel-collapsible" id="uploadPanel">
+        <div class="panel-fold-head">
+          <div class="panel-fold-meta">
+            <div class="panel-title">
+              <span class="panel-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M5 16v3a1 1 0 001 1h12a1 1 0 001-1v-3"/></svg>
+              </span>
+              <span data-i18n="index.upload.title">Upload Point Cloud</span>
+            </div>
+            <div class="upload-preview-chips" aria-hidden="true">
+              <span class="upload-preview-chip active" data-preview-tab="las" data-i18n="index.upload.tabLas">Single LAS / LAZ</span>
+              <span class="upload-preview-chip" data-preview-tab="zip" data-i18n="index.upload.tabZip">Scanner Project (ZIP)</span>
+              <span class="upload-preview-chip" data-preview-tab="potree" data-i18n="index.upload.tabPotree">Pre-converted Octree</span>
+              <span class="upload-preview-chip" data-preview-tab="gaussian" data-i18n="index.upload.tabGaussian">3D Gaussian Scene</span>
+            </div>
+          </div>
+          <button type="button" class="panel-fold-toggle" id="uploadPanelToggle" aria-expanded="false" aria-controls="uploadPanelBody" title="Upload Point Cloud">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+        </div>
+
+        <div class="upload-panel-shell">
+          <div class="upload-panel-body" id="uploadPanelBody">
+        <!-- Mode tabs -->
+        <div class="up-tabs">
+          <button class="up-tab active" data-tab="las" data-i18n="index.upload.tabLas">Single LAS / LAZ</button>
+          <button class="up-tab" data-tab="zip" data-i18n="index.upload.tabZip">Scanner Project (ZIP)</button>
+          <button class="up-tab" data-tab="potree" data-i18n="index.upload.tabPotree">Pre-converted Octree</button>
+          <button class="up-tab" data-tab="gaussian" data-i18n="index.upload.tabGaussian">3D Gaussian Scene</button>
+        </div>
+
+        <!-- Panel: single LAS -->
+        <div id="up-panel-las">
+          <form id="uploadForm">
+            <div class="field">
+              <label data-i18n="index.upload.fileLabel">Point cloud file (LAS / LAZ)</label>
+              <input id="f-file" type="file" name="pointcloud" accept=".las,.laz">
+            </div>
+            <div class="field">
+              <label data-i18n="index.upload.nameLabel">Point cloud name (optional, defaults to file name)</label>
+              <input id="f-name" type="text" name="name" placeholder="e.g. building_facade" data-i18n-placeholder="index.upload.namePlaceholder">
+            </div>
+            <div class="field">
+              <label data-i18n="index.upload.passwordLabel">Upload Password</label>
+              <input id="f-upload-password" type="password" autocomplete="off" placeholder="Enter upload password" data-i18n-placeholder="index.upload.passwordPlaceholder">
+            </div>
+            <div class="actions">
+              <button type="submit" id="submitBtn" class="btn pri" data-i18n="index.upload.submitBtn">Upload &amp; Convert</button>
+              <button type="button" id="clearBtn" class="btn" data-i18n="index.upload.clearBtn">Clear Logs</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Panel: project ZIP -->
+        <div id="up-panel-zip" style="display:none;">
+          <div class="zip-hint" data-i18n-html="index.upload.zipHint">
+            Compress the scanner project folder as a <b>ZIP</b> and upload it. The server automatically extracts it and converts LAS files. Photos, trajectory, coordinates, and related files remain available in the viewer.<br>
+            <b>Compression method:</b>Right-click the folder → compress as ZIP, keeping the folder structure.
+          </div>
+          <form id="uploadZipForm">
+            <div class="field">
+              <label data-i18n="index.upload.zipFileLabel">ZIP file (containing the whole scanner project folder)</label>
+              <input id="f-zip" type="file" name="projectzip" accept=".zip">
+            </div>
+            <div class="field">
+              <label data-i18n="index.upload.zipNameLabel">Project name (optional, leave blank to use the ZIP file name)</label>
+              <input id="f-zip-name" type="text" name="name" placeholder="e.g. scan_project_01" data-i18n-placeholder="index.upload.zipNamePlaceholder">
+            </div>
+            <div class="field">
+              <label data-i18n="index.upload.passwordLabel">Upload Password</label>
+              <input id="f-zip-password" type="password" autocomplete="off" placeholder="Enter upload password" data-i18n-placeholder="index.upload.passwordPlaceholder">
+            </div>
+            <div class="actions">
+              <button type="submit" id="submitZipBtn" class="btn pri" data-i18n="index.upload.zipSubmitBtn">Upload, Extract &amp; Convert</button>
+              <button type="button" id="clearBtn2" class="btn" data-i18n="index.upload.clearBtn">Clear Logs</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Panel: pre-converted Potree octree ZIP -->
+        <div id="up-panel-potree" style="display:none;">
+          <div class="zip-hint" data-i18n-html="index.upload.potreeHint">
+            Compress the PotreeConverter octree folder (including <b>metadata.json</b>) as a ZIP and upload it. The server extracts it directly into the point-cloud library without reconversion, which is useful for large point clouds already converted locally.<br>
+            <b>Compression method:</b> Right-click the converted output folder → compress as ZIP, keeping the folder structure.
+          </div>
+          <form id="uploadPotreeForm">
+            <div class="field">
+              <label data-i18n="index.upload.potreeFileLabel">ZIP file (containing the converted Potree octree folder)</label>
+              <input id="f-potree" type="file" name="potreezip" accept=".zip">
+            </div>
+            <div class="field">
+              <label data-i18n="index.upload.potreeNameLabel">Point cloud name (optional, leave blank to use the folder name)</label>
+              <input id="f-potree-name" type="text" name="name" placeholder="e.g. my_pointcloud" data-i18n-placeholder="index.upload.potreeZipNamePlaceholder">
+            </div>
+            <div class="field">
+              <label data-i18n="index.upload.passwordLabel">Upload Password</label>
+              <input id="f-potree-password" type="password" autocomplete="off" placeholder="Enter upload password" data-i18n-placeholder="index.upload.passwordPlaceholder">
+            </div>
+            <div class="actions">
+              <button type="submit" id="submitPotreeBtn" class="btn pri" data-i18n="index.upload.potreeSubmitBtn">Upload Pre-converted Cloud</button>
+              <button type="button" id="clearBtn3" class="btn" data-i18n="index.upload.clearBtn">Clear Logs</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="up-panel-gaussian" style="display:none;">
+          <div class="zip-hint" data-i18n="index.upload.gaussianHint">
+            Upload a 3DGS model and open it directly in the CloudStudio browser viewer.
+          </div>
+          <div class="gaussian-publish-panel">
+            <div class="gaussian-publish-title" data-i18n="index.upload.gaussianPublishTitle">Publish 3D Gaussian scene</div>
+            <div class="gaussian-publish-text" data-i18n="index.upload.gaussianPublishHint">
+              Select the original PLY file. The system saves the source file and opens it directly in SuperSplat browsing mode.
+            </div>
+          </div>
+          <form id="uploadGaussianForm">
+            <div class="field">
+              <label data-i18n="index.upload.gaussianFileLabel">Gaussian PLY file</label>
+              <input id="f-gaussian" type="file" name="gaussianFile" accept=".ply">
+            </div>
+            <div class="field">
+              <label data-i18n="index.upload.gaussianNameLabel">Scene name (optional, leave blank to use the file name)</label>
+              <input id="f-gaussian-name" type="text" name="name" placeholder="e.g. factory_gaussian_scene" data-i18n-placeholder="index.upload.gaussianNamePlaceholder">
+            </div>
+            <div class="field">
+              <label data-i18n="index.upload.passwordLabel">Upload Password</label>
+              <input id="f-gaussian-password" type="password" autocomplete="off" placeholder="Enter upload password" data-i18n-placeholder="index.upload.passwordPlaceholder">
+            </div>
+            <div class="actions">
+              <button type="submit" id="submitGaussianBtn" class="btn pri" data-i18n="index.upload.gaussianSubmitBtn">Upload and Open Viewer</button>
+            </div>
+            <div class="gaussian-secondary-actions">
+              <button type="button" id="clearBtn4" class="btn" data-i18n="index.upload.clearBtn">Clear Logs</button>
+            </div>
+          </form>
+          <div id="gaussianResult" class="gaussian-result" aria-live="polite">
+            <div class="gaussian-result-title" id="gaussianResultTitle" data-i18n="index.upload.gaussianReadyTitleShort">3DGS published</div>
+            <div class="gaussian-result-meta" id="gaussianResultMeta"></div>
+            <a id="gaussianResultOpen" class="btn pri" href="#" target="_blank" data-i18n="index.upload.openGaussianViewer">Open Viewer</a>
+          </div>
+        </div>
+
+        <!-- Progress bar (shared) -->
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-header">
+            <span id="progressLabel">Uploading…</span>
+            <span class="progress-pct" id="progressPct">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-speed" id="progressSpeed"></div>
+        </div>
+
+        <div id="statusEl" class="status-bar" data-i18n="index.status.waitingUpload">Waiting for upload...</div>
+        <pre id="logEl" class="log-box" data-i18n="index.log.empty">No logs yet</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-sep">
+
+  <!-- ── Features ── -->
+  <div class="section-wrap" id="features" data-reveal>
+    <div class="section-label" data-i18n="index.features.label">Capabilities</div>
+    <div class="section-title">
+      <h2 data-i18n="index.features.title">A complete professional toolchain</h2>
+      <p data-i18n="index.features.subtitle">From ingest to analysis to export — every step engineered for survey workflows.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-media" aria-hidden="true">
+          <img src="/assets/feature-illustrations/measure.png" alt="" loading="lazy">
+        </div>
+        <h3 data-i18n="index.feat.measure.title">Precision measurement</h3>
+        <p data-i18n="index.feat.measure.desc">Distance, height, area, angle and point coordinates — with custom CRS and global unit switching, results read out in real time.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-media" aria-hidden="true">
+          <img src="/assets/feature-illustrations/volume.png" alt="" loading="lazy">
+        </div>
+        <h3 data-i18n="index.feat.volume.title">Volume calculation</h3>
+        <p data-i18n="index.feat.volume.desc">Polygon selection with 2.5D grid integration, gap-aware sampling, auto-recommended parameters, and cut/fill colour visualisation.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-media" aria-hidden="true">
+          <img src="/assets/feature-illustrations/clip.png" alt="" loading="lazy">
+        </div>
+        <h3 data-i18n="index.feat.clip.title">Clipping &amp; deletion</h3>
+        <p data-i18n="index.feat.clip.desc">Box clip, polygon delete regions, and cross-section profiles — multi-layer deletion stays in sync with the backend on export.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-media" aria-hidden="true">
+          <img src="/assets/feature-illustrations/crs.png" alt="" loading="lazy">
+        </div>
+        <h3 data-i18n="index.feat.crs.title">Coordinate systems</h3>
+        <p data-i18n="index.feat.crs.desc">Built-in WGS84, UTM and Web Mercator. Custom EPSG/PROJ/WKT, plus support for .prj / .gsb / .tif parameter files.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-media" aria-hidden="true">
+          <img src="/assets/feature-illustrations/visualize.png" alt="" loading="lazy">
+        </div>
+        <h3 data-i18n="index.feat.vis.title">Multi-mode visualisation</h3>
+        <p data-i18n="index.feat.vis.desc">RGB, elevation, intensity, classification and LOD colouring; EDL eye-dome lighting and an X-Ray transparency mode.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-media" aria-hidden="true">
+          <img src="/assets/feature-illustrations/profile.png" alt="" loading="lazy">
+        </div>
+        <h3 data-i18n="index.feat.profile.title">Profile &amp; section measurement</h3>
+        <p data-i18n="index.feat.profile.desc">Run measurements directly inside section views, switch backgrounds for clarity, and annotate with live dimensions.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-media" aria-hidden="true">
+          <img src="/assets/feature-illustrations/export.png" alt="" loading="lazy">
+        </div>
+        <h3 data-i18n="index.feat.export.title">Honest LAS export</h3>
+        <p data-i18n="index.feat.export.desc">Coordinates rewritten to true CRS metadata. Deleted regions propagate to the backend so what ships is what was reviewed.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-media" aria-hidden="true">
+          <img src="/assets/feature-illustrations/slam.png" alt="" loading="lazy">
+        </div>
+        <h3 data-i18n="index.feat.slam.title">SLAM scanner support</h3>
+        <p data-i18n="index.feat.slam.desc">Auto-discovers scanner projects, parses geo_info.csv coordinate files, and loads full-site data with trajectories in one click.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Advantages ── -->
+  <div class="section-wrap" id="advantages" data-reveal>
+    <div class="section-label" data-i18n="index.adv.label">Why CloudStudio</div>
+    <div class="section-title">
+      <h2 data-i18n="index.adv.title">Engineered for the field, not the demo.</h2>
+      <p data-i18n="index.adv.subtitle">A cloud-native 3D platform built for survey, construction, and inspection teams who can&rsquo;t afford to wait on a desktop install.</p>
+    </div>
+    <div class="adv-grid">
+      <div class="adv-card">
+        <div class="adv-num" data-i18n="index.adv.card1.num">01 — Self-hostable</div>
+        <h3 data-i18n="index.adv.card1.title">Your data, your servers.</h3>
+        <p data-i18n="index.adv.card1.desc">Deploy CloudStudio on your own infrastructure in minutes, or run it managed. Encrypted transit, scoped access, multi-project isolation — built for teams that take governance seriously.</p>
+      </div>
+      <div class="adv-card">
+        <div class="adv-num" data-i18n="index.adv.card2.num">02 — Built for scale</div>
+        <h3 data-i18n="index.adv.card2.title">Billions of points, no jitter.</h3>
+        <p data-i18n="index.adv.card2.desc">A floating-origin pipeline sidesteps the precision walls that plague WebGL viewers. Measurements stay rock-steady at planetary coordinates; overlays and clipping never drift.</p>
+      </div>
+      <div class="adv-card">
+        <div class="adv-num" data-i18n="index.adv.card3.num">03 — Open to anyone</div>
+        <h3 data-i18n="index.adv.card3.title">A link is all it takes.</h3>
+        <p data-i18n="index.adv.card3.desc">Stakeholders open scenes in any modern browser — no client software, no plugins, no GPU workstation required. Engineers and reviewers see the same thing, instantly.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <p data-i18n-html="index.footer.poweredBy">CloudStudio &middot; Cloud-native 3D platform &middot; Built on open standards</p>
+    <p class="footer-credit">
+      <span data-i18n="common.author.createdBy">Created by</span> Peter Yang &middot;
+      <span data-i18n="common.author.role">LiDAR Product Manager</span>
+    </p>
+  </footer>
+
+  <!-- Delete confirmation modal -->
+  <div class="modal-overlay-del" id="modalDelete">
+    <div class="modal-box-del">
+      <h3 data-i18n="index.delete.title">Delete Point Cloud</h3>
+      <p id="delModalMsg" data-i18n="index.delete.confirmMsg">This action permanently deletes the point-cloud data and source files and cannot be undone. Enter the admin password to confirm:</p>
+      <label data-i18n="index.delete.passwordLabel">Admin password</label>
+      <input type="password" id="delPassword" autocomplete="off" data-i18n-placeholder="index.delete.passwordPlaceholder" placeholder="Enter password">
+      <div class="modal-del-err" id="delErrMsg"></div>
+      <div class="modal-del-footer">
+        <button class="btn" id="delCancelBtn" data-i18n="index.delete.cancelBtn">Cancel</button>
+        <button class="btn-del-confirm" id="delConfirmBtn" data-i18n="index.delete.confirmBtn">Confirm Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/i18n/client-i18n.js"></script>
+  <script type="text/plain" id="index-legacy-script-source">
+    const APP_SHELL = window.__APP_SHELL;
+    const APP_SERVICES = window.__APP_SERVICES;
+    const APP_UI = window.__APP_UI;
+    const I18N = APP_SERVICES.i18n;
+    const apiClient = APP_SERVICES.apiClient;
+    let lastStatus = { type: '', key: 'waitingUpload', vars: {}, raw: false };
+
+    function tr(key, vars = {}, fallback = '') { return I18N.t(key, vars, fallback); }
+    function trError(errorCode, fallback = '') {
+      if (!errorCode) return fallback;
+      return tr(`errors.${errorCode}`, {}, fallback || errorCode);
+    }
+
+    async function applyLocaleToPage(locale) {
+      window.__APP_ACTIVE_LOCALE = locale;
+      document.getElementById('locale-select').value = locale;
+      document.title = I18N.translateText(document.body.dataset.pageTitle || document.title, locale);
+      await I18N.applyTranslations(document);
+      const localeSelect = document.getElementById('locale-select');
+      if (localeSelect) {
+        localeSelect.setAttribute('aria-label', tr('common.locale.label', {}, 'Language'));
+        const localeLabels = {
+          en: 'English',
+          'zh-CN': 'Chinese',
+          fr: 'Français',
+          'ko-KR': '한국어',
+          de: 'Deutsch',
+          es: 'Español',
+          it: 'Italiano',
+          fi: 'Suomi',
+          sv: 'Svenska',
+        };
+        for (const [value, label] of Object.entries(localeLabels)) {
+          const option = localeSelect.querySelector(`option[value="${value}"]`);
+          if (option) option.textContent = label;
+        }
+      }
+      document.body.dataset.i18nReady = '1';
+      if (lastStatus.raw) setStatus(lastStatus.type, lastStatus.key, lastStatus.vars, { raw: true });
+      else setStatus(lastStatus.type, lastStatus.key, lastStatus.vars);
+      loadClouds();
+    }
+
+    function toast(type, msg) {
+      APP_UI.toast(msg, type, 4000, { translate: false, dismissTransform: 'translateX(20px)' });
+    }
+
+    function setStatus(type, keyOrMessage, vars = {}, options = {}) {
+      const msg = options.raw ? keyOrMessage : tr(`index.status.${keyOrMessage}`, vars, I18N.translateText(keyOrMessage));
+      lastStatus = { type, key: keyOrMessage, vars, raw: Boolean(options.raw) };
+      APP_UI.setStatus(msg, { type, raw: true });
+    }
+
+    async function loadClouds() {
+      try {
+        const data = await apiClient.getJson('/api/clouds');
+        const clouds = data.clouds || [];
+        renderClouds(clouds);
+        const statEl = document.getElementById('stat-clouds');
+        if (statEl) statEl.textContent = clouds.length || '0';
+      } catch (e) {
+        renderClouds([]);
+        toast('err', tr('index.toast.loadFailed', { message: e.message }, `Load failed: ${e.message}`));
+      }
+    }
+
+    function renderClouds(clouds) {
+      const list = document.getElementById('cloudList');
+      list.innerHTML = '';
+      if (!clouds.length) {
+        list.innerHTML = `<div class="empty-state">${tr('index.clouds.emptyTitle', {}, 'No converted point clouds yet')}<br><small style="color:var(--text3)">${tr('index.clouds.emptyHint', {}, 'Upload a LAS/LAZ file to get started')}</small></div>`;
+        return;
+      }
+      clouds.forEach(c => {
+        const isScanner = Boolean(c.scannerProjectId);
+        const isPreconverted = c.sourceType === 'preconverted-upload';
+        const isGaussian = c.resourceType === 'gaussian';
+        const gaussianReady = isGaussian && c.gaussianPublishStatus === 'ready';
+        const formatLabel = (c.gaussianFormat || 'unknown').toUpperCase();
+        const sourceSize = fmtMaybeBytes(c.originalBytes);
+        const pts = isGaussian
+          ? (gaussianReady
+            ? tr('index.clouds.gaussianSupersplat', { format: formatLabel }, `3DGS Viewer · ${formatLabel}`)
+            : tr('index.clouds.gaussianFormat', { format: formatLabel }, `Format: ${formatLabel}`))
+          : (Number.isFinite(c.points)
+            ? tr('index.clouds.pointsKnown', { count: c.points.toLocaleString() }, `${c.points.toLocaleString()} pts`)
+            : tr('index.clouds.pointsUnknown', {}, 'Unknown point count'));
+        const detail = isGaussian
+          ? [
+              sourceSize ? `${tr('index.clouds.sourceSize', {}, 'Source')} ${sourceSize}` : '',
+              c.gaussianPublishStatus && c.gaussianPublishStatus !== 'ready'
+                ? tr('index.clouds.publishStatus', { status: c.gaussianPublishStatus }, `Status: ${c.gaussianPublishStatus}`)
+                : '',
+            ].filter(Boolean).join(' · ')
+          : '';
+        const cloudKey = c.cloudName || c.name || '';
+        const viewerUrl = isGaussian
+          ? `/3dgs/${encodeURIComponent(cloudKey)}`
+          : (c.viewerUrl || `/viewer?pointcloud=/pointclouds/${encodeURIComponent(c.name)}/metadata.json`);
+
+        // Build feature tag strip for scanner projects
+        let featureTags = '';
+        if (isScanner) {
+          const tags = [];
+          if (c.features?.hasOdom) tags.push(`<span class="feat-tag">🛣 ${tr('index.clouds.featureOdom', {}, 'Trajectory')}</span>`);
+          if (c.features?.hasCameras) tags.push(`<span class="feat-tag">📷 ${tr('index.clouds.featureCameras', {}, 'Camera')}</span>`);
+          if (c.features?.hasGeo) tags.push(`<span class="feat-tag">📍 ${tr('index.clouds.featureGeo', {}, 'Georeference')}</span>`);
+          featureTags = tags.length
+            ? `<div class="cloud-tags">${tags.join('')}</div>`
+            : '';
+        }
+
+        const icon = isGaussian ? '3D' : (isScanner ? 'SC' : (isPreconverted ? 'PC' : 'PC'));
+        const typeLabel = isGaussian
+          ? `<span class="cloud-type-tag ${gaussianReady ? 'supersplat-tag' : 'preconverted-tag'}">${gaussianReady ? tr('index.clouds.supersplatScene', {}, 'SuperSplat') : tr('index.clouds.gaussianScene', {}, 'Gaussian Scene')}</span>`
+          : isScanner
+            ? `<span class="cloud-type-tag scanner-tag">${tr('index.clouds.scannerProject', {}, 'Scanner Project')}</span>`
+            : isPreconverted
+              ? `<span class="cloud-type-tag preconverted-tag">${tr('index.clouds.preconverted', {}, 'Pre-converted')}</span>`
+              : '';
+
+        const li = document.createElement('div');
+        li.className = 'cloud-item' + (isScanner ? ' cloud-item-scanner' : '');
+        li.dataset.cloud = c.cloudName || c.name;
+        li.dataset.resourceType = isGaussian ? 'gaussian' : 'pointcloud';
+        li.innerHTML = `
+          <div class="cloud-icon">${icon}</div>
+          <div class="cloud-info">
+            <div class="cloud-name-row">
+              <div class="cloud-name cloud-name-label" title="${c.name}">${c.name}</div>
+              ${typeLabel}
+            </div>
+            <div class="cloud-meta">${pts}</div>
+            ${detail ? `<div class="cloud-meta-detail">${detail}</div>` : ''}
+            ${featureTags}
+          </div>
+          <div class="cloud-actions">
+            <a class="btn pri cloud-open" href="${viewerUrl}" target="_blank" rel="noopener">${tr('index.clouds.openViewer', {}, 'Open Viewer')}</a>
+            <button class="btn-delete" data-cloud="${c.name}" title="${tr('index.delete.title', {}, 'Delete')}">🗑</button>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    // ── Upload panel collapse ────────────────────────────────────────
+    const uploadPanel = document.getElementById('uploadPanel');
+    const uploadPanelBody = document.getElementById('uploadPanelBody');
+    const uploadPanelToggle = document.getElementById('uploadPanelToggle');
+
+    function setUploadPanelOpen(open) {
+      if (!uploadPanel || !uploadPanelBody || !uploadPanelToggle) return;
+      uploadPanel.classList.toggle('is-open', !!open);
+      uploadPanelToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      uploadPanelBody.inert = !open;
+      uploadPanelBody.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+
+    uploadPanelToggle?.addEventListener('click', () => {
+      const nextOpen = !uploadPanel.classList.contains('is-open');
+      setUploadPanelOpen(nextOpen);
+    });
+
+    setUploadPanelOpen(false);
+
+    // ── Tab switching ────────────────────────────────────────────────
+    let upCurrentTab = 'las';
+    document.querySelectorAll('.up-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        upCurrentTab = btn.dataset.tab;
+        document.querySelectorAll('.up-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === upCurrentTab));
+        document.querySelectorAll('.upload-preview-chip').forEach(chip => chip.classList.toggle('active', chip.dataset.previewTab === upCurrentTab));
+        document.getElementById('up-panel-las').style.display    = upCurrentTab === 'las'    ? '' : 'none';
+        document.getElementById('up-panel-zip').style.display    = upCurrentTab === 'zip'    ? '' : 'none';
+        document.getElementById('up-panel-potree').style.display = upCurrentTab === 'potree' ? '' : 'none';
+        document.getElementById('up-panel-gaussian').style.display = upCurrentTab === 'gaussian' ? '' : 'none';
+        setUploadPanelOpen(true);
+        // Reset progress UI
+        resetProgress();
+        setStatus('', 'waitingUpload');
+        setLogMessage(tr('index.log.cleared', {}, 'Logs cleared'));
+      });
+    });
+
+    // ── Progress bar helpers ─────────────────────────────────────────
+    function resetProgress() {
+      const wrap = document.getElementById('progressWrap');
+      const fill = document.getElementById('progressFill');
+      wrap.style.display = 'none';
+      fill.className = 'progress-fill';
+      fill.style.width = '0%';
+      fill.style.background = '';
+      document.getElementById('progressPct').textContent = '0%';
+      document.getElementById('progressLabel').textContent = tr('index.progress.uploading', {}, '⬆ Uploading...');
+      document.getElementById('progressSpeed').textContent = '';
+    }
+
+    function fmtBytes(n) {
+      if (!Number.isFinite(n)) return '0 B';
+      const u = ['B', 'KB', 'MB', 'GB'];
+      let i = 0, v = n;
+      while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+      return `${v.toFixed(i === 0 ? 0 : 1)} ${u[i]}`;
+    }
+
+    function fmtMaybeBytes(n) {
+      const value = Number(n);
+      return Number.isFinite(value) && value > 0 ? fmtBytes(value) : '';
+    }
+
+    function setLogMessage(message, { terminal = false } = {}) {
+      const logEl = document.getElementById('logEl');
+      if (!logEl) return;
+      logEl.textContent = message;
+      logEl.classList.toggle('is-terminal', !!terminal);
+    }
+
+    function getUploadPassword(inputId) {
+      const input = document.getElementById(inputId);
+      const value = String(input?.value || '').trim();
+      if (!value) {
+        setStatus('err', tr('index.upload.errors.passwordRequired', {}, 'Please enter the upload password'), {}, { raw: true });
+        input?.focus();
+        return null;
+      }
+      return value;
+    }
+
+    // ── Shared XHR upload function ───────────────────────────────────
+    function showGaussianResult(data) {
+      const wrap = document.getElementById('gaussianResult');
+      const title = document.getElementById('gaussianResultTitle');
+      const meta = document.getElementById('gaussianResultMeta');
+      const open = document.getElementById('gaussianResultOpen');
+      if (!wrap || !open) return;
+      const name = data.assetName || data.cloudName || tr('index.clouds.gaussianScene', {}, 'Gaussian Scene');
+      const sourceSize = fmtMaybeBytes(data.originalBytes);
+      const runtimeSize = fmtMaybeBytes(data.runtimeBytes || data.publish?.bytes);
+      title.textContent = tr('index.upload.gaussianReadyTitle', { cloudName: name }, `3DGS published: ${name}`);
+      meta.textContent = [
+        sourceSize ? `${tr('index.clouds.sourceSize', {}, 'Source')} ${sourceSize}` : '',
+        runtimeSize ? `SOG ${runtimeSize}` : '',
+        data.publish?.pipeline ? data.publish.pipeline : '',
+      ].filter(Boolean).join(' · ');
+      open.href = data.viewerUrl || '#';
+      wrap.classList.add('is-visible');
+    }
+
+    function clearGaussianResult() {
+      const wrap = document.getElementById('gaussianResult');
+      const open = document.getElementById('gaussianResultOpen');
+      if (wrap) wrap.classList.remove('is-visible');
+      if (open) open.href = '#';
+    }
+
+    // ── Shared XHR upload function ───────────────────────────────────
+    function doUpload({ endpoint, formData, isZip, isPotree, isGaussian, submitBtn, log }) {
+      setUploadPanelOpen(true);
+      submitBtn.disabled = true;
+      resetProgress();
+
+      const wrap  = document.getElementById('progressWrap');
+      const fill  = document.getElementById('progressFill');
+      const pctEl = document.getElementById('progressPct');
+      const lbl   = document.getElementById('progressLabel');
+      const spd   = document.getElementById('progressSpeed');
+
+      wrap.style.display = 'block';
+      setStatus('work', 'uploading');
+      setLogMessage(tr('index.log.uploading', {}, 'Uploading...'), { terminal: true });
+
+      const startAt = Date.now();
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', endpoint);
+
+      // Phase 1: Upload progress
+      xhr.upload.addEventListener('progress', (ev) => {
+        if (!ev.lengthComputable) return;
+        const pct = Math.round(ev.loaded / ev.total * 100);
+        fill.style.width = pct + '%';
+        pctEl.textContent = pct + '%';
+        const elapsed = Math.max((Date.now() - startAt) / 1000, 0.001);
+        const speed = ev.loaded / elapsed;
+        spd.textContent = `${fmtBytes(ev.loaded)} / ${fmtBytes(ev.total)}  •  ${fmtBytes(speed)}/s`;
+        setStatus('work', `${tr('index.status.uploading', {}, 'Uploading')} ${pct}%`, {}, { raw: true });
+        setLogMessage(`${pct}%\n${fmtBytes(ev.loaded)} / ${fmtBytes(ev.total)} • ${fmtBytes(speed)}/s`, { terminal: true });
+      });
+
+      // Phase 2: Upload done → server processing pulse
+      xhr.upload.addEventListener('load', () => {
+        fill.style.width = '100%';
+        fill.className = 'progress-fill converting';
+        pctEl.textContent = '100%';
+        lbl.textContent = isGaussian
+          ? tr('index.progress.gaussianPublishing', {}, '⚙ Publishing 3DGS viewer...')
+          : isPotree
+          ? tr('index.progress.preconverted', {}, '⚙ Extracting Potree octree...')
+          : isZip
+            ? tr('index.progress.extracting', {}, '⚙ Extracting and converting...')
+            : tr('index.progress.converting', {}, '⚙ Converting, please wait...');
+        spd.textContent = isGaussian
+          ? tr('index.progress.gaussianPublishingDetail', {}, 'Upload finished. Preparing the browser viewer...')
+          : isPotree
+          ? tr('index.progress.preconvertedDetail', {}, 'Upload finished. Extracting octree...')
+          : isZip
+            ? tr('index.progress.extractingDetail', {}, 'Upload finished. Extracting ZIP and running PotreeConverter...')
+            : tr('index.progress.convertingDetail', {}, 'Upload finished. Running PotreeConverter...');
+        setStatus('work', lbl.textContent, {}, { raw: true });
+        setLogMessage(lbl.textContent, { terminal: true });
+      });
+
+      xhr.addEventListener('load', () => {
+        fill.className = 'progress-fill';
+        let data;
+        try { data = JSON.parse(xhr.responseText); } catch (e) {
+          setStatus('err', tr('index.upload.errors.parseFailed', { message: e.message }, `✗ Failed to parse response: ${e.message}`), {}, { raw: true });
+          submitBtn.disabled = false;
+          return;
+        }
+
+        setLogMessage(JSON.stringify(data, null, 2), { terminal: true });
+
+        if (data.ok) {
+          fill.style.width = '100%';
+          pctEl.textContent = '✓';
+          lbl.textContent = tr('index.progress.done', {}, '✓ Done');
+          spd.textContent = '';
+
+          if (data.resourceType === 'gaussian') {
+            const msg = tr('index.status.gaussianSuccess', { cloudName: data.assetName || data.cloudName }, `✓ 3DGS published: ${data.assetName || data.cloudName}`);
+            setStatus('ok', msg, {}, { raw: true });
+            toast('ok', msg);
+            showGaussianResult(data);
+          } else if (isPotree) {
+            setStatus('ok', tr('index.status.preconvertedSuccess', { cloudName: data.cloudName }, `✓ Pre-converted cloud added: ${data.cloudName}`), {}, { raw: true });
+            toast('ok', tr('index.toast.preconvertedSuccess', { cloudName: data.cloudName }, `Pre-converted cloud added: ${data.cloudName}`));
+          } else if (isZip) {
+            const featStr = [
+              data.features?.hasGeo     ? `📍${tr('index.clouds.featureGeo', {}, 'Georeference')}` : '',
+              data.features?.hasOdom    ? `🛣${tr('index.clouds.featureOdom', {}, 'Trajectory')}`  : '',
+              data.features?.hasCameras ? `📷${tr('index.clouds.featureCameras', {}, 'Camera')}` : '',
+            ].filter(Boolean).join(' ');
+            const msg = tr('index.status.projectUploadSuccess', { projectName: data.projectName, features: featStr ? `  ${featStr}` : '' }, `✓ Project uploaded: ${data.projectName}${featStr ? '  ' + featStr : ''}`);
+            setStatus('ok', msg, {}, { raw: true });
+            toast('ok', msg);
+          } else {
+            setStatus('ok', 'uploadSuccess', { cloudName: data.cloudName });
+            toast('ok', tr('index.toast.uploadSuccess', { cloudName: data.cloudName }, `Point cloud converted: ${data.cloudName}`));
+          }
+          loadClouds();
+        } else {
+          fill.style.background = 'var(--err)';
+          lbl.textContent = tr('index.progress.failed', {}, '✗ Failed');
+          pctEl.textContent = '';
+          spd.textContent = '';
+
+          // Build a clear error message for the user
+          const errMsg = trError(data.errorCode, data.error)
+            || data.error
+            || (data.stderr || '').slice(0, 300)
+            || (data.stdout || '').slice(0, 300)
+            || tr('index.upload.errors.convertUnknown', {}, 'Conversion failed (no details)');
+
+          // For ZIP uploads: files may be extracted even if conversion failed
+          const partialNote = isZip && data.projectName
+            ? `\n📁 ${tr('index.upload.partialNote', {}, 'Project files were extracted on server (you can retry conversion manually).')}`
+            : '';
+
+          setStatus('err', `✗ ${errMsg}${partialNote}`, {}, { raw: true });
+          toast('err', errMsg.slice(0, 100));
+
+          // Expand log box so user sees full details
+          setLogMessage([
+            tr('index.log.errorReason', {}, '=== Error reason ==='),
+            errMsg,
+            isZip && data.projectName ? `\n${tr('index.log.projectFolderHeader', {}, '=== Project folder ===')}\n${tr('index.log.projectFolderPath', { projectName: data.projectName }, `Extracted to projects/${data.projectName}/`)}` : '',
+            data.stderr ? `\n=== PotreeConverter stderr ===\n${data.stderr.slice(-1500)}` : '',
+            data.stdout ? `\n=== PotreeConverter stdout ===\n${data.stdout.slice(-1000)}` : '',
+            `\n${tr('index.log.diagnosticsHeader', {}, '=== Diagnostics ===')}`,
+            tr('index.log.diag1', {}, '1. Check server logs: pm2 logs cloudstudio'),
+            tr('index.log.diag2', {}, '2. Verify PotreeConverter compiled: ls PotreeConverter/build-gcc/'),
+            tr('index.log.diag3', {}, '3. Verify LAS format is supported (LAS 1.2–1.4, standard point formats)'),
+          ].filter(Boolean).join('\n'), { terminal: true });
+        }
+        submitBtn.disabled = false;
+      });
+
+      xhr.addEventListener('error', () => {
+        fill.className = 'progress-fill';
+        fill.style.background = 'var(--err)';
+        lbl.textContent = tr('index.progress.networkError', {}, '✗ Network error');
+        pctEl.textContent = '';
+        const msg = tr('index.toast.networkError', { message: tr('index.messages.networkErrorShort', {}, 'Network error') }, tr('index.messages.networkCheck', {}, 'Network error, please check your connection'));
+        setStatus('err', msg, {}, { raw: true });
+        setLogMessage(msg);
+        submitBtn.disabled = false;
+      });
+
+      xhr.send(formData);
+    }
+
+    // ── LAS upload form ──────────────────────────────────────────────
+    document.getElementById('uploadForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const fileEl = document.getElementById('f-file');
+      if (!fileEl.files.length) { setStatus('err', tr('index.upload.errors.selectLas', {}, 'Please select a LAS/LAZ file'), {}, { raw: true }); return; }
+      const uploadPassword = getUploadPassword('f-upload-password');
+      if (!uploadPassword) return;
+      const fd = new FormData();
+      fd.append('pointcloud', fileEl.files[0]);
+      const name = document.getElementById('f-name').value.trim();
+      if (name) fd.append('name', name);
+      fd.append('uploadPassword', uploadPassword);
+      doUpload({
+        endpoint: '/api/upload',
+        formData: fd,
+        isZip: false,
+        submitBtn: document.getElementById('submitBtn'),
+        log: document.getElementById('logEl'),
+      });
+    });
+
+    // ── ZIP upload form ──────────────────────────────────────────────
+    document.getElementById('uploadZipForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const fileEl = document.getElementById('f-zip');
+      if (!fileEl.files.length) { setStatus('err', tr('index.upload.errors.selectZip', {}, 'Please select a ZIP file'), {}, { raw: true }); return; }
+      const uploadPassword = getUploadPassword('f-zip-password');
+      if (!uploadPassword) return;
+      const fd = new FormData();
+      fd.append('projectzip', fileEl.files[0]);
+      const name = document.getElementById('f-zip-name').value.trim();
+      if (name) fd.append('name', name);
+      fd.append('uploadPassword', uploadPassword);
+      doUpload({
+        endpoint: '/api/upload-project',
+        formData: fd,
+        isZip: true,
+        submitBtn: document.getElementById('submitZipBtn'),
+        log: document.getElementById('logEl'),
+      });
+    });
+
+    // ── Pre-converted Potree upload form ─────────────────────────────
+    document.getElementById('uploadPotreeForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const fileEl = document.getElementById('f-potree');
+      if (!fileEl.files.length) {
+        setStatus('err', tr('index.upload.errors.selectPotreeZip', {}, 'Please select a ZIP file'), {}, { raw: true });
+        return;
+      }
+      const uploadPassword = getUploadPassword('f-potree-password');
+      if (!uploadPassword) return;
+      const fd = new FormData();
+      fd.append('potreezip', fileEl.files[0]);
+      const name = document.getElementById('f-potree-name').value.trim();
+      if (name) fd.append('name', name);
+      fd.append('uploadPassword', uploadPassword);
+      doUpload({
+        endpoint: '/api/upload-preconverted',
+        formData: fd,
+        isZip: false,
+        isPotree: true,
+        submitBtn: document.getElementById('submitPotreeBtn'),
+        log: document.getElementById('logEl'),
+      });
+    });
+
+
+    document.getElementById('uploadGaussianForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const fileEl = document.getElementById('f-gaussian');
+      if (!fileEl.files.length) {
+        setStatus('err', tr('index.upload.errors.selectGaussian', {}, 'Please select a Gaussian file'), {}, { raw: true });
+        return;
+      }
+      const uploadPassword = getUploadPassword('f-gaussian-password');
+      if (!uploadPassword) return;
+      const fd = new FormData();
+      fd.append('gaussianFile', fileEl.files[0]);
+      const name = document.getElementById('f-gaussian-name').value.trim();
+      if (name) fd.append('name', name);
+      fd.append('uploadPassword', uploadPassword);
+      clearGaussianResult();
+      doUpload({
+        endpoint: '/api/upload-gaussian',
+        formData: fd,
+        isZip: false,
+        isPotree: false,
+        isGaussian: true,
+        submitBtn: document.getElementById('submitGaussianBtn'),
+        log: document.getElementById('logEl'),
+      });
+    });
+
+    // ── Delete modal ─────────────────────────────────────────────────
+    let _delTargetCloud = null;
+
+    // Delegate click on dynamically rendered delete buttons in cloud list
+    document.getElementById('cloudList').addEventListener('click', e => {
+      const btn = e.target.closest('.btn-delete');
+      if (!btn) return;
+      _delTargetCloud = btn.dataset.cloud;
+      document.getElementById('delPassword').value = '';
+      document.getElementById('delErrMsg').textContent = '';
+      document.getElementById('delConfirmBtn').disabled = false;
+      // Build the confirmation message with cloud name
+      const cloudNameDisplay = `"${_delTargetCloud}"`;
+      const baseMsg = tr('index.delete.confirmMsg', {}, 'This action permanently deletes the point-cloud data and source files and cannot be undone. Enter the admin password to confirm:');
+      document.getElementById('delModalMsg').textContent = cloudNameDisplay + ' — ' + baseMsg;
+      document.getElementById('modalDelete').classList.add('open');
+      setTimeout(() => document.getElementById('delPassword').focus(), 80);
+    });
+
+    document.getElementById('delCancelBtn').addEventListener('click', () => {
+      document.getElementById('modalDelete').classList.remove('open');
+      _delTargetCloud = null;
+    });
+
+    document.getElementById('modalDelete').addEventListener('click', e => {
+      if (e.target === e.currentTarget) {
+        document.getElementById('modalDelete').classList.remove('open');
+        _delTargetCloud = null;
+      }
+    });
+
+    document.getElementById('delPassword').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('delConfirmBtn').click();
+    });
+
+    document.getElementById('delConfirmBtn').addEventListener('click', async () => {
+      if (!_delTargetCloud) return;
+      const pw = document.getElementById('delPassword').value;
+      const btn = document.getElementById('delConfirmBtn');
+      const errEl = document.getElementById('delErrMsg');
+      errEl.textContent = '';
+      btn.disabled = true;
+
+      try {
+        const targetCard = document.querySelector(`.cloud-item[data-cloud="${CSS.escape(_delTargetCloud)}"]`);
+        const resourceType = targetCard?.dataset?.resourceType || 'pointcloud';
+        const resp = await fetch('/api/delete-cloud', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cloudName: _delTargetCloud, password: pw, resourceType }),
+        });
+        const data = await resp.json();
+
+        if (data.ok) {
+          document.getElementById('modalDelete').classList.remove('open');
+          const name = _delTargetCloud;
+          _delTargetCloud = null;
+          toast('ok', tr('index.delete.success', { cloudName: name }, `Deleted: ${name}`));
+          loadClouds();
+        } else if (data.errorCode === 'WRONG_PASSWORD') {
+          errEl.textContent = tr('index.delete.wrongPassword', {}, 'Wrong password');
+          btn.disabled = false;
+          document.getElementById('delPassword').value = '';
+          document.getElementById('delPassword').focus();
+        } else {
+          errEl.textContent = tr('index.delete.failed', { message: data.error || '' }, `Delete failed: ${data.error || ''}`);
+          btn.disabled = false;
+        }
+      } catch (err) {
+        errEl.textContent = tr('index.delete.failed', { message: err.message }, `Delete failed: ${err.message}`);
+        btn.disabled = false;
+      }
+    });
+
+    // ── Misc buttons ─────────────────────────────────────────────────
+    document.getElementById('refreshBtn').addEventListener('click', loadClouds);
+
+    function clearLog() {
+      setLogMessage(tr('index.log.cleared', {}, 'Logs cleared'));
+      resetProgress();
+      clearGaussianResult();
+      setStatus('', 'waitingUpload');
+    }
+    document.getElementById('clearBtn').addEventListener('click', clearLog);
+    document.getElementById('clearBtn2').addEventListener('click', clearLog);
+    document.getElementById('clearBtn3').addEventListener('click', clearLog);
+    document.getElementById('clearBtn4').addEventListener('click', clearLog);
+
+    document.getElementById('locale-select').addEventListener('change', async event => {
+      await I18N.setLocale(event.target.value);
+    });
+
+    I18N.onLocaleChange(async locale => { await applyLocaleToPage(locale); });
+
+    // ── Mobile hamburger menu ─────────────────────────────────────────
+    (function initMobileMenu() {
+      const header = document.querySelector('header');
+      const nav = document.querySelector('.nav-links');
+      if (!header || !nav) return;
+
+      // Create hamburger button
+      const btn = document.createElement('button');
+      btn.className = 'mobile-menu-btn';
+      btn.innerHTML = '☰';
+      btn.setAttribute('aria-label', 'Menu');
+      btn.style.display = 'none'; // shown via matchMedia
+      header.appendChild(btn);
+
+      function isMobile() { return window.matchMedia('(max-width: 767px)').matches; }
+
+      btn.addEventListener('click', () => {
+        const open = nav.classList.toggle('mobile-open');
+        btn.innerHTML = open ? '✕' : '☰';
+      });
+
+      // Close menu when a nav link is clicked
+      nav.addEventListener('click', (e) => {
+        if (e.target.closest('a')) {
+          nav.classList.remove('mobile-open');
+          btn.innerHTML = '☰';
+        }
+      });
+
+      // Show/hide button based on viewport
+      function onResize() {
+        const mobile = isMobile();
+        btn.style.display = mobile ? 'flex' : 'none';
+        if (!mobile) {
+          nav.classList.remove('mobile-open');
+          btn.innerHTML = '☰';
+        }
+      }
+      window.addEventListener('resize', onResize);
+      onResize();
+    })();
+
+    (async () => {
+      const locale = window.__APP_ACTIVE_LOCALE || await I18N.init();
+      await applyLocaleToPage(locale);
+      setStatus('', 'waitingUpload');
+      loadClouds();
+    })();
+
+    /* Scroll-reveal: fade-up sections and stagger grid children when they
+       enter the viewport. Honours prefers-reduced-motion (CSS already
+       neutralises the transitions in that case, but we still set the
+       class so any future reveal-dependent CSS works). */
+    (function setupReveal() {
+      const targets = document.querySelectorAll('[data-reveal]');
+      if (!targets.length) return;
+      if (!('IntersectionObserver' in window)) {
+        targets.forEach(el => el.classList.add('is-visible'));
+        return;
+      }
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+      targets.forEach(el => io.observe(el));
+    })();
+  </script>
+  <script type="module" src="/assets/app/entry/index-entry.js"></script>
+</body>
+
+</html>

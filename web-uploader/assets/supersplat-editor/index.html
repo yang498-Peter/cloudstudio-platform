@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>CloudStudio 3DGS Viewer</title>
+        <meta charset="utf-8" />
+        <base href="">
+        <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+        <meta http-equiv="Pragma" content="no-cache" />
+        <meta http-equiv="Expires" content="0" />
+        <link rel="stylesheet" href="./index.css?v=cloudstudio-browse-20260505-4">
+        <link rel="shortcut icon" href="#">
+        <meta name="description" content="SuperSplat is an advanced browser-based editor for manipulating and optimizing 3D Gaussian Splats. It is open source and engine agnostic." />
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+        <script>
+            (() => {
+                const copy = {
+                    en: {
+                        title: 'CloudStudio 3DGS Viewer',
+                        description: 'CloudStudio 3DGS Viewer opens, inspects, and shares 3D Gaussian Splat scenes in the browser.'
+                    },
+                    'zh-CN': {
+                        title: 'CloudStudio 3DGS 浏览器',
+                        description: 'CloudStudio 3DGS 浏览器用于在网页中快速打开、检查和分享 3D 高斯场景。'
+                    },
+                    fr: {
+                        title: 'Visionneuse CloudStudio 3DGS',
+                        description: 'La visionneuse CloudStudio 3DGS permet d’ouvrir, inspecter et partager des scènes 3D Gaussian Splat dans le navigateur.'
+                    },
+                    'ko-KR': {
+                        title: 'CloudStudio 3DGS 뷰어',
+                        description: 'CloudStudio 3DGS 뷰어는 브라우저에서 3D Gaussian Splat 장면을 열고, 검사하고, 공유할 수 있게 합니다.'
+                    },
+                    de: {
+                        title: 'CloudStudio 3DGS-Viewer',
+                        description: 'Der CloudStudio 3DGS-Viewer öffnet, prüft und teilt 3D-Gaussian-Splat-Szenen direkt im Browser.'
+                    },
+                    es: {
+                        title: 'Visor 3DGS de CloudStudio',
+                        description: 'El visor 3DGS de CloudStudio permite abrir, revisar y compartir escenas 3D Gaussian Splat en el navegador.'
+                    },
+                    it: {
+                        title: 'Visualizzatore 3DGS CloudStudio',
+                        description: 'Il visualizzatore 3DGS CloudStudio consente di aprire, controllare e condividere scene 3D Gaussian Splat nel browser.'
+                    },
+                    fi: {
+                        title: 'CloudStudio 3DGS -katselin',
+                        description: 'CloudStudio 3DGS -katselin avaa, tarkistaa ja jakaa 3D Gaussian Splat -näkymiä selaimessa.'
+                    },
+                    sv: {
+                        title: 'CloudStudio 3DGS-visare',
+                        description: 'CloudStudio 3DGS-visaren öppnar, granskar och delar 3D Gaussian Splat-scener direkt i webbläsaren.'
+                    }
+                };
+                const lng = new URLSearchParams(window.location.search).get('lng') || 'en';
+                const active = copy[lng] || copy.en;
+                document.documentElement.lang = lng;
+                document.title = active.title;
+                const desc = document.querySelector('meta[name="description"]');
+                if (desc) desc.setAttribute('content', active.description);
+            })();
+        </script>
+
+        <style>
+            html,
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                overflow: hidden !important;
+                background: #050505 !important;
+            }
+
+            #menu,
+            #scene-panel,
+            #transform,
+            #bottom-toolbar,
+            #timeline-panel,
+            #data-panel,
+            #status-bar,
+            #right-toolbar,
+            #view-panel,
+            #color-panel,
+            #shortcuts-popup,
+            #about-popup,
+            #app-label,
+            #cursor-label,
+            #mode-toggle,
+            #file-selector,
+            input[type="file"],
+            .select-toolbar,
+            .menu-panel {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
+
+            #app-container,
+            #editor-container,
+            #main-container,
+            #canvas-container {
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            #tools-container,
+            #mask-canvas {
+                pointer-events: none !important;
+            }
+        </style>
+
+        <script>
+            (() => {
+                const hiddenIds = [
+                    'menu',
+                    'scene-panel',
+                    'transform',
+                    'bottom-toolbar',
+                    'timeline-panel',
+                    'data-panel',
+                    'status-bar',
+                    'right-toolbar',
+                    'view-panel',
+                    'color-panel',
+                    'shortcuts-popup',
+                    'about-popup',
+                    'app-label',
+                    'cursor-label',
+                    'mode-toggle',
+                    'file-selector'
+                ];
+
+                const fullScreenIds = [
+                    'app-container',
+                    'editor-container',
+                    'main-container',
+                    'canvas-container'
+                ];
+
+                const hideEditorChrome = () => {
+                    document.documentElement.classList.add('cloudstudio-browse-mode');
+                    document.body?.classList.add('cloudstudio-browse-mode');
+
+                    const sceneEvents = window.scene?.events;
+                    if (sceneEvents?.fire) {
+                        sceneEvents.fire('grid.setVisible', false);
+                        sceneEvents.fire('camera.setBound', false);
+                    }
+
+                    hiddenIds.forEach((id) => {
+                        const el = document.getElementById(id);
+                        if (!el) return;
+                        el.style.setProperty('display', 'none', 'important');
+                        el.style.setProperty('visibility', 'hidden', 'important');
+                        el.style.setProperty('opacity', '0', 'important');
+                        el.style.setProperty('pointer-events', 'none', 'important');
+                    });
+
+                    document.querySelectorAll('.select-toolbar, .menu-panel, input[type="file"]').forEach((el) => {
+                        el.style.setProperty('display', 'none', 'important');
+                        el.style.setProperty('visibility', 'hidden', 'important');
+                        el.style.setProperty('opacity', '0', 'important');
+                        el.style.setProperty('pointer-events', 'none', 'important');
+                    });
+
+                    fullScreenIds.forEach((id) => {
+                        const el = document.getElementById(id);
+                        if (!el) return;
+                        el.style.setProperty('position', 'fixed', 'important');
+                        el.style.setProperty('inset', '0', 'important');
+                        el.style.setProperty('width', '100vw', 'important');
+                        el.style.setProperty('height', '100vh', 'important');
+                        el.style.setProperty('margin', '0', 'important');
+                        el.style.setProperty('padding', '0', 'important');
+                    });
+                };
+
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations?.()
+                        .then((registrations) => {
+                            registrations.forEach((registration) => {
+                                if (registration.scope && registration.scope.includes('/assets/supersplat-editor/')) {
+                                    registration.unregister();
+                                }
+                            });
+                        })
+                        .catch(() => {});
+                }
+
+                hideEditorChrome();
+                window.addEventListener('load', hideEditorChrome);
+                window.addEventListener('DOMContentLoaded', hideEditorChrome);
+                new MutationObserver(hideEditorChrome).observe(document.documentElement, {
+                    childList: true,
+                    subtree: true
+                });
+                window.setInterval(hideEditorChrome, 500);
+            })();
+        </script>
+    </head>
+
+    <body>
+        <script type="module" src="./index.js?v=cloudstudio-browse-20260505-4"></script>
+    </body>
+</html>

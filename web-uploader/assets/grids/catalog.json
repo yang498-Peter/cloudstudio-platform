@@ -1,0 +1,200 @@
+[
+  {
+    "id": "builtin-be-hbg18",
+    "name": "Belgium hBG18",
+    "description": "Belgium official hBG18 geoid model for orthometric height conversion.",
+    "scope": "regional",
+    "usageHint": "geoidgrids",
+    "regions": ["Belgium"],
+    "localFile": "builtin/be_ign_hBG18.tif"
+  },
+  {
+    "id": "builtin-be-bd72-etrs89-gsb",
+    "name": "Belgium BD72 <-> ETRS89 NTv2",
+    "description": "Belgium NTv2 horizontal grid for BD72 / ETRS89 Lambert transformation.",
+    "scope": "regional",
+    "usageHint": "nadgrids",
+    "regions": ["Belgium"],
+    "localFile": "builtin/bd72lb72_etrs89lb08.gsb"
+  },
+  {
+    "id": "builtin-be-bd72-etrs89-tif",
+    "name": "Belgium BD72 <-> ETRS89 GeoTIFF",
+    "description": "Belgium horizontal backup grid in GeoTIFF form.",
+    "scope": "regional",
+    "usageHint": "nadgrids",
+    "regions": ["Belgium"],
+    "localFile": "builtin/be_ign_bd72lb72_etrs89lb08.tif"
+  },
+  {
+    "id": "builtin-global-egm96-15",
+    "name": "Global EGM96 15'",
+    "description": "Global geoid grid from NGA. Useful as a broad built-in vertical fallback.",
+    "scope": "global",
+    "usageHint": "geoidgrids",
+    "regions": ["global"],
+    "localFile": "builtin/us_nga_egm96_15.tif"
+  },
+  {
+    "id": "builtin-au-ausgeoid2020",
+    "name": "Australia AUSGeoid2020",
+    "description": "Australia vertical geoid model from Geoscience Australia.",
+    "scope": "regional",
+    "usageHint": "geoidgrids",
+    "regions": ["Australia"],
+    "localFile": "builtin/au_ga_AUSGeoid2020_20180201.tif"
+  },
+  {
+    "id": "builtin-fr-raf20",
+    "name": "France RAF20",
+    "description": "IGN France RAF20 vertical reference grid.",
+    "scope": "regional",
+    "usageHint": "geoidgrids",
+    "regions": ["France"],
+    "localFile": "builtin/fr_ign_RAF20.tif"
+  },
+  {
+    "id": "builtin-de-beta2007",
+    "name": "Germany BETA2007",
+    "description": "Germany deformation/grid package distributed in PROJ-data.",
+    "scope": "regional",
+    "usageHint": "grids",
+    "regions": ["Germany"],
+    "localFile": "builtin/de_adv_BETA2007.tif"
+  },
+  {
+    "id": "builtin-de-gcg2016v2023",
+    "name": "Germany GCG2016v2023",
+    "description": "Germany geoid grid for orthometric/normal-height workflows. Bundled as a GTX converted from the validated GCG2016v2023 source grid.",
+    "scope": "regional",
+    "usageHint": "geoidgrids",
+    "regions": ["Germany"],
+    "localFile": "builtin/de_bkg_GCG2016v2023.gtx"
+  },
+  {
+    "id": "builtin-fi-fin2023n2000",
+    "name": "Finland FIN2023 N2000",
+    "description": "Finland N2000 vertical grid published in PROJ-data.",
+    "scope": "regional",
+    "usageHint": "geoidgrids",
+    "regions": ["Finland"],
+    "localFile": "builtin/fi_nls_fin2023n2000.tif"
+  },
+  {
+    "id": "builtin-no-href2018b-nn2000",
+    "name": "Norway HREF2018B NN2000",
+    "description": "Norway vertical transformation grid in PROJ-data.",
+    "scope": "regional",
+    "usageHint": "geoidgrids",
+    "regions": ["Norway"],
+    "localFile": "builtin/no_kv_HREF2018B_NN2000_EUREF89.tif"
+  },
+  {
+    "id": "builtin-jp-jpgeo2024",
+    "name": "Japan JPGEO2024",
+    "description": "Japan GSI geoid model from PROJ-data.",
+    "scope": "regional",
+    "usageHint": "geoidgrids",
+    "regions": ["Japan"],
+    "localFile": "builtin/jp_gsi_jpgeo2024.tif"
+  },
+  {
+    "id": "builtin-za-sageoid2010",
+    "name": "South Africa SAGEOID2010",
+    "description": "South Africa geoid grid from PROJ-data.",
+    "scope": "regional",
+    "usageHint": "geoidgrids",
+    "regions": ["South Africa"],
+    "localFile": "builtin/za_cdngi_sageoid2010.tif"
+  },
+  {
+    "id": "builtin-us-geoid18-conus",
+    "name": "USA GEOID18 CONUS",
+    "description": "NOAA GEOID18 geoid model for the contiguous United States. Use for converting ellipsoidal height to NAVD88-type orthometric height workflows.",
+    "scope": "regional",
+    "usageHint": "geoidgrids",
+    "regions": ["United States", "CONUS"],
+    "localFile": "builtin/us_noaa_g2018u0.tif"
+  },
+  {
+    "id": "builtin-us-geoid12b-alaska",
+    "name": "USA GEOID12B Alaska",
+    "description": "NOAA geoid model for Alaska vertical height conversion.",
+    "scope": "regional",
+    "usageHint": "geoidgrids",
+    "regions": ["United States", "Alaska"],
+    "localFile": "builtin/us_noaa_g2012ba0.tif"
+  },
+  {
+    "id": "builtin-us-geoid12b-hawaii",
+    "name": "USA GEOID12B Hawaii",
+    "description": "NOAA geoid model for Hawaii vertical height conversion.",
+    "scope": "regional",
+    "usageHint": "geoidgrids",
+    "regions": ["United States", "Hawaii"],
+    "localFile": "builtin/us_noaa_g2012bh0.tif"
+  },
+  {
+    "id": "builtin-us-geoid12b-prvi",
+    "name": "USA GEOID12B Puerto Rico / Virgin Islands",
+    "description": "NOAA geoid model for Puerto Rico and the U.S. Virgin Islands vertical height conversion.",
+    "scope": "regional",
+    "usageHint": "geoidgrids",
+    "regions": ["United States", "Puerto Rico", "Virgin Islands"],
+    "localFile": "builtin/us_noaa_g2012bp0.tif"
+  },
+  {
+    "id": "builtin-us-nadcon5-nad27-nad83-conus",
+    "name": "USA NADCON5 NAD27 -> NAD83(1986) CONUS",
+    "description": "Common legacy horizontal transformation for NAD27 to NAD83(1986) in the contiguous United States.",
+    "scope": "regional",
+    "usageHint": "nadgrids",
+    "regions": ["United States", "CONUS"],
+    "localFile": "builtin/us_noaa_nadcon5_nad27_nad83_1986_conus.tif"
+  },
+  {
+    "id": "builtin-us-nadcon5-nad83-2007-2011-conus",
+    "name": "USA NADCON5 NAD83(2007) -> NAD83(2011) CONUS",
+    "description": "Common modern horizontal transformation for NAD83(2007) to NAD83(2011) in the contiguous United States.",
+    "scope": "regional",
+    "usageHint": "nadgrids",
+    "regions": ["United States", "CONUS"],
+    "localFile": "builtin/us_noaa_nadcon5_nad83_2007_nad83_2011_conus.tif"
+  },
+  {
+    "id": "builtin-us-nadcon5-nad27-nad83-alaska",
+    "name": "USA NADCON5 NAD27 -> NAD83(1986) Alaska",
+    "description": "Common legacy horizontal transformation for NAD27 to NAD83(1986) in Alaska.",
+    "scope": "regional",
+    "usageHint": "nadgrids",
+    "regions": ["United States", "Alaska"],
+    "localFile": "builtin/us_noaa_nadcon5_nad27_nad83_1986_alaska.tif"
+  },
+  {
+    "id": "builtin-us-nadcon5-nad83-2007-2011-alaska",
+    "name": "USA NADCON5 NAD83(2007) -> NAD83(2011) Alaska",
+    "description": "Common modern horizontal transformation for NAD83(2007) to NAD83(2011) in Alaska.",
+    "scope": "regional",
+    "usageHint": "nadgrids",
+    "regions": ["United States", "Alaska"],
+    "localFile": "builtin/us_noaa_nadcon5_nad83_2007_nad83_2011_alaska.tif"
+  },
+  {
+    "id": "builtin-us-nadcon5-nad83-1986-1993-hawaii",
+    "name": "USA NADCON5 NAD83(1986) -> NAD83(1993) Hawaii",
+    "description": "Common horizontal transformation for Hawaii NAD83 realizations.",
+    "scope": "regional",
+    "usageHint": "nadgrids",
+    "regions": ["United States", "Hawaii"],
+    "localFile": "builtin/us_noaa_nadcon5_nad83_1986_nad83_1993_hawaii.tif"
+  },
+  {
+    "id": "builtin-us-nadcon5-nad83-1986-1993-prvi",
+    "name": "USA NADCON5 NAD83(1986) -> NAD83(1993) Puerto Rico / Virgin Islands",
+    "description": "Common horizontal transformation for Puerto Rico and the U.S. Virgin Islands NAD83 realizations.",
+    "scope": "regional",
+    "usageHint": "nadgrids",
+    "regions": ["United States", "Puerto Rico", "Virgin Islands"],
+    "localFile": "builtin/us_noaa_nadcon5_nad83_1986_nad83_1993_prvi.tif"
+  }
+]
