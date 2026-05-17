@@ -3104,6 +3104,16 @@ function sanitizeConversionJobForClient(job) {
   };
 }
 
+function sanitizeScannerFeaturesForClient(features = null) {
+  if (!features || typeof features !== 'object') return features || null;
+  const sanitized = { ...features };
+  delete sanitized.dirPath;
+  delete sanitized.odomPath;
+  delete sanitized.imgPosePath;
+  delete sanitized.geoInfoPath;
+  return sanitized;
+}
+
 function buildConversionFailurePayload(error, {
   cloudName = null,
   viewerUrl = null,
@@ -3857,7 +3867,7 @@ app.get('/api/scan-projects', (_req, res) => {
         projectId: p.projectId,
         name: p.name,
         dirPath: redactServerPath(p.dirPath, { expose: EXPOSE_SERVER_PATHS }),
-        features: p.features,
+        features: sanitizeScannerFeaturesForClient(p.features),
         sourceFiles: listScannerSourceFiles(p).map(file => sanitizeSourceFileForClient({
           ...file,
           absPath: path.join(p.dirPath, file.relPath),
@@ -4206,7 +4216,7 @@ app.get('/api/clouds', (_req, res) => {
           points,
           scannerProjectId,
           scannerProjectName,
-          features,
+          features: sanitizeScannerFeaturesForClient(features),
           sourceType,
           metadataUrl: `/pointclouds/${encodeURIComponent(name)}/metadata.json`,
           scanDataUrl: scannerProjectId ? `/scan-data/${encodeURIComponent(scannerProjectId)}` : null,
@@ -4243,7 +4253,7 @@ app.get('/api/clouds', (_req, res) => {
         points: entry.points ?? readMetadataPointCount(entry.metadataPath),
         scannerProjectId: entry.projectId || null,
         scannerProjectName: entry.projectName || null,
-        features: entry.features || null,
+        features: sanitizeScannerFeaturesForClient(entry.features),
         sourceType: entry.sourceType || 'desktop-local-import',
         metadataUrl: entry.metadataUrl || buildLocalPointcloudMetadataUrl(entry.cloudName),
         sourcePath: redactServerPath(
@@ -4269,7 +4279,7 @@ app.get('/api/clouds', (_req, res) => {
         points: entry.features?.pointCount ?? null,
         scannerProjectId: entry.projectId,
         scannerProjectName: entry.name,
-        features: entry.features || null,
+        features: sanitizeScannerFeaturesForClient(entry.features),
         sourceType: 'scan-project',
         metadataUrl: entry.pointcloudUrl,
         sourcePath: redactServerPath(entry.dirPath, { expose: EXPOSE_SERVER_PATHS, basename: true }),
