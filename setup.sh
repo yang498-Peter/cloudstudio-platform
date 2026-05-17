@@ -9,6 +9,7 @@ set -e
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 WEB_DIR="$APP_DIR/web-uploader"
 CONVERTER_BUILD="$APP_DIR/PotreeConverter/build-gcc"
+DEFAULT_DATA_DIR="${CLOUDSTUDIO_DATA_DIR:-/srv/cloudstudio-data}"
 
 echo "======================================================"
 echo " CloudStudio 服务器安装脚本"
@@ -98,8 +99,30 @@ fi
 # 生成 .env（如果不存在）
 if [ ! -f "$WEB_DIR/.env" ]; then
   cp "$WEB_DIR/.env.example" "$WEB_DIR/.env"
+  cat >> "$WEB_DIR/.env" << ENV_DEFAULTS
+
+# Staging/demo default: keep runtime data outside application code.
+CLOUDSTUDIO_DATA_DIR=$DEFAULT_DATA_DIR
+ENV_DEFAULTS
   echo "  已生成 .env 文件（可按需修改）"
+elif ! grep -Eq '^(CLOUDSTUDIO_DATA_DIR|CLOUDSTUDIO_STORAGE_ROOT)=' "$WEB_DIR/.env"; then
+  echo "  提醒：建议在 $WEB_DIR/.env 设置 CLOUDSTUDIO_DATA_DIR=$DEFAULT_DATA_DIR"
 fi
+
+if [ -f "$WEB_DIR/.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . "$WEB_DIR/.env"
+  set +a
+fi
+ACTIVE_DATA_DIR="${CLOUDSTUDIO_DATA_DIR:-${CLOUDSTUDIO_STORAGE_ROOT:-$DEFAULT_DATA_DIR}}"
+mkdir -p \
+  "$ACTIVE_DATA_DIR/uploads" \
+  "$ACTIVE_DATA_DIR/pointclouds" \
+  "$ACTIVE_DATA_DIR/gaussians" \
+  "$ACTIVE_DATA_DIR/projects" \
+  "$ACTIVE_DATA_DIR/exports" \
+  "$ACTIVE_DATA_DIR/cache"
 
 # ---------- 配置 nginx ----------
 echo ""
@@ -141,8 +164,14 @@ echo "======================================================"
 echo " 启动 CloudStudio..."
 echo "======================================================"
 cd "$WEB_DIR"
+if [ -f "$WEB_DIR/.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . "$WEB_DIR/.env"
+  set +a
+fi
 pm2 delete cloudstudio 2>/dev/null || true
-pm2 start server.js --name cloudstudio --interpreter node
+pm2 start server.js --name cloudstudio --interpreter node --update-env
 pm2 save
 pm2 startup systemd -u root --hp /root | tail -1 | bash 2>/dev/null || true
 

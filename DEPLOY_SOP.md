@@ -87,15 +87,17 @@
 
 ---
 
-## 2. 服务器信息（当前固定）
-- Host: `47.253.63.0`
+## 2. 服务器信息（staging/demo）
+- Host: `8.209.66.134`
+- SSH alias: `cloudstudio-new`
 - User: `root`
 - SSH key: `~/.ssh/openclaw_cloudstudio_ed25519`
-- 生产代码目录：`/opt/cloudstudio`
+- 代码目录：`/opt/cloudstudio`
 - Web 应用目录：`/opt/cloudstudio/web-uploader`
+- 推荐数据目录：`/srv/cloudstudio-data`（通过 `CLOUDSTUDIO_DATA_DIR` 配置）
 - PM2 进程：`cloudstudio`
 - Nginx 反代：`127.0.0.1:8090`
-- 外网域名：`https://lidar361.com`
+- 外网地址：`http://8.209.66.134`
 
 ---
 
@@ -125,7 +127,7 @@
 ### 3.3 升级前健康检查
 ```bash
 curl -s http://localhost:8090/health
-curl -I https://lidar361.com
+curl -I http://8.209.66.134
 ```
 
 ---
@@ -199,16 +201,16 @@ curl -I https://lidar361.com
 ## 6. 快速热更新（推荐默认路径）
 
 ```bash
-cd /Users/yangqi/.openclaw/workspace/potree-local/cloudstudio-server
+cd /Users/yangqi/.openclaw/workspace/cloudstudio-platform
 
-scp -i ~/.ssh/openclaw_cloudstudio_ed25519 web-uploader/server.js root@47.253.63.0:/opt/cloudstudio/web-uploader/server.js
-scp -i ~/.ssh/openclaw_cloudstudio_ed25519 web-uploader/viewer.html root@47.253.63.0:/opt/cloudstudio/web-uploader/viewer.html
-scp -i ~/.ssh/openclaw_cloudstudio_ed25519 web-uploader/index.html root@47.253.63.0:/opt/cloudstudio/web-uploader/index.html
+scp -i ~/.ssh/openclaw_cloudstudio_ed25519 web-uploader/server.js root@8.209.66.134:/opt/cloudstudio/web-uploader/server.js
+scp -i ~/.ssh/openclaw_cloudstudio_ed25519 web-uploader/viewer.html root@8.209.66.134:/opt/cloudstudio/web-uploader/viewer.html
+scp -i ~/.ssh/openclaw_cloudstudio_ed25519 web-uploader/index.html root@8.209.66.134:/opt/cloudstudio/web-uploader/index.html
 
-ssh -i ~/.ssh/openclaw_cloudstudio_ed25519 root@47.253.63.0 '
+ssh -i ~/.ssh/openclaw_cloudstudio_ed25519 root@8.209.66.134 '
 set -e
 cd /opt/cloudstudio/web-uploader
-pm2 restart cloudstudio
+pm2 restart cloudstudio --update-env
 pm2 save
 sleep 3
 curl -s http://localhost:8090/health
@@ -242,7 +244,7 @@ curl -s http://localhost:8090/health
 
 ### 8.2 外网健康
 ```bash
-curl -I https://lidar361.com
+curl -I http://8.209.66.134
 ```
 
 ### 8.3 必测接口
@@ -288,7 +290,7 @@ curl -s "http://localhost:8090/api/crs/search?q=4326"
 ```bash
 df -h /
 curl -s http://localhost:8090/health
-curl -I https://lidar361.com
+curl -I http://8.209.66.134
 ```
 
 ---

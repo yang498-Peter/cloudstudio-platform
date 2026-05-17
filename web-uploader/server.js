@@ -60,6 +60,47 @@ function pathExists(candidate) {
   }
 }
 
+function canWriteDirectory(dirPath) {
+  try {
+    fs.accessSync(dirPath, fs.constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getRuntimeStorageHealth() {
+  const directoryConfigs = [
+    RUNTIME_STORAGE.uploads,
+    RUNTIME_STORAGE.pointclouds,
+    RUNTIME_STORAGE.gaussians,
+    RUNTIME_STORAGE.projects,
+    RUNTIME_STORAGE.exports,
+    RUNTIME_STORAGE.cache,
+  ];
+  const directories = {};
+  for (const dirConfig of directoryConfigs) {
+    directories[dirConfig.key] = {
+      primaryExists: pathExists(dirConfig.primary),
+      primaryWritable: canWriteDirectory(dirConfig.primary),
+      legacyExists: pathExists(dirConfig.legacy),
+    };
+  }
+  const disk = getDiskUsageSummary(STORAGE_ROOT);
+  return {
+    configured: Boolean(RUNTIME_STORAGE.configuredStorageRoot),
+    env: RUNTIME_STORAGE.configuredStorageEnv,
+    external: RUNTIME_STORAGE.usesExternalStorage,
+    directories,
+    disk: disk ? {
+      totalBytes: disk.totalBytes,
+      usedBytes: disk.usedBytes,
+      freeBytes: disk.freeBytes,
+      usageRatio: disk.usageRatio,
+    } : null,
+  };
+}
+
 function buildPythonEnv(extraEnv = {}) {
   const env = { ...process.env, ...extraEnv };
   const pythonPaths = [PYTHON_VENDOR_SITE, env.PYTHONPATH].filter(Boolean);
@@ -3704,6 +3745,7 @@ app.get('/health', (_req, res) => {
     desktopDialogs: false,
     desktopDialogsPath: null,
     exportScript: fs.existsSync(EXPORT_POINTCLOUD_SCRIPT),
+    storage: getRuntimeStorageHealth(),
   });
 });
 
