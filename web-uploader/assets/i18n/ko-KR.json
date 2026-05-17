@@ -218,8 +218,8 @@
       "gaussianNameLabel": "장면 이름 (선택사항, 비워두면 파일 이름 사용)",
       "gaussianNamePlaceholder": "예: factory_gaussian_scene",
       "gaussianSubmitBtn": "업로드 후 뷰어 열기",
-      "gaussianReadyTitle": "3DGS 게시됨: {{cloudName}}",
-      "gaussianReadyTitleShort": "3DGS 게시됨",
+      "gaussianReadyTitle": "3DGS 바로 보기 준비됨: {{cloudName}}",
+      "gaussianReadyTitleShort": "3DGS 바로 보기 준비됨",
       "openGaussianViewer": "뷰어 열기"
     },
     "clouds": {
@@ -241,7 +241,9 @@
       "gaussianSupersplat": "3DGS 뷰어 · {{format}}",
       "sourceSize": "원본",
       "publishSize": "웹 패키지",
-      "publishStatus": "상태: {{status}}"
+      "publishStatus": "상태: {{status}}",
+      "directBrowseReady": "바로 보기 준비됨",
+      "sogStatus": "SOG: {{status}}"
     },
     "adv": {
       "label": "CloudStudio를 선택하는 이유",
@@ -269,7 +271,7 @@
       "uploadSuccess": "변환 완료: {{cloudName}}",
       "projectUploadSuccess": "✓ 프로젝트 업로드됨: {{projectName}}{{features}}",
       "preconvertedSuccess": "✓ 변환 완료 클라우드 추가됨: {{cloudName}}",
-      "gaussianSuccess": "✓ 3DGS 게시됨: {{cloudName}}"
+      "gaussianSuccess": "3DGS 바로 보기 준비됨: {{cloudName}}"
     },
     "toast": {
       "loadFailed": "로드 실패: {{message}}",

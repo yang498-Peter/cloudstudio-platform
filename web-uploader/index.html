@@ -2585,11 +2585,17 @@
         const isScanner = Boolean(c.scannerProjectId);
         const isPreconverted = c.sourceType === 'preconverted-upload';
         const isGaussian = c.resourceType === 'gaussian';
-        const gaussianReady = isGaussian && c.gaussianPublishStatus === 'ready';
+        const gaussianDirectReady = isGaussian && (
+          c.gaussianDirectBrowseStatus === 'ready'
+          || c.gaussianPublishStatus === 'ready'
+          || c.gaussianPublishStatus === 'direct-ready'
+          || c.gaussianPublishStatus === 'optimized-ready'
+        );
+        const gaussianOptimizationStatus = c.gaussianOptimizationStatus || 'not-applicable';
         const formatLabel = (c.gaussianFormat || 'unknown').toUpperCase();
         const sourceSize = fmtMaybeBytes(c.originalBytes);
         const pts = isGaussian
-          ? (gaussianReady
+          ? (gaussianDirectReady
             ? tr('index.clouds.gaussianSupersplat', { format: formatLabel }, `3DGS Viewer · ${formatLabel}`)
             : tr('index.clouds.gaussianFormat', { format: formatLabel }, `Format: ${formatLabel}`))
           : (Number.isFinite(c.points)
@@ -2598,14 +2604,15 @@
         const detail = isGaussian
           ? [
               sourceSize ? `${tr('index.clouds.sourceSize', {}, 'Source')} ${sourceSize}` : '',
-              c.gaussianPublishStatus && c.gaussianPublishStatus !== 'ready'
-                ? tr('index.clouds.publishStatus', { status: c.gaussianPublishStatus }, `Status: ${c.gaussianPublishStatus}`)
+              gaussianDirectReady ? tr('index.clouds.directBrowseReady', {}, 'Direct browse ready') : '',
+              gaussianOptimizationStatus && gaussianOptimizationStatus !== 'not-applicable'
+                ? tr('index.clouds.sogStatus', { status: gaussianOptimizationStatus }, `SOG: ${gaussianOptimizationStatus}`)
                 : '',
             ].filter(Boolean).join(' · ')
           : '';
         const cloudKey = c.cloudName || c.name || '';
         const viewerUrl = isGaussian
-          ? `/3dgs/${encodeURIComponent(cloudKey)}`
+          ? (c.viewerUrl || `/3dgs/${encodeURIComponent(cloudKey)}`)
           : (c.viewerUrl || `/viewer?pointcloud=/pointclouds/${encodeURIComponent(c.name)}/metadata.json`);
 
         // Build feature tag strip for scanner projects
@@ -2622,7 +2629,7 @@
 
         const icon = isGaussian ? '3D' : (isScanner ? 'SC' : (isPreconverted ? 'PC' : 'PC'));
         const typeLabel = isGaussian
-          ? `<span class="cloud-type-tag ${gaussianReady ? 'supersplat-tag' : 'preconverted-tag'}">${gaussianReady ? tr('index.clouds.supersplatScene', {}, 'SuperSplat') : tr('index.clouds.gaussianScene', {}, 'Gaussian Scene')}</span>`
+          ? `<span class="cloud-type-tag ${gaussianDirectReady ? 'supersplat-tag' : 'preconverted-tag'}">${gaussianDirectReady ? tr('index.clouds.supersplatScene', {}, 'SuperSplat') : tr('index.clouds.gaussianScene', {}, 'Gaussian Scene')}</span>`
           : isScanner
             ? `<span class="cloud-type-tag scanner-tag">${tr('index.clouds.scannerProject', {}, 'Scanner Project')}</span>`
             : isPreconverted
@@ -2746,10 +2753,13 @@
       const name = data.assetName || data.cloudName || tr('index.clouds.gaussianScene', {}, 'Gaussian Scene');
       const sourceSize = fmtMaybeBytes(data.originalBytes);
       const runtimeSize = fmtMaybeBytes(data.runtimeBytes || data.publish?.bytes);
-      title.textContent = tr('index.upload.gaussianReadyTitle', { cloudName: name }, `3DGS published: ${name}`);
+      title.textContent = tr('index.upload.gaussianReadyTitle', { cloudName: name }, `3DGS browse ready: ${name}`);
+      const optimizationStatus = data.optimizationStatus || data.publish?.optimizationStatus || 'not-applicable';
       meta.textContent = [
         sourceSize ? `${tr('index.clouds.sourceSize', {}, 'Source')} ${sourceSize}` : '',
-        runtimeSize ? `SOG ${runtimeSize}` : '',
+        tr('index.clouds.directBrowseReady', {}, 'Direct browse ready'),
+        optimizationStatus && optimizationStatus !== 'not-applicable' ? tr('index.clouds.sogStatus', { status: optimizationStatus }, `SOG: ${optimizationStatus}`) : '',
+        runtimeSize && optimizationStatus === 'ready' ? `SOG ${runtimeSize}` : '',
         data.publish?.pipeline ? data.publish.pipeline : '',
       ].filter(Boolean).join(' · ');
       open.href = data.viewerUrl || '#';
@@ -2841,7 +2851,7 @@
           spd.textContent = '';
 
           if (data.resourceType === 'gaussian') {
-            const msg = tr('index.status.gaussianSuccess', { cloudName: data.assetName || data.cloudName }, `✓ 3DGS published: ${data.assetName || data.cloudName}`);
+            const msg = tr('index.status.gaussianSuccess', { cloudName: data.assetName || data.cloudName }, `3DGS browse ready: ${data.assetName || data.cloudName}`);
             setStatus('ok', msg, {}, { raw: true });
             toast('ok', msg);
             showGaussianResult(data);
