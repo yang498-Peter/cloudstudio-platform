@@ -7,6 +7,10 @@ import { spawn, spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { readLastJsonLine } from './lib/job-result.js';
 import {
+  createLongJobRegistry,
+  runCommandWithTimeout,
+} from './lib/long-job-state.js';
+import {
   buildRuntimeStorageLayout,
   createStaticFallbackMiddleware,
   ensureRuntimeStorageLayout,
@@ -40,6 +44,11 @@ const ZIP_MAX_TOTAL_BYTES = parsePositiveIntegerEnv('CLOUDSTUDIO_ZIP_MAX_TOTAL_B
 const ZIP_MAX_FILE_BYTES = parsePositiveIntegerEnv('CLOUDSTUDIO_ZIP_MAX_FILE_BYTES', 10 * GIB);
 const ZIP_MAX_FILES = parsePositiveIntegerEnv('CLOUDSTUDIO_ZIP_MAX_FILES', 100000);
 const GRID_UPLOAD_MAX_BYTES = parsePositiveIntegerEnv('CLOUDSTUDIO_GRID_UPLOAD_MAX_BYTES', 2 * GIB);
+const LONG_JOB_TIMEOUTS = Object.freeze({
+  potreeConversionMs: parsePositiveIntegerEnv('CLOUDSTUDIO_POTREE_CONVERSION_TIMEOUT_MS', 60 * 60 * 1000),
+  zipExtractionMs: parsePositiveIntegerEnv('CLOUDSTUDIO_ZIP_EXTRACTION_TIMEOUT_MS', 15 * 60 * 1000),
+  gaussianSogOptimizationMs: parsePositiveIntegerEnv('CLOUDSTUDIO_GAUSSIAN_SOG_TIMEOUT_MS', 30 * 60 * 1000),
+});
 
 const ROOT = path.resolve(__dirname, '..');
 const POTREE_ROOT = path.join(ROOT, 'potree');
@@ -383,6 +392,7 @@ const PROJECTS_DIR = RUNTIME_STORAGE.projects.primary;   // Uploaded scanner pro
 const EXPORTS_DIR = RUNTIME_STORAGE.exports.primary;
 const ASSETS_DIR = path.join(__dirname, 'assets');
 const CACHE_DIR = RUNTIME_STORAGE.cache.primary;
+const CONVERSION_JOB_DIR = path.join(CACHE_DIR, 'conversion-jobs');
 const GRID_STORAGE_DIR = RUNTIME_STORAGE.gridStorage.primary;
 const CRS_BOOTSTRAP_FILE = path.join(ASSETS_DIR, 'crs', 'bootstrap.json');
 const CRS_CACHE_FILE = path.join(CACHE_DIR, 'crs-cache.json');
@@ -400,6 +410,11 @@ const EFFECTIVE_TERRAIN_PYTHON_BIN = PYTHON_BIN;
 const POWERSHELL_BIN = null;
 
 ensureRuntimeStorageLayout(RUNTIME_STORAGE);
+fs.mkdirSync(CONVERSION_JOB_DIR, { recursive: true });
+const conversionJobRegistry = createLongJobRegistry({
+  dir: CONVERSION_JOB_DIR,
+  maxJobs: parsePositiveIntegerEnv('CLOUDSTUDIO_CONVERSION_JOB_HISTORY', 100),
+});
 
 for (const d of [PYTHON_VENDOR_SITE].filter(Boolean)) {
   fs.mkdirSync(d, { recursive: true });
@@ -1745,6 +1760,13 @@ const API_ERROR_STATUS = Object.freeze({
   EXPORT_SCRIPT_MISSING: 500,
   CONVERTER_NOT_FOUND: 500,
   CONVERSION_FAILED: 500,
+  CONVERSION_TIMEOUT: 504,
+  EXTRACT_TIMEOUT: 504,
+  GAUSSIAN_OPTIMIZATION_TIMEOUT: 504,
+  PROCESS_TIMEOUT: 504,
+  JOB_NOT_FOUND: 404,
+  VOLUME_JOB_TIMEOUT: 504,
+  VOLUME_SURFACE_TIMEOUT: 504,
   WRONG_PASSWORD: 403,
   ZIP_TOO_LARGE: 413,
   INTERNAL_ERROR: 500,
@@ -2722,53 +2744,67 @@ function resolveSplatTransformCommand() {
   return { command: IS_WINDOWS ? 'npx.cmd' : 'npx', prefixArgs: ['--yes', `@playcanvas/splat-transform@${SPLAT_TRANSFORM_VERSION}`] };
 }
 
-function runGaussianSogConversion(inputPath, outputPath, { rotation = GAUSSIAN_CONVERT_ROTATION } = {}) {
-  return new Promise((resolve) => {
-    const { command, prefixArgs } = resolveSplatTransformCommand();
-    const args = [
-      ...prefixArgs,
-      '--mem',
-      '--overwrite',
-      '-g',
-      'cpu',
-      inputPath,
-      '-r',
-      rotation,
-      outputPath,
-    ];
-    const startedAt = Date.now();
-    const child = spawn(command, args, {
+async function runGaussianSogConversion(inputPath, outputPath, {
+  rotation = GAUSSIAN_CONVERT_ROTATION,
+  jobId = null,
+  timeoutMs = LONG_JOB_TIMEOUTS.gaussianSogOptimizationMs,
+} = {}) {
+  const { command, prefixArgs } = resolveSplatTransformCommand();
+  const args = [
+    ...prefixArgs,
+    '--mem',
+    '--overwrite',
+    '-g',
+    'cpu',
+    inputPath,
+    '-r',
+    rotation,
+    outputPath,
+  ];
+  try {
+    const result = await runTrackedCommandJob(jobId, {
+      command,
+      args,
       cwd: __dirname,
       env: buildPythonEnv({ npm_config_yes: 'true' }),
-      windowsHide: true,
+      timeoutMs,
+      stage: 'sog-optimization',
+      message: 'Optimizing PLY to SOG',
+      timeoutCode: 'GAUSSIAN_OPTIMIZATION_TIMEOUT',
+      timeoutMessage: `3DGS SOG optimization timed out after ${Math.round(timeoutMs / 1000)}s`,
     });
-    let stdout = '';
-    let stderr = '';
-    child.stdout?.on('data', chunk => { stdout += chunk.toString(); });
-    child.stderr?.on('data', chunk => { stderr += chunk.toString(); });
-    child.on('error', error => {
-      resolve({
+    return {
+      ok: result.code === 0 && fs.existsSync(outputPath),
+      code: result.code,
+      command,
+      args,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      durationMs: result.durationMs,
+    };
+  } catch (error) {
+    if (error.code === 'GAUSSIAN_OPTIMIZATION_TIMEOUT') {
+      return {
         ok: false,
+        timedOut: true,
         error,
         command,
         args,
-        stdout,
-        stderr,
-        durationMs: Date.now() - startedAt,
-      });
-    });
-    child.on('close', code => {
-      resolve({
-        ok: code === 0 && fs.existsSync(outputPath),
-        code,
-        command,
-        args,
-        stdout,
-        stderr,
-        durationMs: Date.now() - startedAt,
-      });
-    });
-  });
+        stdout: error.stdout || '',
+        stderr: error.stderr || '',
+        durationMs: null,
+      };
+    }
+    return {
+      ok: false,
+      error,
+      command,
+      args,
+      stdout: error.stdout || '',
+      stderr: error.stderr || '',
+      durationMs: null,
+    };
+  }
 }
 
 function summarizeSplatTransformOutput(output = '') {
@@ -2878,8 +2914,9 @@ async function optimizeGaussianAssetToSog({
   runtimeName = 'scene.sog',
   runtimePath,
   sourceBytes,
+  jobId = null,
 }) {
-  const conversion = await runGaussianSogConversion(targetPath, runtimePath);
+  const conversion = await runGaussianSogConversion(targetPath, runtimePath, { jobId });
   if (!conversion.ok) {
     const currentManifest = readGaussianManifest(assetName)
       || createGaussianDirectManifest(assetName, {
@@ -2899,6 +2936,7 @@ async function optimizeGaussianAssetToSog({
       conversionRotation: GAUSSIAN_CONVERT_ROTATION,
       durationMs: conversion.durationMs,
       error: conversion.error?.message || `splat-transform exited with code ${conversion.code}`,
+      errorCode: conversion.error?.code || (conversion.timedOut ? 'GAUSSIAN_OPTIMIZATION_TIMEOUT' : 'GAUSSIAN_OPTIMIZATION_FAILED'),
       stderr: summarizeSplatTransformOutput(conversion.stderr),
       tool: `@playcanvas/splat-transform@${SPLAT_TRANSFORM_VERSION}`,
       failedAt: new Date().toISOString(),
@@ -2910,6 +2948,16 @@ async function optimizeGaussianAssetToSog({
     currentManifest.publish.viewerRotation = viewerRotation;
     currentManifest.note = 'Direct PLY browsing is available. Background SOG optimization failed on the server.';
     writeGaussianManifest(assetDir, currentManifest);
+    updateConversionJob(jobId, {
+      status: conversion.timedOut ? 'timed_out' : 'failed',
+      stage: conversion.timedOut ? 'timeout' : 'failed',
+      message: currentManifest.publish.error,
+      error: currentManifest.publish.error,
+      errorCode: currentManifest.publish.errorCode,
+      durationMs: conversion.durationMs,
+      manifestPath: path.join(assetDir, 'source.json'),
+      ...summarizeJobOutput(conversion.stdout, conversion.stderr),
+    });
     console.warn(`[Gaussian] Background SOG optimization failed for ${assetName}: ${currentManifest.publish.error}`);
     return { ok: false, conversion, manifest: currentManifest };
   }
@@ -2957,6 +3005,15 @@ async function optimizeGaussianAssetToSog({
   });
   manifest.note = 'Published with CloudStudio SuperSplat Editor browse mode using official PlayCanvas SOG generated from the original PLY. Rotation is baked into the published file.';
   writeGaussianManifest(assetDir, manifest);
+  updateConversionJob(jobId, {
+    status: 'succeeded',
+    stage: 'complete',
+    message: '3DGS SOG optimization completed',
+    durationMs: conversion.durationMs,
+    manifestPath: path.join(assetDir, 'source.json'),
+    runtimePath,
+    ...summarizeJobOutput(conversion.stdout, conversion.stderr),
+  });
   console.log(`[Gaussian] Background SOG optimization finished for ${assetName} in ${conversion.durationMs}ms`);
   return { ok: true, conversion, manifest };
 }
@@ -2970,6 +3027,139 @@ function buildConversionFailureMessage({ ok, code, metadataPath, stdout, stderr 
     : (errDetail
       ? `PotreeConverter 退出码 ${code}：${errDetail}`
       : `PotreeConverter 退出码 ${code}，无详细输出。请用 pm2 logs cloudstudio 查看服务端日志。`);
+}
+
+function createConversionJob(kind, fields = {}) {
+  return conversionJobRegistry.create(kind, {
+    timeoutMs: fields.timeoutMs || null,
+    message: fields.message || 'Queued',
+    ...fields,
+  });
+}
+
+function updateConversionJob(jobId, patch = {}) {
+  if (!jobId) return null;
+  return conversionJobRegistry.update(jobId, patch);
+}
+
+function buildTimeoutError(message, {
+  code = 'PROCESS_TIMEOUT',
+  timeoutMs = null,
+  jobId = null,
+  stdout = '',
+  stderr = '',
+} = {}) {
+  const error = new Error(message);
+  error.code = code;
+  error.timeoutMs = timeoutMs;
+  error.jobId = jobId;
+  error.stdout = stdout;
+  error.stderr = stderr;
+  return error;
+}
+
+function summarizeJobOutput(stdout = '', stderr = '', maxLength = 4000) {
+  return {
+    stdout: String(stdout || '').slice(-maxLength),
+    stderr: String(stderr || '').slice(-maxLength),
+  };
+}
+
+function requireConversionJobId(rawJobId) {
+  const jobId = String(rawJobId || '').trim();
+  if (!/^[a-zA-Z0-9_-]{1,160}$/.test(jobId)) {
+    const error = new Error('Invalid conversion job id');
+    error.code = 'BAD_REQUEST';
+    throw error;
+  }
+  return jobId;
+}
+
+function sanitizeConversionJobForClient(job) {
+  if (!job) return null;
+  const {
+    stdout,
+    stderr,
+    manifestPath,
+    metadataPath,
+    runtimePath,
+    ...safeJob
+  } = job;
+  return {
+    ...safeJob,
+    output: {
+      hasStdout: Boolean(stdout),
+      hasStderr: Boolean(stderr),
+      hasManifest: Boolean(manifestPath),
+      hasMetadata: Boolean(metadataPath),
+      hasRuntime: Boolean(runtimePath),
+    },
+  };
+}
+
+function buildConversionFailurePayload(error, {
+  cloudName = null,
+  viewerUrl = null,
+  metadataPath = null,
+  extra = {},
+} = {}) {
+  return {
+    ok: false,
+    code: null,
+    errorCode: error?.code || 'CONVERSION_FAILED',
+    cloudName,
+    viewerUrl,
+    metadataExists: metadataPath ? fs.existsSync(metadataPath) : false,
+    error: error?.message || String(error),
+    conversionJobId: error?.jobId || extra.conversionJobId || null,
+    ...extra,
+  };
+}
+
+async function runTrackedCommandJob(jobId, {
+  command,
+  args = [],
+  cwd = ROOT,
+  env = buildPythonEnv(),
+  timeoutMs,
+  stage = 'running',
+  message = 'Running job',
+  timeoutCode = 'PROCESS_TIMEOUT',
+  timeoutMessage = null,
+  windowsHide = true,
+} = {}) {
+  updateConversionJob(jobId, {
+    status: 'running',
+    stage,
+    message,
+    timeoutMs,
+  });
+  const result = await runCommandWithTimeout(command, args, {
+    cwd,
+    env,
+    timeoutMs,
+    windowsHide,
+  });
+  if (result.timedOut) {
+    const errorMessage = timeoutMessage || `Job timed out after ${Math.round(timeoutMs / 1000)}s`;
+    updateConversionJob(jobId, {
+      status: 'timed_out',
+      stage: 'timeout',
+      message: errorMessage,
+      error: errorMessage,
+      errorCode: timeoutCode,
+      durationMs: result.durationMs,
+      ...summarizeJobOutput(result.stdout, result.stderr),
+    });
+    throw buildTimeoutError(errorMessage, {
+      code: timeoutCode,
+      timeoutMs,
+      jobId,
+      stdout: result.stdout,
+      stderr: result.stderr,
+    });
+  }
+  return result;
 }
 
 function runTerrainPythonJob(scriptPath, scriptArgs = [], {
@@ -3213,35 +3403,64 @@ function registerLocalScannerProject({
   };
 }
 
-function convertLasToPotree(absLasPath, outDir) {
-  return new Promise((resolve, reject) => {
-    if (!fs.existsSync(CONVERTER)) {
-      const error = new Error('PotreeConverter not found');
-      error.code = 'CONVERTER_NOT_FOUND';
-      reject(error);
-      return;
-    }
-
-    fs.mkdirSync(outDir, { recursive: true });
-    const proc = spawn(CONVERTER, [absLasPath, '-o', outDir], { cwd: ROOT, windowsHide: true });
-    let stdout = '';
-    let stderr = '';
-    proc.stdout.on('data', d => { stdout += String(d); });
-    proc.stderr.on('data', d => { stderr += String(d); });
-    proc.on('error', reject);
-    proc.on('close', code => {
-      const metadataPath = path.join(outDir, 'metadata.json');
-      if (code === 0 && fs.existsSync(metadataPath)) {
-        resolve({ metadataPath, stdout, stderr });
-        return;
-      }
-      const error = new Error((stderr || stdout || 'Point cloud conversion failed').slice(-2000));
-      error.code = 'CONVERSION_FAILED';
-      error.stdout = stdout;
-      error.stderr = stderr;
-      reject(error);
+async function convertLasToPotree(absLasPath, outDir, {
+  jobId = null,
+  timeoutMs = LONG_JOB_TIMEOUTS.potreeConversionMs,
+} = {}) {
+  if (!fs.existsSync(CONVERTER)) {
+    const error = new Error('PotreeConverter not found');
+    error.code = 'CONVERTER_NOT_FOUND';
+    updateConversionJob(jobId, {
+      status: 'failed',
+      stage: 'preflight',
+      message: error.message,
+      error: error.message,
+      errorCode: error.code,
     });
+    throw error;
+  }
+
+  fs.mkdirSync(outDir, { recursive: true });
+  const result = await runTrackedCommandJob(jobId, {
+    command: CONVERTER,
+    args: [absLasPath, '-o', outDir],
+    cwd: ROOT,
+    timeoutMs,
+    stage: 'potree-conversion',
+    message: 'Running PotreeConverter',
+    timeoutCode: 'CONVERSION_TIMEOUT',
+    timeoutMessage: `PotreeConverter timed out after ${Math.round(timeoutMs / 1000)}s`,
   });
+  const metadataPath = path.join(outDir, 'metadata.json');
+  if (result.code === 0 && fs.existsSync(metadataPath)) {
+    updateConversionJob(jobId, {
+      status: 'succeeded',
+      stage: 'complete',
+      message: 'Potree conversion completed',
+      code: result.code,
+      metadataPath,
+      durationMs: result.durationMs,
+      ...summarizeJobOutput(result.stdout, result.stderr),
+    });
+    return { metadataPath, stdout: result.stdout, stderr: result.stderr };
+  }
+
+  const error = new Error((result.stderr || result.stdout || 'Point cloud conversion failed').slice(-2000));
+  error.code = 'CONVERSION_FAILED';
+  error.stdout = result.stdout;
+  error.stderr = result.stderr;
+  updateConversionJob(jobId, {
+    status: 'failed',
+    stage: 'failed',
+    message: error.message,
+    error: error.message,
+    errorCode: error.code,
+    code: result.code,
+    metadataExists: fs.existsSync(metadataPath),
+    durationMs: result.durationMs,
+    ...summarizeJobOutput(result.stdout, result.stderr),
+  });
+  throw error;
 }
 
 function removeDirIfExists(targetPath) {
@@ -3296,22 +3515,29 @@ async function sanitizeLasForPotree(absLasPath, sanitizeMode = 'auto') {
 
 async function convertLasToPotreeWithFallback(absLasPath, outDir, {
   sanitizeMode = inferPotreeSanitizeMode(absLasPath),
+  jobId = null,
 } = {}) {
   removeDirIfExists(outDir);
   fs.mkdirSync(outDir, { recursive: true });
   try {
-    const result = await convertLasToPotree(absLasPath, outDir);
+    const result = await convertLasToPotree(absLasPath, outDir, { jobId });
     return { ...result, inputPath: absLasPath, sanitized: false };
   } catch (error) {
     const shouldFallback = /\.(las|laz)$/i.test(absLasPath);
-    if (!shouldFallback) {
+    if (!shouldFallback || error.code === 'CONVERSION_TIMEOUT') {
       removeDirIfExists(outDir);
       throw error;
     }
     console.warn('[Potree] Primary conversion failed, retrying with sanitized LAS:', error.message);
+    updateConversionJob(jobId, {
+      status: 'running',
+      stage: 'sanitize',
+      message: 'Primary conversion failed; sanitizing LAS before retry',
+      primaryError: error.message,
+    });
     removeDirIfExists(outDir);
     const sanitized = await sanitizeLasForPotree(absLasPath, sanitizeMode);
-    const result = await convertLasToPotree(sanitized.outputPath, outDir);
+    const result = await convertLasToPotree(sanitized.outputPath, outDir, { jobId });
     return {
       ...result,
       inputPath: sanitized.outputPath,
@@ -3587,6 +3813,32 @@ app.use('/scan-data/:projectId', (req, res, next) => {
   }
   // Serve files from the project directory
   express.static(project.dirPath, { dotfiles: 'deny', fallthrough: true, index: false, redirect: false })(req, res, next);
+});
+
+app.get('/api/conversion-jobs/:jobId', (req, res) => {
+  try {
+    const jobId = requireConversionJobId(req.params.jobId);
+    const job = conversionJobRegistry.get(jobId);
+    if (!job) {
+      return sendApiError(res, new Error('Conversion job not found'), {
+        fallbackCode: 'JOB_NOT_FOUND',
+        fallbackStatus: 404,
+      });
+    }
+    return sendApiSuccess(res, { job: sanitizeConversionJobForClient(job) });
+  } catch (error) {
+    return sendApiError(res, error, { fallbackCode: error?.code || 'BAD_REQUEST', fallbackStatus: 400 });
+  }
+});
+
+app.get('/api/conversion-jobs', uploadCredentialJsonPrecheck, (_req, res) => {
+  try {
+    return sendApiSuccess(res, {
+      jobs: conversionJobRegistry.list({ limit: 50 }).map(sanitizeConversionJobForClient),
+    });
+  } catch (error) {
+    return sendApiError(res, error, { fallbackCode: 'INTERNAL_ERROR' });
+  }
 });
 
 // ── API: List scanner projects ──
@@ -4325,7 +4577,7 @@ except ZipValidationError as e:
 }
 
 // ── Upload and convert ──
-app.post('/api/upload', uploadCredentialPrecheck, upload.single('pointcloud'), (req, res) => {
+app.post('/api/upload', uploadCredentialPrecheck, upload.single('pointcloud'), async (req, res) => {
   const uploadedPath = req.file?.path;
   try {
     verifyUploadCredentialFromRequest(req);
@@ -4356,75 +4608,90 @@ app.post('/api/upload', uploadCredentialPrecheck, upload.single('pointcloud'), (
   fs.mkdirSync(outDir, { recursive: true });
 
   const inputPath = req.file.path;
-  const args = [inputPath, '-o', outDir];
+  const conversionJob = createConversionJob('potree-upload-conversion', {
+    timeoutMs: LONG_JOB_TIMEOUTS.potreeConversionMs,
+    message: 'Queued point cloud conversion',
+    metadata: {
+      cloudName,
+      originalName: req.file.originalname,
+      uploadFilename: req.file.filename,
+    },
+  });
+  const metadata = path.join(outDir, 'metadata.json');
 
-  const proc = spawn(CONVERTER, args, { cwd: ROOT });
-  let stdout = '';
-  let stderr = '';
+  try {
+    const result = await convertLasToPotreeWithFallback(inputPath, outDir, { jobId: conversionJob.jobId });
 
-  proc.stdout.on('data', d => (stdout += d.toString()));
-  proc.stderr.on('data', d => (stderr += d.toString()));
-
-  proc.on('close', code => {
-    const metadata = path.join(outDir, 'metadata.json');
-    const ok = code === 0 && fs.existsSync(metadata);
-
-    if (ok) {
+    try {
+      // Try to detect if this file belongs to a known scanner project (by filename match)
+      let detectedProject = null;
+      const originalBaseName = req.file.originalname; // e.g. 'colorized.las'
       try {
-        // Try to detect if this file belongs to a known scanner project (by filename match)
-        let detectedProject = null;
-        const originalBaseName = req.file.originalname; // e.g. 'colorized.las'
-        try {
-          discoverScanProjects();
-          for (const [, proj] of scanProjectRegistry) {
-            const candidate = path.join(proj.dirPath, originalBaseName);
-            if (fs.existsSync(candidate)) {
-              detectedProject = proj;
-              break;
-            }
-            // Also check if the lasFiles list matches
-            if (proj.features?.lasFiles?.includes(originalBaseName)) {
-              detectedProject = proj;
-              break;
-            }
+        discoverScanProjects();
+        for (const [, proj] of scanProjectRegistry) {
+          const candidate = path.join(proj.dirPath, originalBaseName);
+          if (fs.existsSync(candidate)) {
+            detectedProject = proj;
+            break;
           }
-        } catch (e) {
-          console.warn('[Upload] Scanner project detection failed:', e.message);
+          // Also check if the lasFiles list matches
+          if (proj.features?.lasFiles?.includes(originalBaseName)) {
+            detectedProject = proj;
+            break;
+          }
         }
-
-        const sourceData = {
-          type: 'upload',
-          uploadFilename: req.file.filename,
-          originalName: req.file.originalname,
-          uploadedAt: new Date().toISOString(),
-        };
-
-        if (detectedProject) {
-          sourceData.scannerProjectId = detectedProject.projectId;
-          sourceData.scannerProjectName = detectedProject.name;
-          sourceData.originalPath = path.join(detectedProject.dirPath, originalBaseName);
-          console.log(`[Upload] Linked cloud '${cloudName}' → scanner project '${detectedProject.name}'`);
-        }
-
-        fs.writeFileSync(path.join(outDir, 'source.json'), JSON.stringify(sourceData, null, 2));
-      } catch (error) {
-        console.warn('[Export] Failed to write source manifest:', error.message);
+      } catch (e) {
+        console.warn('[Upload] Scanner project detection failed:', e.message);
       }
+
+      const sourceData = {
+        type: 'upload',
+        uploadFilename: req.file.filename,
+        originalName: req.file.originalname,
+        convertedInputPath: result.inputPath || inputPath,
+        sanitizedForPotree: Boolean(result.sanitized),
+        sanitizeMode: result.sanitizeMode || null,
+        conversionJobId: conversionJob.jobId,
+        uploadedAt: new Date().toISOString(),
+      };
+
+      if (detectedProject) {
+        sourceData.scannerProjectId = detectedProject.projectId;
+        sourceData.scannerProjectName = detectedProject.name;
+        sourceData.originalPath = path.join(detectedProject.dirPath, originalBaseName);
+        console.log(`[Upload] Linked cloud '${cloudName}' → scanner project '${detectedProject.name}'`);
+      }
+
+      fs.writeFileSync(path.join(outDir, 'source.json'), JSON.stringify(sourceData, null, 2));
+    } catch (error) {
+      console.warn('[Export] Failed to write source manifest:', error.message);
     }
 
-    const lasErrorMsg = buildConversionFailureMessage({ ok, code, metadataPath: metadata, stdout, stderr });
-    return res.status(ok ? 200 : 500).json({
-      ok,
-      code,
-      errorCode: ok ? null : 'CONVERSION_FAILED',
-      error: lasErrorMsg,
+    return res.status(200).json({
+      ok: true,
+      code: 0,
+      errorCode: null,
+      error: null,
       cloudName,
-      viewerUrl: ok ? `/viewer?pointcloud=%2Fpointclouds%2F${encodeURIComponent(cloudName)}%2Fmetadata.json` : null,
+      conversionJobId: conversionJob.jobId,
+      viewerUrl: `/viewer?pointcloud=%2Fpointclouds%2F${encodeURIComponent(cloudName)}%2Fmetadata.json`,
       metadataExists: fs.existsSync(metadata),
-      stdout: stdout.slice(-4000),
-      stderr: stderr.slice(-4000)
+      sanitizedForPotree: Boolean(result.sanitized),
+      stdout: String(result.stdout || '').slice(-4000),
+      stderr: String(result.stderr || '').slice(-4000),
     });
-  });
+  } catch (error) {
+    removeDirIfExists(outDir);
+    return res.status(error?.code === 'CONVERSION_TIMEOUT' ? 504 : 500).json(buildConversionFailurePayload(error, {
+      cloudName,
+      metadataPath: metadata,
+      extra: {
+        conversionJobId: conversionJob.jobId,
+        stdout: String(error?.stdout || '').slice(-4000),
+        stderr: String(error?.stderr || '').slice(-4000),
+      },
+    }));
+  }
 });
 
 // ── Upload scanner project folder as ZIP ────────────────────────────
@@ -4551,17 +4818,21 @@ app.post('/api/upload-project', uploadCredentialPrecheck, zipUpload.single('proj
 
     console.log(`[ZIP Upload] Spawning: ${CONVERTER} ${lasAbsPath} -o ${outDir}`);
 
-    const conv = spawn(CONVERTER, [lasAbsPath, '-o', outDir], { cwd: ROOT });
-    let stdout = '';
-    let stderr = '';
-    conv.stdout.on('data', d => (stdout += d.toString()));
-    conv.stderr.on('data', d => (stderr += d.toString()));
+    const conversionJob = createConversionJob('project-zip-potree-conversion', {
+      timeoutMs: LONG_JOB_TIMEOUTS.potreeConversionMs,
+      message: 'Queued scanner project point cloud conversion',
+      metadata: {
+        projectName,
+        cloudName,
+        lasFile: bestLas,
+      },
+    });
 
-    conv.on('close', (code) => {
-      const metadataExists = fs.existsSync(path.join(outDir, 'metadata.json'));
-      const ok = code === 0 && metadataExists;
+    (async () => {
+      const metadataPath = path.join(outDir, 'metadata.json');
+      try {
+        const result = await convertLasToPotreeWithFallback(lasAbsPath, outDir, { jobId: conversionJob.jobId });
 
-      if (ok) {
         // Write source manifest linking back to project folder
         const scannerProjectId = projectName.replace(/[^a-zA-Z0-9._-]/g, '_');
         const sourceData = {
@@ -4569,6 +4840,10 @@ app.post('/api/upload-project', uploadCredentialPrecheck, zipUpload.single('proj
           projectName,
           projectDir: destDir,
           lasFile: bestLas,
+          convertedInputPath: result.inputPath || lasAbsPath,
+          sanitizedForPotree: Boolean(result.sanitized),
+          sanitizeMode: result.sanitizeMode || null,
+          conversionJobId: conversionJob.jobId,
           uploadedAt: new Date().toISOString(),
           features: { hasGeo: info.hasGeo, hasOdom: info.hasOdom, hasCameras: info.hasCameras },
           // Link back to the scanner project so viewer can auto-detect it
@@ -4580,32 +4855,43 @@ app.post('/api/upload-project', uploadCredentialPrecheck, zipUpload.single('proj
           fs.writeFileSync(path.join(outDir, 'source.json'), JSON.stringify(sourceData, null, 2));
         } catch { }
         discoverScanProjects();
+
+        res.status(200).json({
+          ok: true,
+          projectName,
+          cloudName,
+          conversionJobId: conversionJob.jobId,
+          features: { hasGeo: info.hasGeo, hasOdom: info.hasOdom, hasCameras: info.hasCameras },
+          lasFiles: info.lasFiles,
+          viewerUrl: `/viewer?pointcloud=%2Fpointclouds%2F${encodeURIComponent(cloudName)}%2Fmetadata.json`,
+          // Even on failure, project folder is accessible at /projects/{projectName}/
+          projectUrl: `/projects/${projectName}/`,
+          errorCode: null,
+          error: null,
+          stdout: String(result.stdout || '').slice(-3000),
+          stderr: String(result.stderr || '').slice(-3000),
+          sanitizedForPotree: Boolean(result.sanitized),
+        });
+      } catch (error) {
+        const status = error?.code === 'CONVERSION_TIMEOUT' ? 504 : 500;
+        res.status(status).json(buildConversionFailurePayload(error, {
+          cloudName,
+          metadataPath,
+          extra: {
+            projectName,
+            conversionJobId: conversionJob.jobId,
+            features: { hasGeo: info.hasGeo, hasOdom: info.hasOdom, hasCameras: info.hasCameras },
+            lasFiles: info.lasFiles,
+            projectUrl: `/projects/${projectName}/`,
+            note: '项目文件夹已解压到 projects/' + projectName + '，但 LAS 转换失败',
+            stdout: String(error?.stdout || '').slice(-3000),
+            stderr: String(error?.stderr || '').slice(-3000),
+          },
+        }));
       }
-
-      // Build a human-readable error message for the client
-      const errDetail = (stderr || stdout).slice(-400).trim();
-      const errorMsg = ok ? null
-        : !metadataExists && code === 0
-          ? `PotreeConverter 运行结束但未生成 metadata.json（LAS 格式可能不兼容）`
-          : errDetail
-            ? `PotreeConverter 退出码 ${code}：${errDetail}`
-            : `PotreeConverter 退出码 ${code}，无详细输出。请用 pm2 logs cloudstudio 查看服务端日志。`;
-
-      res.status(ok ? 200 : 500).json({
-        ok,
-        projectName,
-        cloudName,
-        features: { hasGeo: info.hasGeo, hasOdom: info.hasOdom, hasCameras: info.hasCameras },
-        lasFiles: info.lasFiles,
-        viewerUrl: ok ? `/viewer?pointcloud=%2Fpointclouds%2F${encodeURIComponent(cloudName)}%2Fmetadata.json` : null,
-        // Even on failure, project folder is accessible at /projects/{projectName}/
-        projectUrl: `/projects/${projectName}/`,
-        errorCode: ok ? null : 'CONVERSION_FAILED',
-        error: errorMsg,
-        stdout: stdout.slice(-3000),
-        stderr: stderr.slice(-3000),
+    })().catch(error => {
+      return sendApiError(res, error, { fallbackCode: error?.code || 'CONVERSION_FAILED' });
       });
-    });
   });
 });
 
@@ -4742,6 +5028,21 @@ app.post('/api/upload-gaussian', uploadCredentialPrecheck, upload.single('gaussi
   if (ext === '.ply') {
     const runtimeName = 'scene.sog';
     const runtimePath = path.join(assetDir, runtimeName);
+    const optimizationJob = createConversionJob('gaussian-sog-optimization', {
+      timeoutMs: LONG_JOB_TIMEOUTS.gaussianSogOptimizationMs,
+      message: 'Queued 3DGS SOG optimization',
+      metadata: {
+        assetName,
+        originalName,
+        targetName,
+        runtimeName,
+      },
+    });
+    directManifest.publish = {
+      ...(directManifest.publish || {}),
+      optimizationJobId: optimizationJob.jobId,
+    };
+    writeGaussianManifest(assetDir, directManifest);
     void enqueueGaussianConversion(() => optimizeGaussianAssetToSog({
       assetName,
       assetDir,
@@ -4751,7 +5052,15 @@ app.post('/api/upload-gaussian', uploadCredentialPrecheck, upload.single('gaussi
       runtimeName,
       runtimePath,
       sourceBytes,
+      jobId: optimizationJob.jobId,
     })).catch(error => {
+      updateConversionJob(optimizationJob.jobId, {
+        status: 'failed',
+        stage: 'failed',
+        message: error?.message || '3DGS SOG optimization queue failed',
+        error: error?.message || String(error),
+        errorCode: error?.code || 'GAUSSIAN_OPTIMIZATION_FAILED',
+      });
       console.warn(`[Gaussian] Queue execution failed for ${assetName}:`, error?.message || error);
     });
   }
@@ -4772,6 +5081,7 @@ app.post('/api/upload-gaussian', uploadCredentialPrecheck, upload.single('gaussi
     optimizationStatus: directManifest.optimizationStatus,
     optimizationEligible: directManifest.publish?.optimizationEligible || false,
     optimizationPipeline: directManifest.publish?.optimizationPipeline || null,
+    optimizationJobId: directManifest.publish?.optimizationJobId || null,
     publish: directManifest.publish,
     note: directManifest.note,
   });
@@ -4816,9 +5126,17 @@ app.post('/api/upload-by-path', (req, res) => {
   const cloudName = (name || path.parse(absPath).name)
     .replace(/[^a-zA-Z0-9._-]/g, '_');
   const outDir = path.join(POINTCLOUDS_DIR, cloudName);
+  const conversionJob = createConversionJob('potree-import-path-conversion', {
+    timeoutMs: LONG_JOB_TIMEOUTS.potreeConversionMs,
+    message: 'Queued local path point cloud conversion',
+    metadata: {
+      cloudName,
+      originalName: path.basename(absPath),
+    },
+  });
   (async () => {
     try {
-      const result = await convertLasToPotreeWithFallback(absPath, outDir);
+      const result = await convertLasToPotreeWithFallback(absPath, outDir, { jobId: conversionJob.jobId });
       try {
         fs.writeFileSync(path.join(outDir, 'source.json'), JSON.stringify({
           type: 'import-by-path',
@@ -4827,6 +5145,7 @@ app.post('/api/upload-by-path', (req, res) => {
           convertedInputPath: result.inputPath || absPath,
           sanitizedForPotree: Boolean(result.sanitized),
           sanitizeMode: result.sanitizeMode || null,
+          conversionJobId: conversionJob.jobId,
           importedAt: new Date().toISOString(),
         }, null, 2));
       } catch (e) {
@@ -4838,6 +5157,7 @@ app.post('/api/upload-by-path', (req, res) => {
         code: 0,
         errorCode: null,
         cloudName,
+        conversionJobId: conversionJob.jobId,
         viewerUrl: `/viewer?pointcloud=%2Fpointclouds%2F${encodeURIComponent(cloudName)}%2Fmetadata.json`,
         metadataExists: true,
         error: null,
@@ -4845,15 +5165,11 @@ app.post('/api/upload-by-path', (req, res) => {
       });
     } catch (error) {
       removeDirIfExists(outDir);
-      res.status(500).json({
-        ok: false,
-        code: null,
-        errorCode: error.code || 'CONVERSION_FAILED',
+      res.status(error?.code === 'CONVERSION_TIMEOUT' ? 504 : 500).json(buildConversionFailurePayload(error, {
         cloudName,
-        viewerUrl: null,
-        metadataExists: false,
-        error: error.message,
-      });
+        metadataPath: path.join(outDir, 'metadata.json'),
+        extra: { conversionJobId: conversionJob.jobId },
+      }));
     }
   })();
 });
