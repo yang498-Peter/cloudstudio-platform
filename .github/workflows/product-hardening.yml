@@ -1,0 +1,71 @@
+name: Product Hardening
+
+on:
+  pull_request:
+    branches:
+      - main
+      - audit/product-hardening
+  push:
+    branches:
+      - main
+      - audit/product-hardening
+
+jobs:
+  core-checks:
+    name: Core checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web-uploader
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web-uploader/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check i18n
+        run: npm run check:i18n
+
+      - name: Run unit tests
+        run: |
+          npm run test:dxf-draw
+          npm run test:volume
+          npm run test:floorplan
+
+  viewer-smoke:
+    name: Viewer browser smoke
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web-uploader
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web-uploader/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright for smoke tests
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Run viewer smoke tests
+        run: |
+          npm run test:viewer-smoke
+          npm run test:viewer-volume
