@@ -61,7 +61,8 @@
     "UPLOAD_PASSWORD_NOT_CONFIGURED": "Upload password is not configured on the server.",
     "WRONG_PASSWORD": "Wrong password.",
     "BAD_REQUEST": "Request is invalid.",
-    "INTERNAL_ERROR": "Unexpected server error."
+    "INTERNAL_ERROR": "Unexpected server error.",
+    "DATASET_NAME_CONFLICT": "A dataset with this name already exists. Choose a new name to protect existing data."
   },
   "units": {
     "linear": {
@@ -126,7 +127,8 @@
       "step3Text": "Open the final scene, validate status, and hand over a shareable viewing path.",
       "meta1": "Upload format",
       "meta2": "Browser ready",
-      "meta3": "Project delivery"
+      "meta3": "Project delivery",
+      "uploadPublish": "Upload & Publish"
     },
     "stats": {
       "maxPoints": "Points per scene",
@@ -195,7 +197,7 @@
         "selectLas": "Please select a LAS/LAZ file",
         "selectZip": "Please select a ZIP file",
         "passwordRequired": "Please enter the upload password",
-        "parseFailed": "✗ Failed to parse response: {{message}}",
+        "parseFailed": "Failed to parse response: {{message}}",
         "convertUnknown": "Conversion failed (no details)",
         "selectPotreeZip": "Please select a ZIP file",
         "selectGaussian": "Please select a Gaussian file"
@@ -211,22 +213,25 @@
       "potreeSubmitBtn": "Upload Pre-converted Cloud",
       "potreeZipNamePlaceholder": "e.g. my_pointcloud",
       "tabGaussian": "3D Gaussian Scene",
-      "gaussianHint": "Upload a 3D Gaussian PLY model — CloudStudio publishes a browser-ready scene you can share with a link.",
-      "gaussianPublishTitle": "3D Gaussian Publish",
-      "gaussianPublishHint": "Choose the original PLY file. CloudStudio prepares an optimized scene and returns a shareable browser link.",
+      "gaussianHint": "Upload a 3D Gaussian PLY model. CloudStudio processes it into a browser-ready scene and a shareable link.",
+      "gaussianPublishTitle": "Prepare 3D Gaussian scene",
+      "gaussianPublishHint": "Choose the original PLY file. CloudStudio saves the source, prepares the browser view, and keeps optimization status visible.",
       "gaussianFileLabel": "Gaussian PLY file",
       "gaussianNameLabel": "Scene name (optional, leave blank to use the file name)",
       "gaussianNamePlaceholder": "e.g. factory_gaussian_scene",
-      "gaussianSubmitBtn": "Upload and Open Viewer",
-      "gaussianReadyTitle": "3DGS browse ready: {{cloudName}}",
-      "gaussianReadyTitleShort": "3DGS browse ready",
-      "openGaussianViewer": "Open Viewer"
+      "gaussianSubmitBtn": "Upload & prepare 3DGS",
+      "gaussianReadyTitle": "3DGS ready to browse: {{cloudName}}",
+      "gaussianReadyTitleShort": "3DGS ready to browse",
+      "openGaussianViewer": "Open Viewer",
+      "summary": "Choose LAS/LAZ, scanner ZIP, pre-converted octree, or 3DGS, then publish a browser-ready scene.",
+      "expandPanel": "Start upload",
+      "collapsePanel": "Hide upload form"
     },
     "clouds": {
       "title": "Published Scenes",
       "refresh": "Refresh",
       "emptyTitle": "No scenes published yet",
-      "emptyHint": "Upload a LAS/LAZ file to get started",
+      "emptyHint": "Upload and publish a scene to get started",
       "pointsKnown": "{{count}} pts",
       "pointsUnknown": "Unknown point count",
       "openViewer": "Open Viewer",
@@ -242,8 +247,17 @@
       "sourceSize": "Source",
       "publishSize": "Viewer",
       "publishStatus": "Status: {{status}}",
-      "directBrowseReady": "Direct browse ready",
-      "sogStatus": "SOG: {{status}}"
+      "directBrowseReady": "Ready to browse",
+      "sogStatus": "SOG: {{status}}",
+      "openScene": "Open scene",
+      "copyLink": "Copy link",
+      "copyLinkTitle": "Copy share link",
+      "copiedLink": "Share link copied",
+      "copyFailed": "Could not copy link",
+      "shareReady": "Share link ready",
+      "gaussianProcessing": "Processing",
+      "gaussianOptimizing": "Optimizing",
+      "gaussianOptimized": "Optimized for viewing"
     },
     "adv": {
       "label": "Why CloudStudio",
@@ -269,9 +283,9 @@
       "waitingUpload": "Waiting for upload...",
       "uploading": "Uploading and converting. Large files may take a few minutes...",
       "uploadSuccess": "Conversion completed: {{cloudName}}",
-      "projectUploadSuccess": "✓ Project uploaded: {{projectName}}{{features}}",
-      "preconvertedSuccess": "✓ Pre-converted cloud added: {{cloudName}}",
-      "gaussianSuccess": "3DGS browse ready: {{cloudName}}"
+      "projectUploadSuccess": "Project uploaded: {{projectName}}{{features}}",
+      "preconvertedSuccess": "Pre-converted cloud added: {{cloudName}}",
+      "gaussianSuccess": "3DGS ready to browse: {{cloudName}}"
     },
     "toast": {
       "loadFailed": "Load failed: {{message}}",
@@ -298,10 +312,10 @@
       "uploading": "Uploading...",
       "converting": "Converting, please wait...",
       "extracting": "Extracting and preparing...",
-      "gaussianPublishing": "Preparing 3D Gaussian scene...",
+      "gaussianPublishing": "Processing 3D Gaussian scene...",
       "convertingDetail": "Upload finished. Preparing streaming-ready scene...",
       "extractingDetail": "Upload finished. Extracting archive and preparing scene...",
-      "gaussianPublishingDetail": "Upload finished. Publishing browser-ready 3D Gaussian link...",
+      "gaussianPublishingDetail": "Upload finished. Preparing and optimizing the browser view...",
       "done": "Done",
       "failed": "Failed",
       "networkError": "Network error",
@@ -675,7 +689,8 @@
       "loading": "Loading...",
       "minimapPlaceholder": "Geographic information is required to show the map",
       "minimapPlaceholderHint": "Load a scanner project that contains geo_info.csv",
-      "crsBrowserSupportNote": "This coordinate workflow supports local coordinates, WGS84, Web Mercator, UTM/UPS, and offline authority-code lookup for common CRS definitions. Parameter files can be imported as `.prj / .wkt / .txt / .json / .csv`. Grid resources can be attached from `.gsb / .gtx / .tif / .tiff`, while `.ggf / .grd` may require conversion to a PROJ-compatible grid before they can be used. Horizontal grids can participate in interactive coordinate display when the current transform chain supports them; vertical geoid and more generic grids are applied mainly through the native PROJ/pyproj transform and export pipeline."
+      "crsBrowserSupportNote": "This coordinate workflow supports local coordinates, WGS84, Web Mercator, UTM/UPS, and offline authority-code lookup for common CRS definitions. Parameter files can be imported as `.prj / .wkt / .txt / .json / .csv`. Grid resources can be attached from `.gsb / .gtx / .tif / .tiff`, while `.ggf / .grd` may require conversion to a PROJ-compatible grid before they can be used. Horizontal grids can participate in interactive coordinate display when the current transform chain supports them; vertical geoid and more generic grids are applied mainly through the native PROJ/pyproj transform and export pipeline.",
+      "trajectoryTitle": "Trajectory"
     },
     "open": {
       "loading": "Loading...",
@@ -834,7 +849,9 @@
       "intensityLabel": "Intensity",
       "intensityTitle": "Intensity Coloring",
       "classificationLabel": "Classification",
-      "classificationTitle": "Classification Coloring"
+      "classificationTitle": "Classification Coloring",
+      "moreTitle": "More tools",
+      "moreLabel": "More"
     },
     "menu": {
       "file": "File",
@@ -1087,10 +1104,16 @@
         "metaEmpty": "No volume jobs yet",
         "noteActive": "Double-click to confirm the boundary. The active workspace will keep method and result steps together.",
         "noteEmpty": "Click \"New\" to start a guided volume measurement."
-      }
+      },
+      "pickHeight": "Pick from cloud"
     },
     "scene": {
-      "mobileScene": "☰ Scene"
+      "mobileScene": "Scene",
+      "toggleCollapse": "Hide scene panel",
+      "toggleExpand": "Show scene panel",
+      "pointCloudLayers": "Point Cloud Layers",
+      "measurementResults": "Measurement Results",
+      "clippingVolumes": "Clipping Volumes"
     },
     "disclaimer": {
       "statusText": "Testing version · verify results independently",
@@ -1125,6 +1148,46 @@
       "altitude": "Altitude",
       "recommendedProjection": "Recommended Projection",
       "extent": "Extent"
+    },
+    "status": {
+      "ready": "Ready",
+      "dismiss": "Dismiss status",
+      "geoLabel": "Geo"
+    },
+    "orientation": {
+      "label": "XYZ orientation"
+    },
+    "loadError": {
+      "kicker": "Load issue",
+      "title": "Unable to load this point cloud",
+      "titleWithName": "Unable to load {{name}}",
+      "datasetFallback": "this dataset",
+      "copy": "CloudStudio could not read the point cloud metadata needed to start the viewer.",
+      "copyWithDetail": "CloudStudio could not read the point cloud metadata needed to start the viewer. Detail: {{detail}}",
+      "reasonMissing": "The dataset link may be broken or the metadata.json file is missing.",
+      "reasonMoved": "The dataset may have been moved, deleted, or not fully converted.",
+      "reasonNetwork": "Network or permission settings may be blocking access.",
+      "retry": "Retry",
+      "openAnother": "Open another dataset",
+      "back": "Go back",
+      "status": "Point cloud load failed",
+      "toast": "Unable to load point cloud. Check the dataset link or metadata.",
+      "unknownDetail": "The metadata request failed.",
+      "badJson": "metadata.json is not valid JSON.",
+      "httpFailed": "Metadata request failed.",
+      "badShape": "metadata.json has an unexpected format.",
+      "missingFields": "metadata.json is missing the point cloud fields needed by Potree."
+    },
+    "advanced": {
+      "volumeTitle": "Volume analysis",
+      "volumeHint": "Use when you need a guided cut/fill workflow with a confirmed boundary and reference elevation.",
+      "clipTitle": "Clipping and profile tools",
+      "clipHint": "Start with a clip box or profile, then review saved clipping objects below.",
+      "dxfTitle": "DXF overlay and drawing",
+      "dxfHint": "Import CAD overlays first; drawing tools stay grouped below the loaded files."
+    },
+    "measure": {
+      "clearAll": "Clear All"
     }
   },
   "phrases": {

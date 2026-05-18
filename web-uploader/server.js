@@ -118,6 +118,48 @@ function getRuntimeStorageHealth() {
   };
 }
 
+function getPotreeRuntimeHealth(potreeRoot = POTREE_ROOT) {
+  const requiredFiles = [
+    {
+      key: 'potreeJs',
+      relativePath: path.join('build', 'potree', 'potree.js'),
+    },
+    {
+      key: 'potreeCss',
+      relativePath: path.join('build', 'potree', 'potree.css'),
+    },
+    {
+      key: 'binaryDecoderWorker',
+      relativePath: path.join('build', 'potree', 'workers', 'BinaryDecoderWorker.js'),
+    },
+    {
+      key: 'lasLazWorker',
+      relativePath: path.join('build', 'potree', 'workers', 'LASLAZWorker.js'),
+    },
+    {
+      key: 'lazPerfWasm',
+      relativePath: path.join('build', 'potree', 'workers', 'laz-perf.wasm'),
+    },
+  ];
+  const files = {};
+  const missing = [];
+  for (const file of requiredFiles) {
+    const absPath = path.join(potreeRoot, file.relativePath);
+    const exists = pathExists(absPath);
+    files[file.key] = {
+      status: exists ? 'present' : 'missing',
+      relativePath: file.relativePath.replace(/\\/g, '/'),
+    };
+    if (!exists) missing.push(files[file.key].relativePath);
+  }
+  return {
+    ok: missing.length === 0,
+    status: missing.length === 0 ? 'ready' : 'missing',
+    requiredFiles: files,
+    missing,
+  };
+}
+
 function buildPythonEnv(extraEnv = {}) {
   const env = { ...process.env, ...extraEnv };
   const pythonPaths = [PYTHON_VENDOR_SITE, env.PYTHONPATH].filter(Boolean);
@@ -400,6 +442,9 @@ const EXPORTS_DIR = RUNTIME_STORAGE.exports.primary;
 const ASSETS_DIR = path.join(__dirname, 'assets');
 const CACHE_DIR = RUNTIME_STORAGE.cache.primary;
 const CONVERSION_JOB_DIR = path.join(CACHE_DIR, 'conversion-jobs');
+const TRASH_DIR = path.join(STORAGE_ROOT, 'trash');
+const DELETE_AUDIT_DIR = path.join(CACHE_DIR, 'audit');
+const DELETE_AUDIT_LOG = path.join(DELETE_AUDIT_DIR, 'delete-cloud.jsonl');
 const GRID_STORAGE_DIR = RUNTIME_STORAGE.gridStorage.primary;
 const CRS_BOOTSTRAP_FILE = path.join(ASSETS_DIR, 'crs', 'bootstrap.json');
 const CRS_CACHE_FILE = path.join(CACHE_DIR, 'crs-cache.json');
@@ -418,6 +463,8 @@ const POWERSHELL_BIN = null;
 
 ensureRuntimeStorageLayout(RUNTIME_STORAGE);
 fs.mkdirSync(CONVERSION_JOB_DIR, { recursive: true });
+fs.mkdirSync(TRASH_DIR, { recursive: true });
+fs.mkdirSync(DELETE_AUDIT_DIR, { recursive: true });
 const conversionJobRegistry = createLongJobRegistry({
   dir: CONVERSION_JOB_DIR,
   maxJobs: parsePositiveIntegerEnv('CLOUDSTUDIO_CONVERSION_JOB_HISTORY', 100),
@@ -1726,6 +1773,7 @@ const API_ERROR_STATUS = Object.freeze({
   CRS_INTERNAL_ERROR: 500,
   CRS_UNSUPPORTED_AUTHORITY: 400,
   DELETE_PASSWORD_NOT_CONFIGURED: 500,
+  DATASET_NAME_CONFLICT: 409,
   DTM_BAD_JOB_ID: 400,
   DTM_FILE_NOT_FOUND: 404,
   DTM_GRID_NOT_FOUND: 400,
@@ -2596,6 +2644,112 @@ function requireSafeCloudName(cloudName) {
   return normalized;
 }
 
+function sanitizeDatasetName(value, fallback = 'dataset') {
+  return sanitizeNameSegment(value, fallback);
+}
+
+function datasetPathExistsInCandidates(candidates = [], datasetName) {
+  return candidates.some(dirPath => pathExists(path.join(dirPath, datasetName)));
+}
+
+function getDatasetNameConflicts(datasetName, {
+  includeLocalImports = true,
+  dirs = {
+    pointclouds: RUNTIME_STORAGE.pointclouds.candidates,
+    projects: RUNTIME_STORAGE.projects.candidates,
+    gaussians: RUNTIME_STORAGE.gaussians.candidates,
+  },
+} = {}) {
+  const safeName = sanitizeDatasetName(datasetName);
+  const conflicts = [];
+  if (datasetPathExistsInCandidates(dirs.pointclouds || [], safeName)) conflicts.push('pointcloud');
+  if (datasetPathExistsInCandidates(dirs.projects || [], safeName)) conflicts.push('project');
+  if (datasetPathExistsInCandidates(dirs.gaussians || [], safeName)) conflicts.push('gaussian');
+  if (includeLocalImports && getLocalImportEntry(safeName)) conflicts.push('local-import');
+  return conflicts;
+}
+
+function buildSuggestedDatasetName(datasetName, options = {}) {
+  const safeBase = sanitizeDatasetName(datasetName);
+  for (let suffix = 2; suffix < 1000; suffix += 1) {
+    const candidate = `${safeBase}-${suffix}`;
+    if (!getDatasetNameConflicts(candidate, options).length) return candidate;
+  }
+  return `${safeBase}-${Date.now()}`;
+}
+
+function createDatasetNameConflictError(datasetName, conflicts = [], options = {}) {
+  const safeName = sanitizeDatasetName(datasetName);
+  const error = new Error(`A dataset named "${safeName}" already exists. Choose a new name to keep existing customer data safe.`);
+  error.code = 'DATASET_NAME_CONFLICT';
+  error.datasetName = safeName;
+  error.conflicts = conflicts;
+  error.suggestedName = buildSuggestedDatasetName(safeName, options);
+  return error;
+}
+
+function assertDatasetNameAvailable(datasetName, options = {}) {
+  const safeName = sanitizeDatasetName(datasetName);
+  const conflicts = getDatasetNameConflicts(safeName, options);
+  if (conflicts.length) throw createDatasetNameConflictError(safeName, conflicts, options);
+  return safeName;
+}
+
+function reserveNewDatasetDirectory(dirPath, datasetName) {
+  try {
+    fs.mkdirSync(dirPath, { recursive: false });
+  } catch (error) {
+    if (error?.code === 'EEXIST') {
+      throw createDatasetNameConflictError(datasetName || path.basename(dirPath), ['reserved']);
+    }
+    throw error;
+  }
+}
+
+function buildDeleteAuditId(date = new Date()) {
+  const stamp = date.toISOString().replace(/[-:TZ.]/g, '').slice(0, 17);
+  const suffix = Math.random().toString(36).slice(2, 8);
+  return `del_${stamp}_${suffix}`;
+}
+
+function uniqueTrashPath(targetPath) {
+  if (!pathExists(targetPath)) return targetPath;
+  const parsed = path.parse(targetPath);
+  for (let suffix = 2; suffix < 1000; suffix += 1) {
+    const candidate = path.join(parsed.dir, `${parsed.name}-${suffix}${parsed.ext}`);
+    if (!pathExists(candidate)) return candidate;
+  }
+  return path.join(parsed.dir, `${parsed.name}-${Date.now()}${parsed.ext}`);
+}
+
+function moveRuntimePathToTrash(sourcePath, {
+  auditId,
+  category,
+  displayPath = null,
+  trashRoot = TRASH_DIR,
+} = {}) {
+  if (!sourcePath || !pathExists(sourcePath)) return null;
+  const absSource = assertPathWithinCloudStudioBounds(sourcePath, { fieldName: displayPath || category || 'path' });
+  const safeCategory = sanitizeNameSegment(category || 'item');
+  const safeName = sanitizeNameSegment(path.basename(absSource), 'item');
+  const trashPath = uniqueTrashPath(path.join(trashRoot, auditId, safeCategory, safeName));
+  const relativeTrashPath = path.relative(path.dirname(trashRoot), trashPath).replace(/\\/g, '/');
+  fs.mkdirSync(path.dirname(trashPath), { recursive: true });
+  fs.renameSync(absSource, trashPath);
+  return {
+    from: displayPath || `${safeCategory}/${safeName}`,
+    to: relativeTrashPath,
+    originalPath: redactServerPath(absSource, { expose: EXPOSE_SERVER_PATHS, basename: true }),
+    trashPath: redactServerPath(trashPath, { expose: EXPOSE_SERVER_PATHS, basename: true }),
+  };
+}
+
+function appendDeleteAuditRecord(record, auditLogPath = DELETE_AUDIT_LOG) {
+  fs.mkdirSync(path.dirname(auditLogPath), { recursive: true });
+  fs.appendFileSync(auditLogPath, `${JSON.stringify(record)}\n`, 'utf8');
+  return record.auditId;
+}
+
 function sanitizeGaussianAssetName(value, fallback = 'gaussian_scene') {
   const normalized = String(value || fallback)
     .trim()
@@ -2694,6 +2848,22 @@ function getGaussianViewerUrl(assetName, publishInfo = null, fallbackFileName = 
   return `/3dgs/${encodeURIComponent(assetName)}`;
 }
 
+function getGaussianReadableStatus(manifest = {}) {
+  const publish = manifest.publish || {};
+  const directStatus = publish.directBrowseStatus || manifest.directBrowseStatus || 'unknown';
+  const optimizationStatus = publish.optimizationStatus || manifest.optimizationStatus || 'unknown';
+  if (optimizationStatus === 'ready') return 'Optimized 3DGS is ready to view.';
+  if (optimizationStatus === 'pending') return '3DGS upload is browseable now. Optimization is still running.';
+  if (optimizationStatus === 'failed') return '3DGS upload is browseable, but optimization failed. See error details.';
+  if (directStatus === 'ready') return '3DGS upload is browseable. Optimization is not required for this format.';
+  return '3DGS upload is being prepared.';
+}
+
+function getGaussianReadableError(manifest = {}) {
+  const publish = manifest.publish || {};
+  return publish.error || manifest.error || null;
+}
+
 function buildGaussianCloudListEntry(name, manifest = {}) {
   const publish = manifest.publish || {};
   const optimizationStatus = publish.optimizationStatus
@@ -2720,6 +2890,8 @@ function buildGaussianCloudListEntry(name, manifest = {}) {
     gaussianOptimizationStatus: optimizationStatus,
     gaussianOptimizationEligible: Boolean(publish.optimizationEligible || optimizationStatus !== 'not-applicable'),
     gaussianOptimizationPipeline: publish.optimizationPipeline || null,
+    gaussianReadableStatus: getGaussianReadableStatus(manifest),
+    gaussianError: getGaussianReadableError(manifest),
     gaussianPublishBytes: publish.bytes || manifest.runtimeBytes || null,
     originalBytes: manifest.originalBytes || null,
     fileUrl: manifest.fileUrl || null,
@@ -2855,12 +3027,15 @@ function finalizeGaussianManifestForEditor(assetName, manifest, publishOverrides
     viewerUrl: manifest.viewerUrl,
     viewerRotation,
     optimizationStatus: manifest.optimizationStatus,
+    readableStatus: '',
+    error: null,
     publishedAt: new Date().toISOString(),
     ...publish,
   };
   manifest.publish.viewerRotation = viewerRotation;
   manifest.publish.directBrowseStatus = manifest.directBrowseStatus;
   manifest.publish.optimizationStatus = manifest.optimizationStatus;
+  manifest.publish.readableStatus = getGaussianReadableStatus(manifest);
   const editorViewerUrl = buildGaussianEditorUrl(assetName, manifest, manifest.publish);
   manifest.publish.editorViewerUrl = editorViewerUrl;
   manifest.publish.directViewerUrl = editorViewerUrl;
@@ -2953,6 +3128,7 @@ async function optimizeGaussianAssetToSog({
     currentManifest.directBrowseStatus = 'ready';
     currentManifest.optimizationStatus = 'failed';
     currentManifest.publish.viewerRotation = viewerRotation;
+    currentManifest.publish.readableStatus = getGaussianReadableStatus(currentManifest);
     currentManifest.note = 'Direct PLY browsing is available. Background SOG optimization failed on the server.';
     writeGaussianManifest(assetDir, currentManifest);
     updateConversionJob(jobId, {
@@ -3534,8 +3710,6 @@ async function convertLasToPotreeWithFallback(absLasPath, outDir, {
   sanitizeMode = inferPotreeSanitizeMode(absLasPath),
   jobId = null,
 } = {}) {
-  removeDirIfExists(outDir);
-  fs.mkdirSync(outDir, { recursive: true });
   try {
     const result = await convertLasToPotree(absLasPath, outDir, { jobId });
     return { ...result, inputPath: absLasPath, sanitized: false };
@@ -4023,11 +4197,13 @@ app.get(['/supersplat-viewer', '/supersplat-viewer/'], (req, res) => {
 });
 
 app.get('/health', (_req, res) => {
+  const potreeRuntime = getPotreeRuntimeHealth();
   res.json({
-    ok: true,
+    ok: potreeRuntime.ok,
     platform: process.platform,
     desktop: false,
     converter: pathExists(CONVERTER),
+    potreeRuntime,
     exportPython: pathExists(PYTHON_BIN),
     systemPython: Boolean(SYSTEM_PYTHON_BIN),
     desktopDialogs: false,
@@ -4424,9 +4600,18 @@ ${buildSafeZipPythonHelpers()}
 zip_path   = sys.argv[1]
 projects_dir = sys.argv[2]
 name_override = sys.argv[3]   # may be empty string
+pointclouds_dir = sys.argv[4] if len(sys.argv) > 4 else ''
+gaussians_dir = sys.argv[5] if len(sys.argv) > 5 else ''
 
 def safe_name(s):
     return re.sub(r'[^a-zA-Z0-9._-]', '_', s)
+
+def suggest_name(base):
+    for i in range(2, 1000):
+        candidate = f"{base}-{i}"
+        if not any(os.path.exists(os.path.join(root, candidate)) for root in (projects_dir, pointclouds_dir, gaussians_dir) if root):
+            return candidate
+    return f"{base}-new"
 
 try:
     with zipfile.ZipFile(zip_path, 'r') as zf:
@@ -4456,7 +4641,31 @@ try:
             project_name = re.sub(r'^\\d+_', '', project_name)
 
         dest_dir = os.path.join(projects_dir, project_name)
-        os.makedirs(dest_dir, exist_ok=True)
+        conflicts = []
+        if os.path.exists(dest_dir):
+            conflicts.append('project')
+        if pointclouds_dir and os.path.exists(os.path.join(pointclouds_dir, project_name)):
+            conflicts.append('pointcloud')
+        if gaussians_dir and os.path.exists(os.path.join(gaussians_dir, project_name)):
+            conflicts.append('gaussian')
+        if conflicts:
+            print(json.dumps({
+                'errorCode': 'DATASET_NAME_CONFLICT',
+                'error': f'A dataset named "{project_name}" already exists. Choose a new name to keep existing customer data safe.',
+                'suggestedName': suggest_name(project_name),
+                'conflicts': conflicts,
+            }))
+            sys.exit(0)
+        try:
+            os.makedirs(dest_dir, exist_ok=False)
+        except FileExistsError:
+            print(json.dumps({
+                'errorCode': 'DATASET_NAME_CONFLICT',
+                'error': f'A dataset named "{project_name}" already exists. Choose a new name to keep existing customer data safe.',
+                'suggestedName': suggest_name(project_name),
+                'conflicts': ['project'],
+            }))
+            sys.exit(0)
 
         if has_root_folder:
             # Strip the root folder prefix when extracting
@@ -4530,9 +4739,17 @@ ${buildSafeZipPythonHelpers()}
 zip_path = sys.argv[1]
 pointclouds_dir = sys.argv[2]
 name_override = sys.argv[3]
+gaussians_dir = sys.argv[4] if len(sys.argv) > 4 else ''
 
 def safe_name(s):
     return re.sub(r'[^a-zA-Z0-9._-]', '_', s)
+
+def suggest_name(base):
+    for i in range(2, 1000):
+        candidate = f"{base}-{i}"
+        if not os.path.exists(os.path.join(pointclouds_dir, candidate)) and not (gaussians_dir and os.path.exists(os.path.join(gaussians_dir, candidate))):
+            return candidate
+    return f"{base}-new"
 
 try:
     with zipfile.ZipFile(zip_path, 'r') as zf:
@@ -4569,8 +4786,31 @@ try:
         dest_dir = os.path.join(pointclouds_dir, cloud_name)
 
         if os.path.exists(dest_dir):
-            shutil.rmtree(dest_dir)
-        os.makedirs(dest_dir, exist_ok=True)
+            print(json.dumps({
+                'errorCode': 'DATASET_NAME_CONFLICT',
+                'error': f'A dataset named "{cloud_name}" already exists. Choose a new name to keep existing customer data safe.',
+                'suggestedName': suggest_name(cloud_name),
+                'conflicts': ['pointcloud'],
+            }))
+            sys.exit(0)
+        if gaussians_dir and os.path.exists(os.path.join(gaussians_dir, cloud_name)):
+            print(json.dumps({
+                'errorCode': 'DATASET_NAME_CONFLICT',
+                'error': f'A dataset named "{cloud_name}" already exists. Choose a new name to keep existing customer data safe.',
+                'suggestedName': suggest_name(cloud_name),
+                'conflicts': ['gaussian'],
+            }))
+            sys.exit(0)
+        try:
+            os.makedirs(dest_dir, exist_ok=False)
+        except FileExistsError:
+            print(json.dumps({
+                'errorCode': 'DATASET_NAME_CONFLICT',
+                'error': f'A dataset named "{cloud_name}" already exists. Choose a new name to keep existing customer data safe.',
+                'suggestedName': suggest_name(cloud_name),
+                'conflicts': ['pointcloud'],
+            }))
+            sys.exit(0)
 
         for member in zf.infolist():
             rel = member.filename
@@ -4634,10 +4874,32 @@ app.post('/api/upload', uploadCredentialPrecheck, upload.single('pointcloud'), a
     });
   }
 
-  const cloudName = (req.body.name || path.parse(req.file.originalname).name)
-    .replace(/[^a-zA-Z0-9._-]/g, '_');
+  let cloudName;
+  try {
+    cloudName = assertDatasetNameAvailable(req.body.name || path.parse(req.file.originalname).name);
+  } catch (error) {
+    if (uploadedPath && fs.existsSync(uploadedPath)) {
+      try { fs.unlinkSync(uploadedPath); } catch { }
+    }
+    return sendApiError(res, error, {
+      fallbackCode: 'DATASET_NAME_CONFLICT',
+      fallbackStatus: 409,
+      extra: { suggestedName: error.suggestedName, conflicts: error.conflicts || [] },
+    });
+  }
   const outDir = path.join(POINTCLOUDS_DIR, cloudName);
-  fs.mkdirSync(outDir, { recursive: true });
+  try {
+    reserveNewDatasetDirectory(outDir, cloudName);
+  } catch (error) {
+    if (uploadedPath && fs.existsSync(uploadedPath)) {
+      try { fs.unlinkSync(uploadedPath); } catch { }
+    }
+    return sendApiError(res, error, {
+      fallbackCode: error?.code || 'DATASET_NAME_CONFLICT',
+      fallbackStatus: 409,
+      extra: { suggestedName: error.suggestedName, conflicts: error.conflicts || [] },
+    });
+  }
 
   const inputPath = req.file.path;
   const conversionJob = createConversionJob('potree-upload-conversion', {
@@ -4751,11 +5013,23 @@ app.post('/api/upload-project', uploadCredentialPrecheck, zipUpload.single('proj
 
   // ── Step 1: Determine project name from zip or override ──────────
   const nameOverride = (req.body.name || '').trim();
+  if (nameOverride) {
+    try {
+      assertDatasetNameAvailable(nameOverride);
+    } catch (error) {
+      try { fs.unlinkSync(zipPath); } catch { }
+      return sendApiError(res, error, {
+        fallbackCode: 'DATASET_NAME_CONFLICT',
+        fallbackStatus: 409,
+        extra: { suggestedName: error.suggestedName, conflicts: error.conflicts || [] },
+      });
+    }
+  }
 
   // ── Step 2: Use Python3 zipfile to peek at zip structure, then extract ──
   const extractScript = buildScannerProjectZipExtractScript();
 
-  const pyProc = spawn(SYSTEM_PYTHON_BIN, ['-c', extractScript, zipPath, PROJECTS_DIR, nameOverride], { env: buildPythonEnv() });
+  const pyProc = spawn(SYSTEM_PYTHON_BIN, ['-c', extractScript, zipPath, PROJECTS_DIR, nameOverride, POINTCLOUDS_DIR, GAUSSIANS_DIR], { env: buildPythonEnv() });
   let pyOut = '';
   let pyErr = '';
   pyProc.stdout.on('data', d => (pyOut += d.toString()));
@@ -4778,7 +5052,11 @@ app.post('/api/upload-project', uploadCredentialPrecheck, zipUpload.single('proj
     if (info.error) {
       const error = new Error(info.error);
       error.code = info.errorCode || 'EXTRACT_FAILED';
-      return sendApiError(res, error, { fallbackCode: error.code, fallbackStatus: 400 });
+      return sendApiError(res, error, {
+        fallbackCode: error.code,
+        fallbackStatus: error.code === 'DATASET_NAME_CONFLICT' ? 409 : 400,
+        extra: { suggestedName: info.suggestedName, conflicts: info.conflicts || [] },
+      });
     }
 
     const { projectName, destDir, bestLas } = info;
@@ -4826,7 +5104,6 @@ app.post('/api/upload-project', uploadCredentialPrecheck, zipUpload.single('proj
     const lasAbsPath = path.join(destDir, bestLas);
     const cloudName = projectName;
     const outDir = path.join(POINTCLOUDS_DIR, cloudName);
-    fs.mkdirSync(outDir, { recursive: true });
 
     console.log(`[ZIP Upload] Project: ${projectName}, LAS files found: [${info.lasFiles.join(', ')}]`);
     console.log(`[ZIP Upload] Selected for conversion: ${lasAbsPath}`);
@@ -4845,6 +5122,16 @@ app.post('/api/upload-project', uploadCredentialPrecheck, zipUpload.single('proj
         ok: false, projectName, error: `PotreeConverter 未找到: ${CONVERTER}`,
         errorCode: 'CONVERTER_NOT_FOUND',
         note: '项目文件夹已解压到 projects/' + projectName + '，但 LAS 转换失败（找不到转换器）',
+      });
+    }
+
+    try {
+      reserveNewDatasetDirectory(outDir, cloudName);
+    } catch (error) {
+      return sendApiError(res, error, {
+        fallbackCode: error?.code || 'DATASET_NAME_CONFLICT',
+        fallbackStatus: 409,
+        extra: { suggestedName: error.suggestedName, conflicts: error.conflicts || [] },
       });
     }
 
@@ -4950,9 +5237,21 @@ app.post('/api/upload-preconverted', uploadCredentialPrecheck, zipUpload.single(
 
   const zipPath = req.file.path;
   const nameOverride = (req.body.name || '').trim();
+  if (nameOverride) {
+    try {
+      assertDatasetNameAvailable(nameOverride);
+    } catch (error) {
+      try { fs.unlinkSync(zipPath); } catch { }
+      return sendApiError(res, error, {
+        fallbackCode: 'DATASET_NAME_CONFLICT',
+        fallbackStatus: 409,
+        extra: { suggestedName: error.suggestedName, conflicts: error.conflicts || [] },
+      });
+    }
+  }
   const extractScript = buildPreconvertedZipExtractScript();
 
-  const pyProc = spawn(SYSTEM_PYTHON_BIN, ['-c', extractScript, zipPath, POINTCLOUDS_DIR, nameOverride], { env: buildPythonEnv() });
+  const pyProc = spawn(SYSTEM_PYTHON_BIN, ['-c', extractScript, zipPath, POINTCLOUDS_DIR, nameOverride, GAUSSIANS_DIR], { env: buildPythonEnv() });
   let pyOut = '';
   let pyErr = '';
   pyProc.stdout.on('data', d => (pyOut += d.toString()));
@@ -4975,7 +5274,11 @@ app.post('/api/upload-preconverted', uploadCredentialPrecheck, zipUpload.single(
     if (info.error) {
       const error = new Error(info.error);
       error.code = info.errorCode || 'INVALID_POTREE_ZIP';
-      return sendApiError(res, error, { fallbackCode: error.code, fallbackStatus: 400 });
+      return sendApiError(res, error, {
+        fallbackCode: error.code,
+        fallbackStatus: error.code === 'DATASET_NAME_CONFLICT' ? 409 : 400,
+        extra: { suggestedName: info.suggestedName, conflicts: info.conflicts || [] },
+      });
     }
 
     const { cloudName, destDir, points } = info;
@@ -5031,8 +5334,32 @@ app.post('/api/upload-gaussian', uploadCredentialPrecheck, upload.single('gaussi
     });
   }
 
-  const { assetName, assetDir } = getUniqueGaussianAssetDir(req.body.name || path.parse(originalName).name);
-  fs.mkdirSync(assetDir, { recursive: true });
+  let assetName;
+  try {
+    assetName = assertDatasetNameAvailable(sanitizeGaussianAssetName(req.body.name || path.parse(originalName).name));
+  } catch (error) {
+    if (uploadedPath && fs.existsSync(uploadedPath)) {
+      try { fs.unlinkSync(uploadedPath); } catch {}
+    }
+    return sendApiError(res, error, {
+      fallbackCode: 'DATASET_NAME_CONFLICT',
+      fallbackStatus: 409,
+      extra: { suggestedName: error.suggestedName, conflicts: error.conflicts || [] },
+    });
+  }
+  const assetDir = path.join(GAUSSIANS_DIR, assetName);
+  try {
+    reserveNewDatasetDirectory(assetDir, assetName);
+  } catch (error) {
+    if (uploadedPath && fs.existsSync(uploadedPath)) {
+      try { fs.unlinkSync(uploadedPath); } catch {}
+    }
+    return sendApiError(res, error, {
+      fallbackCode: error?.code || 'DATASET_NAME_CONFLICT',
+      fallbackStatus: 409,
+      extra: { suggestedName: error.suggestedName, conflicts: error.conflicts || [] },
+    });
+  }
 
   const targetName = `scene${ext}`;
   const targetPath = path.join(assetDir, targetName);
@@ -5043,6 +5370,7 @@ app.post('/api/upload-gaussian', uploadCredentialPrecheck, upload.single('gaussi
       fs.copyFileSync(req.file.path, targetPath);
       fs.unlinkSync(req.file.path);
     } catch (copyError) {
+      removeDirIfExists(assetDir);
       return sendApiError(res, copyError, { fallbackCode: 'INTERNAL_ERROR' });
     }
   }
@@ -5114,6 +5442,8 @@ app.post('/api/upload-gaussian', uploadCredentialPrecheck, upload.single('gaussi
     optimizationEligible: directManifest.publish?.optimizationEligible || false,
     optimizationPipeline: directManifest.publish?.optimizationPipeline || null,
     optimizationJobId: directManifest.publish?.optimizationJobId || null,
+    readableStatus: getGaussianReadableStatus(directManifest),
+    error: getGaussianReadableError(directManifest),
     publish: directManifest.publish,
     note: directManifest.note,
   });
@@ -5155,9 +5485,26 @@ app.post('/api/upload-by-path', (req, res) => {
     return sendApiError(res, new Error('PotreeConverter not found'), { fallbackCode: 'CONVERTER_NOT_FOUND' });
   }
 
-  const cloudName = (name || path.parse(absPath).name)
-    .replace(/[^a-zA-Z0-9._-]/g, '_');
+  let cloudName;
+  try {
+    cloudName = assertDatasetNameAvailable(name || path.parse(absPath).name);
+  } catch (error) {
+    return sendApiError(res, error, {
+      fallbackCode: 'DATASET_NAME_CONFLICT',
+      fallbackStatus: 409,
+      extra: { suggestedName: error.suggestedName, conflicts: error.conflicts || [] },
+    });
+  }
   const outDir = path.join(POINTCLOUDS_DIR, cloudName);
+  try {
+    reserveNewDatasetDirectory(outDir, cloudName);
+  } catch (error) {
+    return sendApiError(res, error, {
+      fallbackCode: error?.code || 'DATASET_NAME_CONFLICT',
+      fallbackStatus: 409,
+      extra: { suggestedName: error.suggestedName, conflicts: error.conflicts || [] },
+    });
+  }
   const conversionJob = createConversionJob('potree-import-path-conversion', {
     timeoutMs: LONG_JOB_TIMEOUTS.potreeConversionMs,
     message: 'Queued local path point cloud conversion',
@@ -7356,6 +7703,23 @@ app.post('/api/delete-cloud', (req, res) => {
 
     const cloudName = requireSafeCloudName(req.body?.cloudName);
     const resourceType = String(req.body?.resourceType || '').trim().toLowerCase();
+    const auditId = buildDeleteAuditId();
+    const requestedAt = new Date().toISOString();
+    const moved = [];
+    const deleted = [];
+    const errors = [];
+    const registryRemoved = [];
+    const moveToTrash = (sourcePath, options) => {
+      try {
+        const movedItem = moveRuntimePathToTrash(sourcePath, { auditId, ...options });
+        if (movedItem) {
+          moved.push(movedItem);
+          deleted.push(movedItem.from);
+        }
+      } catch (error) {
+        errors.push(`${options?.displayPath || sourcePath}: ${error.message}`);
+      }
+    };
     const gaussianDir = path.join(GAUSSIANS_DIR, cloudName);
 
     if (resourceType === 'gaussian') {
@@ -7365,17 +7729,26 @@ app.post('/api/delete-cloud', (req, res) => {
         throw error;
       }
 
-      const deleted = [];
-      const errors = [];
+      moveToTrash(gaussianDir, { category: 'gaussians', displayPath: `gaussians/${cloudName}/` });
+      const auditRecord = {
+        auditId,
+        action: 'soft-delete-cloud',
+        requestedAt,
+        cloudName,
+        resourceType: 'gaussian',
+        moved,
+        deleted,
+        errors,
+        restoreHint: 'Move the listed trash paths back to their original runtime locations to restore.',
+      };
       try {
-        fs.rmSync(gaussianDir, { recursive: true, force: true });
-        deleted.push(`gaussians/${cloudName}/`);
-      } catch (e) {
-        errors.push(`gaussians/${cloudName}/: ${e.message}`);
+        appendDeleteAuditRecord(auditRecord);
+      } catch (error) {
+        errors.push(`audit:${error.message}`);
       }
 
-      console.log(`[Delete] Gaussian '${cloudName}' deleted. Items: [${deleted.join(', ')}]`);
-      return sendApiSuccess(res, { cloudName, deleted, errors, resourceType: 'gaussian' });
+      console.log(`[Delete] Gaussian '${cloudName}' moved to trash. Items: [${deleted.join(', ')}], auditId=${auditId}`);
+      return sendApiSuccess(res, { cloudName, moved, deleted, auditId, errors, resourceType: 'gaussian', deleteMode: 'soft' });
     }
 
     const localEntry = getLocalImportEntry(cloudName);
@@ -7389,49 +7762,49 @@ app.post('/api/delete-cloud', (req, res) => {
     let manifest = localEntry;
     try { manifest = readUploadSourceManifest(cloudName) || localEntry; } catch { }
 
-    const deleted = [];
-    const errors = [];
-
     if (localEntry) {
-      removeLocalImportEntry(cloudName);
-      deleted.push(`registry:${cloudName}`);
-    } else {
-      try {
-        fs.rmSync(cloudDir, { recursive: true, force: true });
-        deleted.push(`pointclouds/${cloudName}/`);
-      } catch (e) {
-        errors.push(`pointclouds/${cloudName}/: ${e.message}`);
+      const removed = removeLocalImportEntry(cloudName);
+      if (removed) {
+        registryRemoved.push(removed);
+        deleted.push(`registry:${cloudName}`);
       }
+    } else {
+      moveToTrash(cloudDir, { category: 'pointclouds', displayPath: `pointclouds/${cloudName}/` });
     }
 
     if (!localEntry && manifest?.uploadFilename) {
       const uploadPath = path.join(UPLOADS_DIR, manifest.uploadFilename);
-      if (fs.existsSync(uploadPath)) {
-        try {
-          fs.unlinkSync(uploadPath);
-          deleted.push(`uploads/${manifest.uploadFilename}`);
-        } catch (e) {
-          errors.push(`uploads/${manifest.uploadFilename}: ${e.message}`);
-        }
-      }
+      moveToTrash(uploadPath, { category: 'uploads', displayPath: `uploads/${manifest.uploadFilename}` });
     }
 
     if (!localEntry && manifest?.projectDir) {
       const projDir = path.resolve(manifest.projectDir);
       const projectsRoot = path.resolve(PROJECTS_DIR);
       if (projDir.startsWith(projectsRoot + path.sep) && fs.existsSync(projDir)) {
-        try {
-          fs.rmSync(projDir, { recursive: true, force: true });
-          deleted.push(`projects/${path.basename(projDir)}/`);
-        } catch (e) {
-          errors.push(`projects/${path.basename(projDir)}/: ${e.message}`);
-        }
+        moveToTrash(projDir, { category: 'projects', displayPath: `projects/${path.basename(projDir)}/` });
       }
     }
 
     discoverScanProjects();
-    console.log(`[Delete] Cloud '${cloudName}' deleted. Items: [${deleted.join(', ')}]`);
-    return sendApiSuccess(res, { cloudName, deleted, errors, resourceType: 'pointcloud' });
+    const auditRecord = {
+      auditId,
+      action: 'soft-delete-cloud',
+      requestedAt,
+      cloudName,
+      resourceType: 'pointcloud',
+      moved,
+      deleted,
+      registryRemoved,
+      errors,
+      restoreHint: 'Move the listed trash paths back to their original runtime locations and restore registryRemoved entries if needed.',
+    };
+    try {
+      appendDeleteAuditRecord(auditRecord);
+    } catch (error) {
+      errors.push(`audit:${error.message}`);
+    }
+    console.log(`[Delete] Cloud '${cloudName}' moved to trash. Items: [${deleted.join(', ')}], auditId=${auditId}`);
+    return sendApiSuccess(res, { cloudName, moved, deleted, auditId, errors, resourceType: 'pointcloud', deleteMode: 'soft' });
   } catch (error) {
     return sendApiError(res, error, { fallbackCode: 'INTERNAL_ERROR' });
   }
@@ -7481,11 +7854,18 @@ export {
   buildGaussianEditorUrl,
   buildPreconvertedZipExtractScript,
   buildScannerProjectZipExtractScript,
+  buildSuggestedDatasetName,
   createGaussianDirectManifest,
   createUploadFileFilter,
+  appendDeleteAuditRecord,
+  assertDatasetNameAvailable,
   ensureExistingBoundedPath,
+  getDatasetNameConflicts,
+  getGaussianReadableStatus,
+  getPotreeRuntimeHealth,
   getUploadPasswordCandidate,
   isPathWithinCloudStudioBounds,
+  moveRuntimePathToTrash,
   requiresExplicitUploadPasswordEnv,
   resolveGaussianViewerRotation,
   resolveUploadPasswordHash,

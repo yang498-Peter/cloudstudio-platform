@@ -272,10 +272,10 @@
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      padding: 0 8px;
-      gap: 3px;
+      padding: 0 10px;
+      gap: 4px;
       z-index: 1500;
-      overflow-x: auto;
+      overflow: visible;
     }
 
     .tb-sep {
@@ -290,6 +290,7 @@
       display: flex;
       align-items: center;
       gap: 1px;
+      min-width: 0;
       flex-shrink: 0;
     }
 
@@ -303,7 +304,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: 42px;
+      width: 38px;
       height: 38px;
       border-radius: 5px;
       cursor: pointer;
@@ -353,6 +354,77 @@
     .tb-label {
       font-size: 9px;
       opacity: .85;
+      max-width: 34px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.05;
+    }
+
+    .tb-overflow {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .tb-overflow-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      width: 214px;
+      max-height: min(70vh, 520px);
+      overflow-y: auto;
+      display: none;
+      padding: 6px;
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--elev-3);
+      backdrop-filter: saturate(180%) blur(16px);
+      -webkit-backdrop-filter: saturate(180%) blur(16px);
+      z-index: 2600;
+    }
+
+    .tb-overflow.open .tb-overflow-menu {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .tb-overflow-menu .tb-btn {
+      width: 100%;
+      height: 34px;
+      flex-direction: row;
+      justify-content: flex-start;
+      gap: 7px;
+      padding: 0 8px;
+      color: var(--text2);
+      border: 1px solid transparent;
+      background: transparent;
+    }
+
+    .tb-overflow-menu .tb-btn:hover {
+      background: rgba(0, 0, 0, 0.04);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .tb-overflow-menu .tb-btn.active {
+      background: rgba(0, 122, 255, 0.10);
+      color: var(--accent);
+      border-color: rgba(0, 122, 255, 0.22);
+    }
+
+    .tb-overflow-menu .tb-label {
+      max-width: none;
+      font-size: 10px;
+      opacity: 1;
+      text-align: left;
+    }
+
+    .tb-overflow-menu .tb-icon,
+    .tb-overflow-menu .tb-icon svg {
+      width: 16px;
+      height: 16px;
     }
 
     /* ========== LAYOUT ========== */
@@ -414,6 +486,33 @@
       flex-direction: column;
       z-index: 2;
       overflow: hidden;
+    }
+
+    .left-panel-toggle {
+      width: 42px;
+      height: 30px;
+      margin: 8px auto 0;
+      flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text2);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s ease, color .15s ease, border-color .15s ease;
+    }
+
+    .left-panel-toggle:hover {
+      background: rgba(255, 255, 255, 0.10);
+      color: var(--accent2);
+      border-color: rgba(126, 176, 255, 0.28);
+    }
+
+    .left-panel-toggle .quick-btn-icon {
+      width: 16px;
+      height: 16px;
     }
 
     .quickbar-scroll {
@@ -646,6 +745,181 @@
       overflow: hidden;
     }
 
+    .viewer-operation-status {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 180;
+      min-width: 280px;
+      max-width: min(560px, calc(100% - 48px));
+      display: none;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 12px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: var(--elev-2);
+      color: var(--text);
+      backdrop-filter: saturate(180%) blur(18px);
+      -webkit-backdrop-filter: saturate(180%) blur(18px);
+      pointer-events: auto;
+    }
+
+    .viewer-operation-status.show {
+      display: flex;
+    }
+
+    .viewer-operation-status.ok {
+      border-color: rgba(52, 199, 89, 0.32);
+      background: rgba(246, 255, 249, 0.92);
+    }
+
+    .viewer-operation-status.err,
+    .viewer-operation-status.error {
+      border-color: rgba(255, 59, 48, 0.34);
+      background: rgba(255, 247, 246, 0.94);
+    }
+
+    .viewer-operation-status.warn {
+      border-color: rgba(255, 149, 0, 0.35);
+      background: rgba(255, 250, 241, 0.94);
+    }
+
+    .viewer-operation-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .viewer-operation-status.ok .viewer-operation-dot { background: var(--success); }
+    .viewer-operation-status.err .viewer-operation-dot,
+    .viewer-operation-status.error .viewer-operation-dot { background: var(--error); }
+    .viewer-operation-status.warn .viewer-operation-dot { background: var(--warning); }
+
+    .viewer-operation-text {
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .viewer-operation-close {
+      width: 20px;
+      height: 20px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--text2);
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .viewer-load-error {
+      position: absolute;
+      inset: 0;
+      z-index: 170;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.78), rgba(245, 245, 247, 0.92));
+      pointer-events: auto;
+    }
+
+    .viewer-load-error.show {
+      display: flex;
+    }
+
+    .viewer-load-error-card {
+      width: min(560px, 100%);
+      border: 1px solid rgba(255, 59, 48, 0.22);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--elev-4);
+      padding: 22px;
+    }
+
+    .viewer-load-error-kicker {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--error);
+      margin-bottom: 8px;
+    }
+
+    .viewer-load-error-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      letter-spacing: 0;
+    }
+
+    .viewer-load-error-copy {
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.65;
+      margin-bottom: 14px;
+    }
+
+    .viewer-load-error-reasons {
+      margin: 0 0 16px 16px;
+      color: var(--text2);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .viewer-load-error-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .orientation-gizmo {
+      position: absolute;
+      right: 14px;
+      bottom: 14px;
+      z-index: 130;
+      width: 96px;
+      height: 96px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.78);
+      box-shadow: var(--elev-2);
+      backdrop-filter: saturate(180%) blur(14px);
+      -webkit-backdrop-filter: saturate(180%) blur(14px);
+      pointer-events: none;
+    }
+
+    .orientation-gizmo svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .orientation-gizmo line {
+      stroke-width: 3;
+      stroke-linecap: round;
+    }
+
+    .orientation-gizmo text {
+      font-size: 11px;
+      font-weight: 700;
+      dominant-baseline: middle;
+      text-anchor: middle;
+      paint-order: stroke;
+      stroke: rgba(255, 255, 255, 0.85);
+      stroke-width: 3px;
+    }
+
     #potree_render_area {
       position: absolute;
       inset: 0;
@@ -668,7 +942,7 @@
 
     .tool-hint {
       position: absolute;
-      top: 10px;
+      top: 58px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(64, 120, 255, .92);
@@ -1479,6 +1753,71 @@
 
     .measure-section-gap {
       margin-top: 12px;
+    }
+
+    .advanced-workflow {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.018);
+      overflow: hidden;
+    }
+
+    .advanced-workflow + .advanced-workflow,
+    .advanced-workflow + .measure-section-gap {
+      margin-top: 10px;
+    }
+
+    .advanced-workflow summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 650;
+      user-select: none;
+    }
+
+    .advanced-workflow summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .advanced-workflow summary::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(45deg);
+      opacity: .55;
+      transition: transform .16s ease;
+      flex-shrink: 0;
+    }
+
+    .advanced-workflow[open] summary::after {
+      transform: rotate(225deg) translate(-2px, -2px);
+    }
+
+    .advanced-workflow-copy {
+      margin-top: 2px;
+      display: block;
+      color: var(--text2);
+      font-size: 10.5px;
+      font-weight: 400;
+      line-height: 1.45;
+    }
+
+    .advanced-workflow-body {
+      padding: 0 10px 10px;
+    }
+
+    .advanced-workflow-body > .pg,
+    .advanced-workflow-body > .clip-pane-stack > .pg,
+    .advanced-workflow-body > .volume-panel {
+      margin-top: 0;
     }
 
     .color-grid {
@@ -2333,6 +2672,42 @@
 
     /* ========== MOBILE RESPONSIVE (@media max-width: 767px) ========== */
     @media (max-width: 767px) {
+      #toolbar {
+        padding: 0 6px;
+        gap: 2px;
+        overflow: hidden;
+      }
+
+      #toolbar .tb-btn {
+        width: 32px;
+      }
+
+      #toolbar .tb-label {
+        display: none;
+      }
+
+      #toolbar .tb-sep {
+        margin: 0 2px;
+      }
+
+      #tb-fly,
+      #tb-edl,
+      #tb-point,
+      #tb-height,
+      #tb-area,
+      #tb-col-elev,
+      #tb-col-int {
+        display: none;
+      }
+
+      .tb-overflow-menu .tb-label {
+        display: inline;
+      }
+
+      #toolbar .tb-overflow-menu .tb-btn {
+        width: 100%;
+      }
+
       /* Both panels become position:fixed overlays — removed from flex flow */
       #left-panel {
         position: fixed;
@@ -4032,8 +4407,21 @@
     }
 
     .dxf-drop-zone-icon {
-      font-size: 22px;
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       margin-bottom: 4px;
+      color: var(--accent);
+    }
+
+    .dxf-drop-zone-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.85;
     }
 
     .dxf-drop-zone-hint {
@@ -6125,6 +6513,7 @@
       <symbol id="cs-i-delete-region" viewBox="0 0 24 24"><path d="m6 6 12 12"/><path d="M18 6 6 18"/><path d="M9 4h6"/><path d="M4 12h16"/></symbol>
       <symbol id="cs-i-profile" viewBox="0 0 24 24"><path d="M4 17.5h16"/><path d="M5.5 16 9 10l3 2 3-5 3.5 4"/></symbol>
       <symbol id="cs-i-clear" viewBox="0 0 24 24"><path d="m7 7 10 10"/><path d="M17 7 7 17"/><path d="M5 12h14"/></symbol>
+      <symbol id="cs-i-more" viewBox="0 0 24 24"><circle cx="6.5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="17.5" cy="12" r="1.5"/></symbol>
       <symbol id="cs-i-rgb" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.5"/><circle cx="15" cy="9" r="3.5"/><circle cx="12" cy="15" r="3.5"/></symbol>
       <symbol id="cs-i-elevation" viewBox="0 0 24 24"><path d="M5 18h14"/><path d="m7 18 5-11 5 11"/><path d="M9 14h6"/></symbol>
       <symbol id="cs-i-intensity" viewBox="0 0 24 24"><path d="M12 3v4"/><path d="M12 17v4"/><path d="m6.3 6.3 2.8 2.8"/><path d="m14.9 14.9 2.8 2.8"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m6.3 17.7 2.8-2.8"/><path d="m14.9 9.1 2.8-2.8"/><circle cx="12" cy="12" r="3.2"/></symbol>
@@ -6173,58 +6562,58 @@
       <div class="menu-item" data-menu="view">
         View
         <div class="menu-dropdown">
-          <div class="mdi" id="mi-fit">⊞ Fit to View<span class="kbd">F</span></div>
-          <div class="mdi" id="mi-topview">🔭 Top View</div>
-          <div class="mdi" id="mi-sideview">↔ Side View</div>
+          <div class="mdi" id="mi-fit"><span class="mi-icon" data-cs-icon="fit"></span>Fit to View<span class="kbd">F</span></div>
+          <div class="mdi" id="mi-topview"><span class="mi-icon" data-cs-icon="top"></span>Top View</div>
+          <div class="mdi" id="mi-sideview"><span class="mi-icon" data-cs-icon="left"></span>Side View</div>
           <div class="mdi-sep"></div>
-          <div class="mdi" id="mi-bg-skybox">🌅 Background: Skybox</div>
-          <div class="mdi" id="mi-bg-gradient">🌈 Background: Gradient</div>
-          <div class="mdi" id="mi-bg-black">⬛ Background: Black</div>
-          <div class="mdi" id="mi-bg-white">⬜ Background: White</div>
+          <div class="mdi" id="mi-bg-skybox">Background: Skybox</div>
+          <div class="mdi" id="mi-bg-gradient">Background: Gradient</div>
+          <div class="mdi" id="mi-bg-black">Background: Black</div>
+          <div class="mdi" id="mi-bg-white">Background: White</div>
           <div class="mdi-sep"></div>
-          <div class="mdi" id="mi-fullscreen">⛶ Fullscreen<span class="kbd">F11</span></div>
+          <div class="mdi" id="mi-fullscreen">Fullscreen<span class="kbd">F11</span></div>
         </div>
       </div>
 
       <div class="menu-item" data-menu="tools">
         Tools
         <div class="menu-dropdown">
-          <div class="mdi" id="mi-t-point" data-i18n="phrases.📍 Coordinate Point">📍 Coordinate Point</div>
-          <div class="mdi" id="mi-t-dist">📏 Distance Measurement</div>
-          <div class="mdi" id="mi-t-height">↕ Height Measurement</div>
-          <div class="mdi" id="mi-t-area">⬡ Area Measurement</div>
-          <div class="mdi" id="mi-t-angle">📐 Angle Measurement</div>
-          <div class="mdi" id="mi-t-volume">⛏ Volume Measurement</div>
+          <div class="mdi" id="mi-t-point"><span class="mi-icon" data-cs-icon="point"></span>Coordinate Point</div>
+          <div class="mdi" id="mi-t-dist"><span class="mi-icon" data-cs-icon="distance"></span>Distance Measurement</div>
+          <div class="mdi" id="mi-t-height"><span class="mi-icon" data-cs-icon="height"></span>Height Measurement</div>
+          <div class="mdi" id="mi-t-area"><span class="mi-icon" data-cs-icon="area"></span>Area Measurement</div>
+          <div class="mdi" id="mi-t-angle"><span class="mi-icon" data-cs-icon="angle"></span>Angle Measurement</div>
+          <div class="mdi" id="mi-t-volume"><span class="mi-icon" data-cs-icon="volume"></span>Volume Measurement</div>
           <div class="mdi-sep"></div>
-          <div class="mdi" id="mi-t-magnifier">🔍 Mouse Magnifier</div>
+          <div class="mdi" id="mi-t-magnifier"><span class="mi-icon" data-cs-icon="magnifier"></span>Mouse Magnifier</div>
           <div class="mdi-sep"></div>
-          <div class="mdi" id="mi-t-clipbox">⬜ Clip Box</div>
-          <div class="mdi" id="mi-t-delete-poly">🧹 Polygon Delete</div>
-          <div class="mdi" id="mi-t-profile">✂ Profile / Section</div>
+          <div class="mdi" id="mi-t-clipbox"><span class="mi-icon" data-cs-icon="clip-box"></span>Clip Box</div>
+          <div class="mdi" id="mi-t-delete-poly"><span class="mi-icon" data-cs-icon="delete-region"></span>Polygon Delete</div>
+          <div class="mdi" id="mi-t-profile"><span class="mi-icon" data-cs-icon="profile"></span>Profile / Section</div>
           <div class="mdi-sep"></div>
-          <div class="mdi" id="mi-clear-meas">🗑 Clear All Measurements</div>
-          <div class="mdi" id="mi-clear-clip">✖ Clear All Clipping</div>
+          <div class="mdi" id="mi-clear-meas"><span class="mi-icon" data-cs-icon="clear"></span>Clear All Measurements</div>
+          <div class="mdi" id="mi-clear-clip"><span class="mi-icon" data-cs-icon="clear"></span>Clear All Clipping</div>
         </div>
       </div>
 
       <div class="menu-item" data-menu="vis">
         Visualization
         <div class="menu-dropdown">
-          <div class="mdi" id="mi-col-rgb">🎨 RGB Color</div>
-          <div class="mdi" id="mi-col-elev">🏔 Elevation Coloring</div>
-          <div class="mdi" id="mi-col-intensity">💡 Intensity Coloring</div>
-          <div class="mdi" id="mi-col-class">🏷 Classification Coloring</div>
-          <div class="mdi" id="mi-col-lod">📊 LOD Level</div>
+          <div class="mdi" id="mi-col-rgb"><span class="mi-icon" data-cs-icon="rgb"></span>RGB Color</div>
+          <div class="mdi" id="mi-col-elev"><span class="mi-icon" data-cs-icon="elevation"></span>Elevation Coloring</div>
+          <div class="mdi" id="mi-col-intensity"><span class="mi-icon" data-cs-icon="intensity"></span>Intensity Coloring</div>
+          <div class="mdi" id="mi-col-class"><span class="mi-icon" data-cs-icon="classification"></span>Classification Coloring</div>
+          <div class="mdi" id="mi-col-lod"><span class="mi-icon" data-cs-icon="lod"></span>LOD Level</div>
           <div class="mdi-sep"></div>
-          <div class="mdi" id="mi-edl-toggle">💠 Toggle EDL Lighting</div>
+          <div class="mdi" id="mi-edl-toggle"><span class="mi-icon" data-cs-icon="edl"></span>Toggle EDL Lighting</div>
         </div>
       </div>
 
       <div class="menu-item" data-menu="help">
         Help
         <div class="menu-dropdown">
-          <div class="mdi" id="mi-shortcuts">⌨ Keyboard Shortcuts</div>
-          <div class="mdi" id="mi-about">ℹ About CloudStudio</div>
+          <div class="mdi" id="mi-shortcuts">Keyboard Shortcuts</div>
+          <div class="mdi" id="mi-about">About CloudStudio</div>
         </div>
       </div>
     </div>
@@ -6252,95 +6641,100 @@
   <div id="toolbar" data-i18n-auto-root>
     <!-- File -->
     <div class="tb-group">
-      <button class="tb-btn" id="tb-open" title="Open point cloud (Ctrl+O)">
-        <span class="tb-icon" data-cs-icon="open"></span><span class="tb-label">Open</span>
+      <button class="tb-btn" id="tb-open" title="Open point cloud (Ctrl+O)" data-i18n-title="viewer.toolbar.openTitle">
+        <span class="tb-icon" data-cs-icon="open"></span><span class="tb-label" data-i18n="viewer.toolbar.openLabel">Open</span>
       </button>
-      <button class="tb-btn" id="tb-export-las" title="Export Point Cloud">
-        <span class="tb-icon" data-cs-icon="export"></span><span class="tb-label">Export Point Cloud</span>
-      </button>
-      <button class="tb-btn" id="tb-screenshot" title="Export Screenshot">
-        <span class="tb-icon" data-cs-icon="screenshot"></span><span class="tb-label">Screenshot</span>
+      <button class="tb-btn" id="tb-export-las" title="Export point cloud" data-i18n-title="viewer.toolbar.exportTitle">
+        <span class="tb-icon" data-cs-icon="export"></span><span class="tb-label" data-i18n="viewer.toolbar.exportLabel">Export</span>
       </button>
     </div>
     <div class="tb-sep" hidden aria-hidden="true" data-internal-tools="terrain-forestry-separator"></div>
     <!-- View -->
     <div class="tb-group">
-      <button class="tb-btn" id="tb-fit" title="Fit to view (F)">
-        <span class="tb-icon" data-cs-icon="fit"></span><span class="tb-label">Fit</span>
+      <button class="tb-btn" id="tb-fit" title="Fit to view (F)" data-i18n-title="viewer.toolbar.fitTitle">
+        <span class="tb-icon" data-cs-icon="fit"></span><span class="tb-label" data-i18n="viewer.toolbar.fitLabel">Fit</span>
       </button>
-      <button class="tb-btn active" id="tb-orbit" title="Orbit navigation">
-        <span class="tb-icon" data-cs-icon="orbit-center"></span><span class="tb-label">Orbit</span>
+      <button class="tb-btn active" id="tb-orbit" title="Orbit navigation" data-i18n-title="viewer.toolbar.orbitTitle">
+        <span class="tb-icon" data-cs-icon="orbit-center"></span><span class="tb-label" data-i18n="viewer.toolbar.orbitLabel">Orbit</span>
       </button>
-      <button class="tb-btn" id="tb-fly" title="Fly navigation">
-        <span class="tb-icon" data-cs-icon="fly"></span><span class="tb-label">Fly</span>
+      <button class="tb-btn" id="tb-fly" title="Fly navigation" data-i18n-title="viewer.toolbar.flyTitle">
+        <span class="tb-icon" data-cs-icon="fly"></span><span class="tb-label" data-i18n="viewer.toolbar.flyLabel">Fly</span>
       </button>
-      <button class="tb-btn active" id="tb-edl" title="Eye Dome Lighting (EDL)">
-        <span class="tb-icon" data-cs-icon="edl"></span><span class="tb-label">EDL</span>
-      </button>
-      <button class="tb-btn" id="tb-magnifier" title="Mouse Magnifier">
-        <span class="tb-icon" data-cs-icon="magnifier"></span><span class="tb-label">Magnifier</span>
+      <button class="tb-btn active" id="tb-edl" title="Eye-Dome Lighting" data-i18n-title="viewer.toolbar.edlTitle">
+        <span class="tb-icon" data-cs-icon="edl"></span><span class="tb-label" data-i18n="viewer.toolbar.edlLabel">EDL</span>
       </button>
     </div>
     <div class="tb-sep"></div>
     <!-- Measurement tools -->
     <div class="tb-group">
-      <button class="tb-btn tool-btn" id="tb-point" data-tool="point" title="Coordinate Point" data-i18n-title="phrases.Coordinate Point">
-        <span class="tb-icon" data-cs-icon="point"></span><span class="tb-label" data-i18n="phrases.Coordinate Point">Point</span>
+      <button class="tb-btn tool-btn" id="tb-point" data-tool="point" title="Coordinate Point" data-i18n-title="viewer.toolbar.pointTitle">
+        <span class="tb-icon" data-cs-icon="point"></span><span class="tb-label" data-i18n="viewer.toolbar.pointLabel">Point</span>
       </button>
-      <button class="tb-btn tool-btn" id="tb-dist" data-tool="distance" title="Distance">
-        <span class="tb-icon" data-cs-icon="distance"></span><span class="tb-label">Distance</span>
+      <button class="tb-btn tool-btn" id="tb-dist" data-tool="distance" title="Distance" data-i18n-title="viewer.toolbar.distanceTitle">
+        <span class="tb-icon" data-cs-icon="distance"></span><span class="tb-label" data-i18n="viewer.toolbar.distanceLabel">Distance</span>
       </button>
-      <button class="tb-btn tool-btn" id="tb-height" data-tool="height" title="Height">
-        <span class="tb-icon" data-cs-icon="height"></span><span class="tb-label">Height</span>
+      <button class="tb-btn tool-btn" id="tb-height" data-tool="height" title="Height" data-i18n-title="viewer.toolbar.heightTitle">
+        <span class="tb-icon" data-cs-icon="height"></span><span class="tb-label" data-i18n="viewer.toolbar.heightLabel">Height</span>
       </button>
-      <button class="tb-btn tool-btn" id="tb-area" data-tool="area" title="Area">
-        <span class="tb-icon" data-cs-icon="area"></span><span class="tb-label">Area</span>
-      </button>
-      <button class="tb-btn tool-btn" id="tb-angle" data-tool="angle" title="Angle">
-        <span class="tb-icon" data-cs-icon="angle"></span><span class="tb-label">Angle</span>
-      </button>
-      <button class="tb-btn tool-btn" id="tb-volume" data-tool="volume" title="Volume">
-        <span class="tb-icon" data-cs-icon="volume"></span><span class="tb-label">Volume</span>
-      </button>
-      <button class="tb-btn tool-btn" id="tb-capture" data-tool="capture" title="Point Capture">
-        <span class="tb-icon" data-cs-icon="capture"></span><span class="tb-label" data-i18n="viewer.capture.toolLabel">Capture</span>
-      </button>
-      <button class="tb-btn" id="tb-dxf-import" title="Import DXF Overlay Layer"
-        onclick="document.getElementById('dxf-file-input').click()">
-        <span class="tb-icon" data-cs-icon="dxf"></span><span class="tb-label">DXF</span>
-      </button>
-    </div>
-    <div class="tb-sep"></div>
-    <!-- Clip tools -->
-    <div class="tb-group">
-      <button class="tb-btn tool-btn" id="tb-clipbox" data-tool="clipbox" title="Clip Box">
-        <span class="tb-icon" data-cs-icon="clip-box"></span><span class="tb-label">Clip Box</span>
-      </button>
-      <button class="tb-btn tool-btn" id="tb-delete-poly" data-tool="polygon-delete" title="Polygon delete">
-        <span class="tb-icon" data-cs-icon="delete-region"></span><span class="tb-label">Delete Region</span>
-      </button>
-      <button class="tb-btn tool-btn" id="tb-profile" data-tool="profile" title="Profile">
-        <span class="tb-icon" data-cs-icon="profile"></span><span class="tb-label">Profile</span>
-      </button>
-      <button class="tb-btn" id="tb-clearclip" title="Clear Clip">
-        <span class="tb-icon" data-cs-icon="clear"></span><span class="tb-label">Clear Clip</span>
+      <button class="tb-btn tool-btn" id="tb-area" data-tool="area" title="Area" data-i18n-title="viewer.toolbar.areaTitle">
+        <span class="tb-icon" data-cs-icon="area"></span><span class="tb-label" data-i18n="viewer.toolbar.areaLabel">Area</span>
       </button>
     </div>
     <div class="tb-sep"></div>
     <!-- Color modes -->
     <div class="tb-group">
-      <button class="tb-btn color-btn active" id="tb-col-rgb" data-attr="rgba" title="RGB Color">
-        <span class="tb-icon" data-cs-icon="rgb"></span><span class="tb-label">RGB</span>
+      <button class="tb-btn color-btn active" id="tb-col-rgb" data-attr="rgba" title="RGB color" data-i18n-title="viewer.toolbar.rgbTitle">
+        <span class="tb-icon" data-cs-icon="rgb"></span><span class="tb-label" data-i18n="viewer.toolbar.rgbLabel">RGB</span>
       </button>
-      <button class="tb-btn color-btn" id="tb-col-elev" data-attr="elevation" title="Elevation Coloring">
-        <span class="tb-icon" data-cs-icon="elevation"></span><span class="tb-label">Elevation</span>
+      <button class="tb-btn color-btn" id="tb-col-elev" data-attr="elevation" title="Elevation color" data-i18n-title="viewer.toolbar.elevationTitle">
+        <span class="tb-icon" data-cs-icon="elevation"></span><span class="tb-label" data-i18n="viewer.toolbar.elevationLabel">Elevation</span>
       </button>
-      <button class="tb-btn color-btn" id="tb-col-int" data-attr="intensity" title="Intensity Coloring">
-        <span class="tb-icon" data-cs-icon="intensity"></span><span class="tb-label">Strength</span>
+      <button class="tb-btn color-btn" id="tb-col-int" data-attr="intensity" title="Intensity color" data-i18n-title="viewer.toolbar.intensityTitle">
+        <span class="tb-icon" data-cs-icon="intensity"></span><span class="tb-label" data-i18n="viewer.toolbar.intensityLabel">Intensity</span>
       </button>
-      <button class="tb-btn color-btn" id="tb-col-cls" data-attr="classification" title="Classification Coloring">
-        <span class="tb-icon" data-cs-icon="classification"></span><span class="tb-label">Classification</span>
+    </div>
+    <div class="tb-sep"></div>
+    <!-- Advanced / less frequent tools -->
+    <div class="tb-overflow" id="tb-more-wrap">
+      <button class="tb-btn" id="tb-more" type="button" title="More tools" aria-haspopup="true" aria-expanded="false" data-i18n-title="viewer.toolbar.moreTitle" data-i18n-aria-label="viewer.toolbar.moreTitle">
+        <span class="tb-icon" data-cs-icon="more"></span><span class="tb-label" data-i18n="viewer.toolbar.moreLabel">More</span>
       </button>
+      <div class="tb-overflow-menu" id="tb-more-menu" role="menu">
+        <button class="tb-btn" id="tb-screenshot" title="Screenshot" data-i18n-title="viewer.toolbar.screenshotTitle">
+          <span class="tb-icon" data-cs-icon="screenshot"></span><span class="tb-label" data-i18n="viewer.toolbar.screenshotLabel">Screenshot</span>
+        </button>
+        <button class="tb-btn" id="tb-magnifier" title="Magnifier" data-i18n-title="viewer.toolbar.magnifierTitle">
+          <span class="tb-icon" data-cs-icon="magnifier"></span><span class="tb-label" data-i18n="viewer.toolbar.magnifierLabel">Magnifier</span>
+        </button>
+        <button class="tb-btn tool-btn" id="tb-angle" data-tool="angle" title="Angle" data-i18n-title="viewer.toolbar.angleTitle">
+          <span class="tb-icon" data-cs-icon="angle"></span><span class="tb-label" data-i18n="viewer.toolbar.angleLabel">Angle</span>
+        </button>
+        <button class="tb-btn tool-btn" id="tb-volume" data-tool="volume" title="Volume" data-i18n-title="viewer.toolbar.volumeTitle">
+          <span class="tb-icon" data-cs-icon="volume"></span><span class="tb-label" data-i18n="viewer.toolbar.volumeLabel">Volume</span>
+        </button>
+        <button class="tb-btn tool-btn" id="tb-capture" data-tool="capture" title="Point Capture" data-i18n-title="viewer.toolbar.captureTitle">
+          <span class="tb-icon" data-cs-icon="capture"></span><span class="tb-label" data-i18n="viewer.capture.toolLabel">Capture</span>
+        </button>
+        <button class="tb-btn" id="tb-dxf-import" title="Import DXF overlay" data-i18n-title="viewer.toolbar.dxfTitle"
+          onclick="document.getElementById('dxf-file-input').click()">
+          <span class="tb-icon" data-cs-icon="dxf"></span><span class="tb-label" data-i18n="viewer.toolbar.dxfLabel">DXF</span>
+        </button>
+        <button class="tb-btn tool-btn" id="tb-clipbox" data-tool="clipbox" title="Clip Box" data-i18n-title="viewer.toolbar.clipBoxTitle">
+          <span class="tb-icon" data-cs-icon="clip-box"></span><span class="tb-label" data-i18n="viewer.toolbar.clipBoxLabel">Clip Box</span>
+        </button>
+        <button class="tb-btn tool-btn" id="tb-delete-poly" data-tool="polygon-delete" title="Polygon delete" data-i18n-title="viewer.toolbar.deleteRegionTitle">
+          <span class="tb-icon" data-cs-icon="delete-region"></span><span class="tb-label" data-i18n="viewer.toolbar.deleteRegionLabel">Delete</span>
+        </button>
+        <button class="tb-btn tool-btn" id="tb-profile" data-tool="profile" title="Profile" data-i18n-title="viewer.toolbar.profileTitle">
+          <span class="tb-icon" data-cs-icon="profile"></span><span class="tb-label" data-i18n="viewer.toolbar.profileLabel">Profile</span>
+        </button>
+        <button class="tb-btn" id="tb-clearclip" title="Clear Clip" data-i18n-title="viewer.toolbar.clearClipTitle">
+          <span class="tb-icon" data-cs-icon="clear"></span><span class="tb-label" data-i18n="viewer.toolbar.clearClipLabel">Clear Clip</span>
+        </button>
+        <button class="tb-btn color-btn" id="tb-col-cls" data-attr="classification" title="Classification color" data-i18n-title="viewer.toolbar.classificationTitle">
+          <span class="tb-icon" data-cs-icon="classification"></span><span class="tb-label" data-i18n="viewer.toolbar.classificationLabel">Class</span>
+        </button>
+      </div>
     </div>
     <div class="tb-sep"></div>
     <!-- Terrain / forestry tools are kept in code for internal builds, but hidden from the customer viewer. -->
@@ -6372,6 +6766,9 @@
     <!-- Left panel -->
     <div id="left-panel">
       <div id="left-quickbar">
+        <button class="left-panel-toggle" id="btn-left-panel-toggle" type="button" title="Hide scene panel" aria-label="Hide scene panel" data-i18n-title="viewer.scene.toggleCollapse" data-i18n-aria-label="viewer.scene.toggleCollapse">
+          <span class="quick-btn-icon" data-cs-icon="left"></span>
+        </button>
         <div class="quickbar-scroll">
           <div class="quickbar-group">
             <div class="quickbar-title">View</div>
@@ -6448,7 +6845,7 @@
         <!-- Point clouds -->
         <div class="sec-hd" id="sh-clouds">
           <span class="collapse-arrow">▾</span>
-          <span>☁ Point Cloud Layers</span>
+          <span data-i18n="viewer.scene.pointCloudLayers">Point Cloud Layers</span>
           <span class="sec-badge" id="cnt-clouds">0</span>
         </div>
         <div class="sec-body" id="sb-clouds" style="max-height:220px;">
@@ -6459,7 +6856,7 @@
         <!-- Measurements -->
         <div class="sec-hd" id="sh-meas">
           <span class="collapse-arrow">▾</span>
-          <span>📏 Measurement Results</span>
+          <span data-i18n="viewer.scene.measurementResults">Measurement Results</span>
           <span class="sec-badge" id="cnt-meas">0</span>
         </div>
         <div class="sec-body" id="sb-meas" style="max-height:200px;">
@@ -6470,7 +6867,7 @@
         <!-- Clipping volumes -->
         <div class="sec-hd" id="sh-vols">
           <span class="collapse-arrow">▾</span>
-          <span>⬜ Clipping Volumes</span>
+          <span data-i18n="viewer.scene.clippingVolumes">Clipping Volumes</span>
           <span class="sec-badge" id="cnt-vols">0</span>
         </div>
         <div class="sec-body" id="sb-vols" style="max-height:150px;">
@@ -6482,7 +6879,7 @@
         <div id="minimap-section">
           <div id="minimap-panel">
             <div id="minimap-header">
-              <span>🗺 <span data-i18n="phrases.Map Location">Map Location</span></span>
+              <span data-i18n="phrases.Map Location">Map Location</span>
               <div id="minimap-controls">
                 <button class="minimap-icon-btn" id="btn-minimap-basemap" type="button" title="Switch Basemap" data-i18n-title="phrases.Switch Basemap">🛰</button>
                 <button class="minimap-icon-btn" id="btn-minimap-reset" type="button" title="Reset View" data-i18n-title="phrases.Reset View">↺</button>
@@ -6506,6 +6903,39 @@
 
     <!-- Viewport -->
     <div id="viewport">
+      <div class="viewer-operation-status" id="viewer-operation-status" role="status" aria-live="polite">
+        <span class="viewer-operation-dot"></span>
+        <span class="viewer-operation-text" id="viewer-operation-text" data-i18n="viewer.status.ready">Ready</span>
+        <button class="viewer-operation-close" id="viewer-operation-close" type="button" aria-label="Dismiss status" data-i18n-aria-label="viewer.status.dismiss">×</button>
+      </div>
+      <div class="viewer-load-error" id="viewer-load-error" aria-live="assertive">
+        <div class="viewer-load-error-card">
+          <div class="viewer-load-error-kicker" data-i18n="viewer.loadError.kicker">Load issue</div>
+          <div class="viewer-load-error-title" id="viewer-load-error-title" data-i18n="viewer.loadError.title">Unable to load this point cloud</div>
+          <div class="viewer-load-error-copy" id="viewer-load-error-copy" data-i18n="viewer.loadError.copy">CloudStudio could not read the point cloud metadata needed to start the viewer.</div>
+          <ul class="viewer-load-error-reasons">
+            <li data-i18n="viewer.loadError.reasonMissing">The dataset link may be broken or the metadata.json file is missing.</li>
+            <li data-i18n="viewer.loadError.reasonMoved">The dataset may have been moved, deleted, or not fully converted.</li>
+            <li data-i18n="viewer.loadError.reasonNetwork">Network or permission settings may be blocking access.</li>
+          </ul>
+          <div class="viewer-load-error-actions">
+            <button class="btn pri" id="viewer-load-error-retry" type="button" data-i18n="viewer.loadError.retry">Retry</button>
+            <button class="btn" id="viewer-load-error-open" type="button" data-i18n="viewer.loadError.openAnother">Open another dataset</button>
+            <button class="btn" id="viewer-load-error-back" type="button" data-i18n="viewer.loadError.back">Go back</button>
+          </div>
+        </div>
+      </div>
+      <div class="orientation-gizmo" id="orientation-gizmo" aria-label="XYZ orientation" data-i18n-aria-label="viewer.orientation.label">
+        <svg viewBox="0 0 96 96" aria-hidden="true">
+          <line id="axis-z-line" x1="48" y1="52" x2="48" y2="18" stroke="#007aff"></line>
+          <line id="axis-y-line" x1="48" y1="52" x2="28" y2="74" stroke="#34c759"></line>
+          <line id="axis-x-line" x1="48" y1="52" x2="76" y2="58" stroke="#ff3b30"></line>
+          <circle cx="48" cy="52" r="3.2" fill="rgba(29,29,31,0.74)"></circle>
+          <text id="axis-z-label" x="48" y="16" fill="#007aff">Z</text>
+          <text id="axis-y-label" x="25" y="77" fill="#34c759">Y</text>
+          <text id="axis-x-label" x="80" y="58" fill="#ff3b30">X</text>
+        </svg>
+      </div>
       <div class="tool-hint" id="tool-hint">Tool active</div>
       <div id="potree_render_area"></div>
       <div id="cursor-magnifier" aria-hidden="true">
@@ -6529,10 +6959,10 @@
         <div class="tab active" data-pane="appearance"><span data-i18n="viewer.inspector.tabs.appearance">Appearance</span></div>
         <div class="tab" data-pane="measure"><span data-i18n="viewer.inspector.tabs.measure">Measure</span></div>
         <div class="tab" data-pane="clip"><span data-i18n="viewer.inspector.tabs.clip">Clip</span></div>
-        <div class="tab" data-pane="scanner">&#128246; <span data-i18n="viewer.inspector.tabs.scanner">Scanner</span></div>
-        <div class="tab" data-pane="coordinate">&#127760; <span data-i18n="viewer.inspector.tabs.coordinate">Coordinate</span></div>
-        <div class="tab" data-pane="capture">&#127919; <span data-i18n="viewer.capture.tabLabel">Capture</span></div>
-        <div class="tab" data-pane="dxf">&#128207; <span data-i18n="viewer.inspector.tabs.dxf">DXF</span></div>
+        <div class="tab" data-pane="scanner"><span data-i18n="viewer.inspector.tabs.scanner">Scanner</span></div>
+        <div class="tab" data-pane="coordinate"><span data-i18n="viewer.inspector.tabs.coordinate">Coordinate</span></div>
+        <div class="tab" data-pane="capture"><span data-i18n="viewer.capture.tabLabel">Capture</span></div>
+        <div class="tab" data-pane="dxf"><span data-i18n="viewer.inspector.tabs.dxf">DXF</span></div>
         <div class="tab" data-pane="classify"><span data-i18n="viewer.inspector.tabs.classification">Classification</span></div>
       </div>
 
@@ -6780,28 +7210,38 @@
         <div class="pg">
           <div class="pg-label" data-i18n="phrases.Quick Measurement">Quick Measurement</div>
           <div class="measure-action-grid">
-            <button class="btn pri" data-ms="distance" data-i18n="phrases.📏 Distance">📏 Distance</button>
-            <button class="btn pri" data-ms="height" data-i18n="phrases.↕ Height">↕ Height</button>
-            <button class="btn pri" data-ms="area" data-i18n="phrases.⬡ Area">⬡ Area</button>
-            <button class="btn pri" data-ms="angle" data-i18n="phrases.📐 Angle">📐 Angle</button>
-            <button class="btn" data-ms="point" data-i18n="phrases.📍 Coordinate Point">📍 Coordinate Point</button>
-            <button class="btn danger" id="btn-clear-meas" data-i18n="phrases.🗑 Clear All">🗑 Clear All</button>
+            <button class="btn pri" data-ms="distance" data-i18n="viewer.toolbar.distanceLabel">Distance</button>
+            <button class="btn pri" data-ms="height" data-i18n="viewer.toolbar.heightLabel">Height</button>
+            <button class="btn pri" data-ms="area" data-i18n="viewer.toolbar.areaLabel">Area</button>
+            <button class="btn pri" data-ms="angle" data-i18n="viewer.toolbar.angleLabel">Angle</button>
+            <button class="btn" data-ms="point" data-i18n="viewer.toolbar.pointLabel">Point</button>
+            <button class="btn danger" id="btn-clear-meas" data-i18n="viewer.measure.clearAll">Clear All</button>
           </div>
         </div>
-        <div class="pg volume-panel measure-section-gap" id="volume-panel">
-          <div class="pg-label" data-i18n="phrases.Earthwork Volume Measurement">Earthwork Volume Measurement</div>
-          <div id="volume-panel-note" class="volume-panel-note" style="margin-bottom:8px" data-i18n="viewer.volume.panelNote">Click to define the boundary and double-click to confirm, then set the reference plane.</div>
-          <div id="volume-panel-meta" class="volume-panel-meta" style="margin-bottom:10px" data-i18n="viewer.volume.noPending">No pending volume regions</div>
-          <div class="volume-panel-actions">
-            <button class="btn pri" id="btn-volume-start" data-i18n="viewer.volume.new">⛏ New</button>
-            <button class="btn" id="btn-volume-cancel" disabled data-i18n="common.actions.cancel">Cancel</button>
-            <button class="btn" id="btn-volume-clear-all" disabled data-i18n="common.actions.clear">Clear</button>
+        <details class="advanced-workflow" id="volume-workflow-details">
+          <summary>
+            <span>
+              <span data-i18n="viewer.advanced.volumeTitle">Volume analysis</span>
+              <span class="advanced-workflow-copy" data-i18n="viewer.advanced.volumeHint">Use when you need a guided cut/fill workflow with a confirmed boundary and reference elevation.</span>
+            </span>
+          </summary>
+          <div class="advanced-workflow-body">
+            <div class="pg volume-panel" id="volume-panel">
+              <div class="pg-label" data-i18n="phrases.Earthwork Volume Measurement">Earthwork Volume Measurement</div>
+              <div id="volume-panel-note" class="volume-panel-note" style="margin-bottom:8px" data-i18n="viewer.volume.panelNote">Click to define the boundary and double-click to confirm, then set the reference plane.</div>
+              <div id="volume-panel-meta" class="volume-panel-meta" style="margin-bottom:10px" data-i18n="viewer.volume.noPending">No pending volume regions</div>
+              <div class="volume-panel-actions">
+                <button class="btn pri" id="btn-volume-start" data-i18n="viewer.volume.newPlain">New</button>
+                <button class="btn" id="btn-volume-cancel" disabled data-i18n="common.actions.cancel">Cancel</button>
+                <button class="btn" id="btn-volume-clear-all" disabled data-i18n="common.actions.clear">Clear</button>
+              </div>
+              <div id="volume-panel-list" class="volume-panel-list">
+                <div data-i18n="phrases.No volume measurements" data-i18n-fallback="No volume measurements"
+                  style="color:var(--text3);font-size:11px;text-align:center;padding:8px;">No volume measurements</div>
+              </div>
+            </div>
           </div>
-          <div id="volume-panel-list" class="volume-panel-list">
-            <div data-i18n="phrases.No volume measurements" data-i18n-fallback="No volume measurements"
-              style="color:var(--text3);font-size:11px;text-align:center;padding:8px;">No volume measurements</div>
-          </div>
-        </div>
+        </details>
         <div id="meas-detail-list" class="measure-section-gap">
           <div class="measure-subtle-empty" data-i18n="phrases.No measurement results">No measurement results</div>
         </div>
@@ -6809,50 +7249,60 @@
 
       <!-- Clip -->
       <div class="tab-pane" id="pane-clip">
-        <div class="clip-pane-stack">
-          <div class="pg clip-section">
-            <div class="pg-label" data-i18n="viewer.clip.toolsTitle">Clipping Tools</div>
-            <div class="clip-action-grid">
-              <button class="btn pri" id="btn-add-clipbox" data-i18n="viewer.clip.addClipBox">⬜ Add Clip Box</button>
-              <button class="btn pri" id="btn-delete-select" data-i18n="viewer.clip.deleteRegion">🧹 Polygon Delete</button>
-              <button class="btn pri wide" id="btn-add-profile" data-i18n="viewer.clip.drawProfile">✂ Draw Profile Line</button>
+        <details class="advanced-workflow" id="clip-workflow-details" open>
+          <summary>
+            <span>
+              <span data-i18n="viewer.advanced.clipTitle">Clipping and profile tools</span>
+              <span class="advanced-workflow-copy" data-i18n="viewer.advanced.clipHint">Start with a clip box or profile, then review saved clipping objects below.</span>
+            </span>
+          </summary>
+          <div class="advanced-workflow-body">
+            <div class="clip-pane-stack">
+              <div class="pg clip-section">
+                <div class="pg-label" data-i18n="viewer.clip.toolsTitle">Clipping Tools</div>
+                <div class="clip-action-grid">
+                  <button class="btn pri" id="btn-add-clipbox" data-i18n="viewer.clip.addClipBox">Add Clip Box</button>
+                  <button class="btn pri" id="btn-delete-select" data-i18n="viewer.clip.deleteRegion">Polygon Delete</button>
+                  <button class="btn pri wide" id="btn-add-profile" data-i18n="viewer.clip.drawProfile">Draw Profile Line</button>
+                </div>
+              </div>
+
+              <div id="clip-box-workspace" class="pg clip-section"></div>
+              <div id="delete-region-workspace" class="pg clip-section"></div>
+
+              <div class="pg clip-section">
+                <div class="pg-label" data-i18n="viewer.clip.modeTitle">Clip Mode</div>
+                <div class="clip-action-grid">
+                  <button class="btn" id="clip-inside" data-i18n="viewer.clip.modeInside">Clip Inside</button>
+                  <button class="btn" id="clip-outside" data-i18n="viewer.clip.modeOutside">Clip Outside</button>
+                </div>
+              </div>
+
+              <div class="pg clip-section">
+                <div class="pg-label" data-i18n="viewer.clip.profileTitle">Profile Parameters</div>
+                <div class="pr">
+                  <span class="pr-label" data-i18n="viewer.clip.profileWidth">Profile width</span>
+                  <div class="pr-val"><input type="range" id="r-pw" min="0.1" max="100" step="0.1" value="2"></div>
+                  <span class="pr-num" id="l-pw">2m</span>
+                </div>
+                <div class="pr">
+                  <span class="pr-label" data-i18n="viewer.clip.profileHeight">Profile height</span>
+                  <div class="pr-val"><input type="number" id="inp-ph" value="5" min="0.1" step="0.5"></div>
+                </div>
+                <div class="btn-row">
+                  <button class="btn" id="btn-profile-view" data-i18n="viewer.clip.viewProfile">View Profile</button>
+                </div>
+              </div>
+
+              <div class="pg clip-section">
+                <div class="pg-label" data-i18n="viewer.clip.objectsTitle">Clipping Objects</div>
+                <div id="clip-vol-list">
+                  <div style="color:var(--text3);font-size:11px;text-align:center;padding:12px;" data-i18n="viewer.clip.emptyObjects">No clipping volumes</div>
+                </div>
+              </div>
             </div>
           </div>
-
-          <div id="clip-box-workspace" class="pg clip-section"></div>
-          <div id="delete-region-workspace" class="pg clip-section"></div>
-
-          <div class="pg clip-section">
-            <div class="pg-label" data-i18n="viewer.clip.modeTitle">Clip Mode</div>
-            <div class="clip-action-grid">
-              <button class="btn" id="clip-inside" data-i18n="viewer.clip.modeInside">Clip Inside</button>
-              <button class="btn" id="clip-outside" data-i18n="viewer.clip.modeOutside">Clip Outside</button>
-            </div>
-          </div>
-
-          <div class="pg clip-section">
-            <div class="pg-label" data-i18n="viewer.clip.profileTitle">Profile Parameters</div>
-            <div class="pr">
-              <span class="pr-label" data-i18n="viewer.clip.profileWidth">Profile width</span>
-              <div class="pr-val"><input type="range" id="r-pw" min="0.1" max="100" step="0.1" value="2"></div>
-              <span class="pr-num" id="l-pw">2m</span>
-            </div>
-            <div class="pr">
-              <span class="pr-label" data-i18n="viewer.clip.profileHeight">Profile height</span>
-              <div class="pr-val"><input type="number" id="inp-ph" value="5" min="0.1" step="0.5"></div>
-            </div>
-            <div class="btn-row">
-              <button class="btn" id="btn-profile-view" data-i18n="viewer.clip.viewProfile">View Profile</button>
-            </div>
-          </div>
-
-          <div class="pg clip-section">
-            <div class="pg-label" data-i18n="viewer.clip.objectsTitle">Clipping Objects</div>
-            <div id="clip-vol-list">
-              <div style="color:var(--text3);font-size:11px;text-align:center;padding:12px;" data-i18n="viewer.clip.emptyObjects">No clipping volumes</div>
-            </div>
-          </div>
-        </div>
+        </details>
       </div>
 
       <!-- Classification -->
@@ -7304,7 +7754,7 @@
 
         <!-- Trajectory -->
         <div class="pg">
-          <div class="pg-label">📍 Scan Trajectory</div>
+          <div class="pg-label" data-i18n="viewer.scanner.trajectoryTitle">Scan Trajectory</div>
           <div class="pr">
             <span class="pr-label">Show Trajectory</span>
             <div class="pr-val"><input type="checkbox" id="chk-traj" checked></div>
@@ -7356,7 +7806,7 @@
       <div class="tab-pane" id="pane-capture">
         <div class="cap-toolbar">
           <button class="btn pri" id="btn-cap-toggle">
-            🎯 <span data-i18n="viewer.capture.start">Start Capture</span>
+            <span data-i18n="viewer.capture.start">Start Capture</span>
           </button>
           <span class="cap-status-badge" id="cap-status-badge">
             <span class="cap-status-dot"></span>
@@ -7403,28 +7853,38 @@
         <!-- Hidden file input -->
         <input type="file" id="dxf-file-input" accept=".dxf" multiple style="display:none">
 
-        <!-- Drop zone (shown when no files loaded) -->
-        <div class="dxf-drop-zone" id="dxf-drop-zone">
-          <div class="dxf-drop-zone-icon">📐</div>
-          <div data-i18n="viewer.dxf.drop.title">Click or drop DXF files here</div>
-          <div class="dxf-drop-zone-hint" data-i18n="viewer.dxf.drop.hint">Multiple files supported · .dxf only</div>
-        </div>
+        <details class="advanced-workflow" id="dxf-workflow-details" open>
+          <summary>
+            <span>
+              <span data-i18n="viewer.advanced.dxfTitle">DXF overlay and drawing</span>
+              <span class="advanced-workflow-copy" data-i18n="viewer.advanced.dxfHint">Import CAD overlays first; drawing tools stay grouped below the loaded files.</span>
+            </span>
+          </summary>
+          <div class="advanced-workflow-body">
+            <!-- Drop zone (shown when no files loaded) -->
+            <div class="dxf-drop-zone" id="dxf-drop-zone">
+              <div class="dxf-drop-zone-icon" data-cs-icon="dxf"></div>
+              <div data-i18n="viewer.dxf.drop.title">Click or drop DXF files here</div>
+              <div class="dxf-drop-zone-hint" data-i18n="viewer.dxf.drop.hint">Multiple files supported · .dxf only</div>
+            </div>
 
-        <!-- Loaded files list (shown after loading) -->
-        <div class="dxf-file-list" id="dxf-file-list" style="display:none"></div>
+            <!-- Loaded files list (shown after loading) -->
+            <div class="dxf-file-list" id="dxf-file-list" style="display:none"></div>
 
-        <!-- Global controls -->
-        <div class="dxf-toolbar" id="dxf-global-ctrl" style="display:none">
-          <button class="btn" id="btn-dxf-add-more" title="Add More Files" data-i18n-title="viewer.dxf.addMoreTitle" data-i18n="viewer.dxf.addMore">＋ Add</button>
-          <button class="btn" id="btn-dxf-clear-all" data-i18n="viewer.dxf.clearAll">🗑 Clear All</button>
-        </div>
+            <!-- Global controls -->
+            <div class="dxf-toolbar" id="dxf-global-ctrl" style="display:none">
+              <button class="btn" id="btn-dxf-add-more" title="Add More Files" data-i18n-title="viewer.dxf.addMoreTitle" data-i18n="viewer.dxf.addMore">Add</button>
+              <button class="btn" id="btn-dxf-clear-all" data-i18n="viewer.dxf.clearAll">Clear All</button>
+            </div>
 
-        <!-- ── Draw section ── -->
-        <div class="dxf-section-sep"></div>
-        <div class="dxf-draw-hd" data-i18n="viewer.dxf.drawTitle">✏️ Drawing</div>
-        <div id="dxf-draw-section">
-          <!-- Rendered by dxf-draw feature module -->
-        </div>
+            <!-- ── Draw section ── -->
+            <div class="dxf-section-sep"></div>
+            <div class="dxf-draw-hd" data-i18n="viewer.dxf.drawTitle">Drawing</div>
+            <div id="dxf-draw-section">
+              <!-- Rendered by dxf-draw feature module -->
+            </div>
+          </div>
+        </details>
 
       </div>
       <!-- ===== END DXF PANE ===== -->
@@ -7463,7 +7923,7 @@
       <span class="st-val" id="st-color">RGB</span>
     </div>
     <div class="st-item" id="st-geo" style="display:none;">
-      <span class="st-lbl" id="st-geo-lbl">🌍</span>
+      <span class="st-lbl" id="st-geo-lbl" data-i18n="viewer.status.geoLabel">Geo</span>
       <span class="st-val" id="st-geo-val">—</span>
     </div>
     <div class="st-item is-action" id="st-disclaimer">
@@ -7481,7 +7941,7 @@
   <!-- Open -->
   <div class="modal-overlay" id="modal-open">
     <div class="modal-box">
-      <div class="modal-title">📂 Open Point Cloud</div>
+      <div class="modal-title" data-i18n="viewer.open.title">Open Point Cloud</div>
       <div id="open-list" style="max-height:320px;overflow-y:auto;margin-bottom:12px;">
         <div style="color:var(--text3);font-size:11px;text-align:center;padding:22px;">Loading...</div>
       </div>
@@ -7493,7 +7953,7 @@
 
   <div class="modal-overlay" id="modal-export-las">
     <div class="modal-box" style="width:560px;">
-      <div class="modal-title" data-i18n="viewer.export.multiFormatTitle">📦 Multi-format Export</div>
+      <div class="modal-title" data-i18n="viewer.export.multiFormatTitle">Multi-format Export</div>
       <label class="modal-label" data-i18n="viewer.export.currentDataset">Current dataset</label>
       <div id="export-dataset-summary" class="modal-msg show info" style="display:block;" data-i18n="viewer.export.loadDatasetFirst">Please load a point cloud or scanner project first</div>
 
@@ -7697,15 +8157,14 @@
   <!-- Profile bottom panel -->
   <div id="profile-panel">
     <div class="profile-hd">
-      <span class="profile-title" data-i18n="viewer.profile.panelTitle">✂ Section / Profile View</span>
+      <span class="profile-title" data-i18n="viewer.profile.panelTitle">Cross-Section / Profile View</span>
       <button class="btn profile-bg-btn" id="btn-profile-bg" title="Toggle profile background: Black / White / Gradient"
         style="padding:3px 10px;font-size:10px;">◐ Background: Black</button>
       <button class="btn" id="btn-profile-triangle" title="Triangle measurement: click two points to measure dx / dy / slope"
         style="padding:3px 10px;font-size:10px;">▽ Triangle Measurement</button>
       <button class="btn" id="btn-profile-triangle-clear" title="Clear measurements"
         style="padding:3px 8px;font-size:10px;display:none;">✕ Clear</button>
-      <button class="btn" id="btn-profile-info-toggle" title="Show / hide floating point info panel" style="padding:3px 10px;font-size:10px;">📍
-        Point Info</button>
+      <button class="btn" id="btn-profile-info-toggle" title="Show / hide floating point info panel" style="padding:3px 10px;font-size:10px;">Point Info</button>
       <span style="font-size:10px;color:var(--text3);">Profile point size:</span>
       <input type="range" id="r-profile-pt-size" min="0.5" max="10" step="0.5" value="2" style="width:70px;">
       <span id="l-profile-pt-size" style="font-size:10px;color:var(--text2);min-width:22px;">2</span>
@@ -8048,8 +8507,37 @@ window.__CLOUDSTUDIO_THREE = THREE;
     // ─────────────────────────────────────────────
     // Utilities
     // ─────────────────────────────────────────────
+    let viewerOperationTimer = null;
+
+    function normalizeStatusType(type = 'info') {
+      if (type === 'error') return 'err';
+      if (type === 'warn' || type === 'warning') return 'warn';
+      if (type === 'ok' || type === 'success') return 'ok';
+      return 'info';
+    }
+
+    function showOperationStatus(message, type = 'info', { autoHide = true, ms = 3200 } = {}) {
+      const root = document.getElementById('viewer-operation-status');
+      const text = document.getElementById('viewer-operation-text');
+      if (!root || !text || !message) return;
+      const normalizedType = normalizeStatusType(type);
+      window.clearTimeout(viewerOperationTimer);
+      root.className = `viewer-operation-status show ${normalizedType}`;
+      text.textContent = trText(message);
+      if (autoHide && normalizedType !== 'err') {
+        viewerOperationTimer = window.setTimeout(() => root.classList.remove('show'), ms);
+      }
+    }
+
+    function hideOperationStatus() {
+      window.clearTimeout(viewerOperationTimer);
+      document.getElementById('viewer-operation-status')?.classList.remove('show');
+    }
+
     function toast(msg, type = 'info', ms = 3000) {
-      APP_UI.toast(trText(msg), type, ms, { translate: false });
+      const translated = trText(msg);
+      showOperationStatus(translated, type, { autoHide: Number(ms) !== 0, ms: Math.min(Math.max(Number(ms) || 3000, 1800), 5200) });
+      APP_UI.toast(translated, normalizeStatusType(type), ms, { translate: false });
     }
 
     function setStatus(txt) {
@@ -8059,8 +8547,19 @@ window.__CLOUDSTUDIO_THREE = THREE;
       };
       const source = canonicalStatusMap[txt] || txt;
       window.__viewerStatusSourceText = source;
-      APP_UI.setStatus(trText(source), { raw: true });
+      const translated = trText(source);
+      APP_UI.setStatus(translated, { raw: true });
+      if (translated) {
+        showOperationStatus(translated, 'info', {
+          autoHide: !/loading|drawing|captur|creating|resolving|adjust/i.test(String(source)),
+          ms: 2800,
+        });
+      } else {
+        hideOperationStatus();
+      }
     }
+
+    document.getElementById('viewer-operation-close')?.addEventListener('click', hideOperationStatus);
 
     function hideProfileClipAction() {
       const action = document.getElementById('st-profile-clip-action');
@@ -8214,6 +8713,52 @@ window.__CLOUDSTUDIO_THREE = THREE;
       if (adjustmentPanel && adjustmentSlot && adjustmentPanel.parentElement !== adjustmentSlot) {
         adjustmentSlot.appendChild(adjustmentPanel);
       }
+    }
+
+    const orientationGizmoState = {
+      lastUpdate: 0,
+      cameraQuat: new THREE.Quaternion(),
+      invCameraQuat: new THREE.Quaternion(),
+      axis: new THREE.Vector3(),
+    };
+
+    function updateOrientationGizmo() {
+      if (!viewer?.scene?.getActiveCamera) return;
+      const now = performance.now();
+      if (now - orientationGizmoState.lastUpdate < 80) return;
+      orientationGizmoState.lastUpdate = now;
+
+      const camera = viewer.scene.getActiveCamera();
+      camera.getWorldQuaternion(orientationGizmoState.cameraQuat);
+      orientationGizmoState.invCameraQuat.copy(orientationGizmoState.cameraQuat).invert();
+
+      const origin = { x: 48, y: 52 };
+      const length = 30;
+      const axes = [
+        { key: 'x', vector: new THREE.Vector3(1, 0, 0) },
+        { key: 'y', vector: new THREE.Vector3(0, 1, 0) },
+        { key: 'z', vector: new THREE.Vector3(0, 0, 1) },
+      ];
+
+      axes.forEach(({ key, vector }) => {
+        const v = orientationGizmoState.axis.copy(vector).applyQuaternion(orientationGizmoState.invCameraQuat).normalize();
+        const x = origin.x + v.x * length;
+        const y = origin.y - v.y * length;
+        const line = document.getElementById(`axis-${key}-line`);
+        const label = document.getElementById(`axis-${key}-label`);
+        if (line) {
+          line.setAttribute('x1', String(origin.x));
+          line.setAttribute('y1', String(origin.y));
+          line.setAttribute('x2', x.toFixed(1));
+          line.setAttribute('y2', y.toFixed(1));
+          line.style.opacity = String(Math.max(0.42, 0.72 + v.z * 0.22));
+        }
+        if (label) {
+          label.setAttribute('x', (origin.x + v.x * (length + 8)).toFixed(1));
+          label.setAttribute('y', (origin.y - v.y * (length + 8)).toFixed(1));
+          label.style.opacity = String(Math.max(0.52, 0.82 + v.z * 0.18));
+        }
+      });
     }
 
     let openModalFeature = null;
@@ -8938,7 +9483,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
       setMenuLabel('help', 'viewer.menu.help', 'Help');
 
       setButtonLocale('tb-open', 'viewer.toolbar.openLabel', 'Open', 'viewer.toolbar.openTitle', 'Open Point Cloud (Ctrl+O)');
-      setButtonLocale('tb-export-las', 'viewer.toolbar.exportLabel', 'Export Point Cloud', 'viewer.toolbar.exportTitle', 'Export Point Cloud');
+      setButtonLocale('tb-export-las', 'viewer.toolbar.exportLabel', 'Export', 'viewer.toolbar.exportTitle', 'Export Point Cloud');
       setButtonLocale('tb-screenshot', 'viewer.toolbar.screenshotLabel', 'Screenshot', 'viewer.toolbar.screenshotTitle', 'Screenshot');
       setButtonLocale('tb-fit', 'viewer.toolbar.fitLabel', 'Fit', 'viewer.toolbar.fitTitle', 'Fit View (F)');
       setButtonLocale('tb-orbit', 'viewer.toolbar.orbitLabel', 'Orbit', 'viewer.toolbar.orbitTitle', 'Orbit Navigation');
@@ -8954,13 +9499,14 @@ window.__CLOUDSTUDIO_THREE = THREE;
       setButtonLocale('tb-capture', 'viewer.toolbar.captureLabel', 'Capture', 'viewer.toolbar.captureTitle', 'Point Capture');
       setButtonLocale('tb-dxf-import', 'viewer.toolbar.dxfLabel', 'DXF', 'viewer.toolbar.dxfTitle', 'Import DXF Overlay');
       setButtonLocale('tb-clipbox', 'viewer.toolbar.clipBoxLabel', 'Clip Box', 'viewer.toolbar.clipBoxTitle', 'Rectangular Clip Box');
-      setButtonLocale('tb-delete-poly', 'viewer.toolbar.deleteRegionLabel', 'Delete Region', 'viewer.toolbar.deleteRegionTitle', 'Delete Selected Region');
+      setButtonLocale('tb-delete-poly', 'viewer.toolbar.deleteRegionLabel', 'Delete', 'viewer.toolbar.deleteRegionTitle', 'Delete Selected Region');
       setButtonLocale('tb-profile', 'viewer.toolbar.profileLabel', 'Profile', 'viewer.toolbar.profileTitle', 'Section / Profile');
       setButtonLocale('tb-clearclip', 'viewer.toolbar.clearClipLabel', 'Clear Clip', 'viewer.toolbar.clearClipTitle', 'Clear Clipping');
       setButtonLocale('tb-col-rgb', 'viewer.toolbar.rgbLabel', 'RGB', 'viewer.toolbar.rgbTitle', 'RGB Color');
       setButtonLocale('tb-col-elev', 'viewer.toolbar.elevationLabel', 'Elevation', 'viewer.toolbar.elevationTitle', 'Elevation Coloring');
       setButtonLocale('tb-col-int', 'viewer.toolbar.intensityLabel', 'Intensity', 'viewer.toolbar.intensityTitle', 'Intensity Coloring');
-      setButtonLocale('tb-col-cls', 'viewer.toolbar.classificationLabel', 'Classification', 'viewer.toolbar.classificationTitle', 'Classification Coloring');
+      setButtonLocale('tb-col-cls', 'viewer.toolbar.classificationLabel', 'Class', 'viewer.toolbar.classificationTitle', 'Classification Coloring');
+      setButtonLocale('tb-more', 'viewer.toolbar.moreLabel', 'More', 'viewer.toolbar.moreTitle', 'More tools');
 
       const miOpen = document.getElementById('mi-open');
       if (miOpen) miOpen.innerHTML = `<span class="mi-icon" data-cs-icon="open"></span>${tr('viewer.toolbar.openTitle', {}, 'Open Point Cloud')}<span class="kbd">Ctrl+O</span>`;
@@ -8972,64 +9518,65 @@ window.__CLOUDSTUDIO_THREE = THREE;
       if (miHome) miHome.innerHTML = `<span class="mi-icon" data-cs-icon="home"></span>${tr('viewer.menu.home', {}, 'Back to Home')}`;
       renderAppIcons(document.getElementById('menubar'));
       const miFit = document.getElementById('mi-fit');
-      if (miFit) miFit.innerHTML = `⊞ ${tr('viewer.toolbar.fitTitle', {}, 'Fit View')}<span class="kbd">F</span>`;
+      if (miFit) miFit.innerHTML = `<span class="mi-icon" data-cs-icon="fit"></span>${tr('viewer.toolbar.fitTitle', {}, 'Fit View')}<span class="kbd">F</span>`;
       const miTopView = document.getElementById('mi-topview');
-      if (miTopView) miTopView.textContent = `🔭 ${tr('viewer.menu.topView', {}, 'Top View')}`;
+      if (miTopView) miTopView.innerHTML = `<span class="mi-icon" data-cs-icon="top"></span>${tr('viewer.menu.topView', {}, 'Top View')}`;
       const miSideView = document.getElementById('mi-sideview');
-      if (miSideView) miSideView.textContent = `↔ ${tr('viewer.menu.sideView', {}, 'Side View')}`;
+      if (miSideView) miSideView.innerHTML = `<span class="mi-icon" data-cs-icon="left"></span>${tr('viewer.menu.sideView', {}, 'Side View')}`;
       const miBgSkybox = document.getElementById('mi-bg-skybox');
-      if (miBgSkybox) miBgSkybox.textContent = `🌅 ${tr('viewer.menu.bgSkybox', {}, 'Background: Skybox')}`;
+      if (miBgSkybox) miBgSkybox.textContent = tr('viewer.menu.bgSkybox', {}, 'Background: Skybox');
       const miBgGradient = document.getElementById('mi-bg-gradient');
-      if (miBgGradient) miBgGradient.textContent = `🌈 ${tr('viewer.menu.bgGradient', {}, 'Background: Gradient')}`;
+      if (miBgGradient) miBgGradient.textContent = tr('viewer.menu.bgGradient', {}, 'Background: Gradient');
       const miBgBlack = document.getElementById('mi-bg-black');
-      if (miBgBlack) miBgBlack.textContent = `⬛ ${tr('viewer.menu.bgBlack', {}, 'Background: Black')}`;
+      if (miBgBlack) miBgBlack.textContent = tr('viewer.menu.bgBlack', {}, 'Background: Black');
       const miBgWhite = document.getElementById('mi-bg-white');
-      if (miBgWhite) miBgWhite.textContent = `⬜ ${tr('viewer.menu.bgWhite', {}, 'Background: White')}`;
+      if (miBgWhite) miBgWhite.textContent = tr('viewer.menu.bgWhite', {}, 'Background: White');
       const miFullscreen = document.getElementById('mi-fullscreen');
-      if (miFullscreen) miFullscreen.innerHTML = `⛶ ${tr('viewer.menu.fullscreen', {}, 'Fullscreen')}<span class="kbd">F11</span>`;
+      if (miFullscreen) miFullscreen.innerHTML = `${tr('viewer.menu.fullscreen', {}, 'Fullscreen')}<span class="kbd">F11</span>`;
       const miPoint = document.getElementById('mi-t-point');
-      if (miPoint) miPoint.textContent = `📍 ${tr('viewer.menu.pointMeasure', {}, 'Point Coordinate Measure')}`;
+      if (miPoint) miPoint.innerHTML = `<span class="mi-icon" data-cs-icon="point"></span>${tr('viewer.menu.pointMeasure', {}, 'Point Coordinate Measure')}`;
       const miDist = document.getElementById('mi-t-dist');
-      if (miDist) miDist.textContent = `📏 ${tr('viewer.menu.distanceMeasure', {}, 'Distance Measure')}`;
+      if (miDist) miDist.innerHTML = `<span class="mi-icon" data-cs-icon="distance"></span>${tr('viewer.menu.distanceMeasure', {}, 'Distance Measure')}`;
       const miHeight = document.getElementById('mi-t-height');
-      if (miHeight) miHeight.textContent = `↕ ${tr('viewer.menu.heightMeasure', {}, 'Height Measure')}`;
+      if (miHeight) miHeight.innerHTML = `<span class="mi-icon" data-cs-icon="height"></span>${tr('viewer.menu.heightMeasure', {}, 'Height Measure')}`;
       const miArea = document.getElementById('mi-t-area');
-      if (miArea) miArea.textContent = `⬡ ${tr('viewer.menu.areaMeasure', {}, 'Area Measure')}`;
+      if (miArea) miArea.innerHTML = `<span class="mi-icon" data-cs-icon="area"></span>${tr('viewer.menu.areaMeasure', {}, 'Area Measure')}`;
       const miAngle = document.getElementById('mi-t-angle');
-      if (miAngle) miAngle.textContent = `📐 ${tr('viewer.menu.angleMeasure', {}, 'Angle Measure')}`;
+      if (miAngle) miAngle.innerHTML = `<span class="mi-icon" data-cs-icon="angle"></span>${tr('viewer.menu.angleMeasure', {}, 'Angle Measure')}`;
       const miVolume = document.getElementById('mi-t-volume');
-      if (miVolume) miVolume.textContent = `⛏ ${tr('viewer.menu.volumeMeasure', {}, 'Volume Measure')}`;
+      if (miVolume) miVolume.innerHTML = `<span class="mi-icon" data-cs-icon="volume"></span>${tr('viewer.menu.volumeMeasure', {}, 'Volume Measure')}`;
       const miMagnifier = document.getElementById('mi-t-magnifier');
-      if (miMagnifier) miMagnifier.textContent = `🔍 ${tr('viewer.menu.magnifier', {}, 'Mouse Magnifier')}`;
+      if (miMagnifier) miMagnifier.innerHTML = `<span class="mi-icon" data-cs-icon="magnifier"></span>${tr('viewer.menu.magnifier', {}, 'Mouse Magnifier')}`;
       const miClipBox = document.getElementById('mi-t-clipbox');
-      if (miClipBox) miClipBox.textContent = `⬜ ${tr('viewer.menu.clipBox', {}, 'Rectangular Clip Box')}`;
+      if (miClipBox) miClipBox.innerHTML = `<span class="mi-icon" data-cs-icon="clip-box"></span>${tr('viewer.menu.clipBox', {}, 'Rectangular Clip Box')}`;
       const miDeletePoly = document.getElementById('mi-t-delete-poly');
-      if (miDeletePoly) miDeletePoly.textContent = `🧹 ${tr('viewer.menu.deleteRegion', {}, 'Delete Selected Region')}`;
+      if (miDeletePoly) miDeletePoly.innerHTML = `<span class="mi-icon" data-cs-icon="delete-region"></span>${tr('viewer.menu.deleteRegion', {}, 'Delete Selected Region')}`;
       const miProfile = document.getElementById('mi-t-profile');
-      if (miProfile) miProfile.textContent = `✂ ${tr('viewer.menu.profile', {}, 'Section / Profile')}`;
+      if (miProfile) miProfile.innerHTML = `<span class="mi-icon" data-cs-icon="profile"></span>${tr('viewer.menu.profile', {}, 'Section / Profile')}`;
       const miClearMeas = document.getElementById('mi-clear-meas');
-      if (miClearMeas) miClearMeas.textContent = `🗑 ${tr('viewer.menu.clearMeasurements', {}, 'Clear All Measurements')}`;
+      if (miClearMeas) miClearMeas.innerHTML = `<span class="mi-icon" data-cs-icon="clear"></span>${tr('viewer.menu.clearMeasurements', {}, 'Clear All Measurements')}`;
       const miClearClip = document.getElementById('mi-clear-clip');
-      if (miClearClip) miClearClip.textContent = `✖ ${tr('viewer.menu.clearClipping', {}, 'Clear All Clipping')}`;
+      if (miClearClip) miClearClip.innerHTML = `<span class="mi-icon" data-cs-icon="clear"></span>${tr('viewer.menu.clearClipping', {}, 'Clear All Clipping')}`;
       const miColRgb = document.getElementById('mi-col-rgb');
-      if (miColRgb) miColRgb.textContent = `🎨 ${tr('viewer.menu.rgbColor', {}, 'RGB Color')}`;
+      if (miColRgb) miColRgb.innerHTML = `<span class="mi-icon" data-cs-icon="rgb"></span>${tr('viewer.menu.rgbColor', {}, 'RGB Color')}`;
       const miColElev = document.getElementById('mi-col-elev');
-      if (miColElev) miColElev.textContent = `🏔 ${tr('viewer.menu.elevationColor', {}, 'Elevation Coloring')}`;
+      if (miColElev) miColElev.innerHTML = `<span class="mi-icon" data-cs-icon="elevation"></span>${tr('viewer.menu.elevationColor', {}, 'Elevation Coloring')}`;
       const miColIntensity = document.getElementById('mi-col-intensity');
-      if (miColIntensity) miColIntensity.textContent = `💡 ${tr('viewer.menu.intensityColor', {}, 'Intensity Coloring')}`;
+      if (miColIntensity) miColIntensity.innerHTML = `<span class="mi-icon" data-cs-icon="intensity"></span>${tr('viewer.menu.intensityColor', {}, 'Intensity Coloring')}`;
       const miColClass = document.getElementById('mi-col-class');
-      if (miColClass) miColClass.textContent = `🏷 ${tr('viewer.menu.classificationColor', {}, 'Classification Coloring')}`;
+      if (miColClass) miColClass.innerHTML = `<span class="mi-icon" data-cs-icon="classification"></span>${tr('viewer.menu.classificationColor', {}, 'Classification Coloring')}`;
       const miColLod = document.getElementById('mi-col-lod');
-      if (miColLod) miColLod.textContent = `📊 ${tr('viewer.menu.lodColor', {}, 'LOD Level')}`;
+      if (miColLod) miColLod.innerHTML = `<span class="mi-icon" data-cs-icon="lod"></span>${tr('viewer.menu.lodColor', {}, 'LOD Level')}`;
       const miEdlToggle = document.getElementById('mi-edl-toggle');
-      if (miEdlToggle) miEdlToggle.textContent = `💠 ${tr('viewer.menu.toggleEdl', {}, 'Toggle EDL Lighting')}`;
+      if (miEdlToggle) miEdlToggle.innerHTML = `<span class="mi-icon" data-cs-icon="edl"></span>${tr('viewer.menu.toggleEdl', {}, 'Toggle EDL Lighting')}`;
       const miShortcuts = document.getElementById('mi-shortcuts');
-      if (miShortcuts) miShortcuts.textContent = `⌨ ${tr('viewer.menu.shortcuts', {}, 'Keyboard Shortcuts')}`;
+      if (miShortcuts) miShortcuts.textContent = tr('viewer.menu.shortcuts', {}, 'Keyboard Shortcuts');
       const miAbout = document.getElementById('mi-about');
-      if (miAbout) miAbout.textContent = `ℹ ${tr('viewer.menu.about', {}, 'About CloudStudio')}`;
+      if (miAbout) miAbout.textContent = tr('viewer.menu.about', {}, 'About CloudStudio');
+      renderAppIcons(document.getElementById('menubar'));
 
       const openModalTitle = document.querySelector('#modal-open .modal-title');
-      if (openModalTitle) openModalTitle.textContent = `📂 ${tr('viewer.open.title', {}, 'Open Point Cloud')}`;
+      if (openModalTitle) openModalTitle.textContent = tr('viewer.open.title', {}, 'Open Point Cloud');
       const openCancel = document.getElementById('open-cancel');
       if (openCancel) openCancel.textContent = tr('common.actions.close', {}, 'Close');
       const openLoading = document.querySelector('#open-list > div');
@@ -9618,7 +10165,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
           card.className = `delete-region-card${pending ? ' pending' : ''}`;
           card.setAttribute('data-i18n-auto-root', '');
           card.innerHTML = `
-            <span>${pending ? '🔴' : '🧹'}</span>
+            <span class="delete-region-state-token">${pending ? tr('viewer.deleteRegion.statePending', {}, 'Previewing') : tr('viewer.deleteRegion.stateApplied', {}, 'Applied')}</span>
             <div class="delete-region-text">
               <div class="delete-region-name">${escapeHtml(pending ? tr('viewer.deleteRegion.pendingRegionLabel', { name: displayName }, `Pending Delete · ${displayName}`) : displayName)}</div>
               <div class="delete-region-sub">${escapeHtml(pending ? `${formatDeleteRegionSummary(region)} | ${tr('viewer.deleteRegion.previewBadge', {}, 'Highlight preview')}` : formatDeleteRegionSummary(region))}</div>
@@ -11146,7 +11693,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
         const coverageText = Number.isFinite(region.coverageRatio) ? `${(region.coverageRatio * 100).toFixed(1)}%` : '—';
         card.innerHTML = `
           <div class="volume-card-head">
-            <span>${region.computeState === 'working' ? '⏳' : '⛏'}</span>
+            <span class="volume-status-badge ${region.computeState === 'working' ? 'status-running' : 'status-ready'}">${region.computeState === 'working' ? tr('viewer.volume.status.running', {}, 'Running') : tr('viewer.volume.status.ready', {}, 'Ready')}</span>
             <div style="flex:1;min-width:0;">
               <div class="volume-card-title">${escapeHtml(region.name)}</div>
               <div class="volume-card-sub">${formatVolumeRegionSummary(region)} | ${escapeHtml(region.pointcloudName || trText('Point Cloud'))}</div>
@@ -11176,7 +11723,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
               <label class="volume-field-label" title="Portions above this plane are cut; portions below are fill.">Reference Elevation <span style="cursor:help;opacity:0.6">(?)</span></label>
               <div class="volume-field-row">
                 <input class="volume-field-input" data-field="referenceHeight" type="number" step="0.01" value="${Number(region.referenceHeight ?? 0).toFixed(3)}">
-                <button class="volume-pick-btn" data-action="pick-height" title="Click anywhere on the point cloud surface to pick the absolute elevation as the reference plane.">📍</button>
+                <button class="volume-pick-btn" data-action="pick-height" title="Click anywhere on the point cloud surface to pick the absolute elevation as the reference plane." data-i18n="viewer.volume.pickHeight">Pick</button>
               </div>
             </div>
             <div>
@@ -11466,6 +12013,27 @@ window.__CLOUDSTUDIO_THREE = THREE;
     relocateCoordinateControlsToStandalonePane();
     syncRightPanelUi();
 
+    document.getElementById('tb-more')?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const wrap = document.getElementById('tb-more-wrap');
+      const btn = document.getElementById('tb-more');
+      const open = !wrap?.classList.contains('open');
+      wrap?.classList.toggle('open', open);
+      btn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    document.getElementById('tb-more-menu')?.addEventListener('click', (event) => {
+      if (!event.target.closest('button')) return;
+      document.getElementById('tb-more-wrap')?.classList.remove('open');
+      document.getElementById('tb-more')?.setAttribute('aria-expanded', 'false');
+    });
+
+    document.addEventListener('click', (event) => {
+      if (event.target.closest('#tb-more-wrap')) return;
+      document.getElementById('tb-more-wrap')?.classList.remove('open');
+      document.getElementById('tb-more')?.setAttribute('aria-expanded', 'false');
+    });
+
     // ─────────────────────────────────────────────
     // Collapsible sections (left panel)
     // ─────────────────────────────────────────────
@@ -11492,6 +12060,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
     viewer.setBackground('skybox');
     viewer.loadSettingsFromURL();
     viewer.addEventListener('update', syncMeasurementCoordinateLabels);
+    viewer.addEventListener('update', updateOrientationGizmo);
     viewer.addEventListener('render.pass.perspective_overlay', () => {
       if (!volumeMeasureState.overlayVisible || !volumeMeasureState.overlayScene) return;
       viewer.renderer.render(volumeMeasureState.overlayScene, viewer.scene.getActiveCamera());
@@ -11551,15 +12120,31 @@ window.__CLOUDSTUDIO_THREE = THREE;
 
     // Toggle left panel collapsed / expanded
     let leftPanelCollapsed = false;
+    function syncLeftPanelUi() {
+      const panel = document.getElementById('left-panel');
+      const toggle = document.getElementById('btn-left-panel-toggle');
+      panel?.classList.toggle('left-panel-collapsed', leftPanelCollapsed);
+      if (!toggle) return;
+      const title = leftPanelCollapsed
+        ? tr('viewer.scene.toggleExpand', {}, 'Show scene panel')
+        : tr('viewer.scene.toggleCollapse', {}, 'Hide scene panel');
+      toggle.title = title;
+      toggle.setAttribute('aria-label', title);
+      setIconElement(toggle.querySelector('.quick-btn-icon'), leftPanelCollapsed ? 'right' : 'left');
+    }
+
     function toggleLeftPanel() {
       if (isMobile()) {
         openMobilePanel('left');
         return;
       }
       leftPanelCollapsed = !leftPanelCollapsed;
-      const panel = document.getElementById('left-panel');
-      panel.classList.toggle('left-panel-collapsed', leftPanelCollapsed);
+      syncLeftPanelUi();
+      window.dispatchEvent(new Event('resize'));
     }
+
+    document.getElementById('btn-left-panel-toggle')?.addEventListener('click', toggleLeftPanel);
+    syncLeftPanelUi();
 
     // ── Mobile panel helpers ──────────────────────────────────────────────────
     function isMobile() {
@@ -11794,8 +12379,72 @@ window.__CLOUDSTUDIO_THREE = THREE;
     const pendingInitialRoute = initCloud
       ? (openLoadOrchestrationFeature?.parseInitialRoute?.() || null)
       : null;
+    let pointCloudLoadSequence = 0;
+    let lastFailedPointCloudLoad = null;
 
-    function loadCloud(url, context = null) {
+    function hidePointCloudLoadError() {
+      document.getElementById('viewer-load-error')?.classList.remove('show');
+    }
+
+    function getReadablePointCloudLoadError(error, url) {
+      const status = error?.status ? `HTTP ${error.status}` : '';
+      const message = error?.message || tr('viewer.loadError.unknownDetail', {}, 'The metadata request failed.');
+      const urlHint = url ? `\n${url}` : '';
+      return `${status ? `${status}: ` : ''}${message}${urlHint}`;
+    }
+
+    function showPointCloudLoadError({ url, name, context, error }) {
+      lastFailedPointCloudLoad = { url, context };
+      const panel = document.getElementById('viewer-load-error');
+      const title = document.getElementById('viewer-load-error-title');
+      const copy = document.getElementById('viewer-load-error-copy');
+      if (title) {
+        title.textContent = tr('viewer.loadError.titleWithName', { name: name || tr('viewer.loadError.datasetFallback', {}, 'this dataset') }, 'Unable to load {{name}}');
+      }
+      if (copy) {
+        copy.textContent = tr(
+          'viewer.loadError.copyWithDetail',
+          { detail: getReadablePointCloudLoadError(error, url) },
+          'CloudStudio could not read the point cloud metadata needed to start the viewer. Detail: {{detail}}'
+        );
+      }
+      panel?.classList.add('show');
+      setStatus(tr('viewer.loadError.status', {}, 'Point cloud load failed'));
+      showOperationStatus(tr('viewer.loadError.status', {}, 'Point cloud load failed'), 'err', { autoHide: false });
+      toast(tr('viewer.loadError.toast', {}, 'Unable to load point cloud. Check the dataset link or metadata.'), 'err', 5000);
+    }
+
+    async function validatePointCloudMetadata(url) {
+      const response = await fetch(url, { cache: 'no-store' });
+      let metadata = null;
+      let text = '';
+      try {
+        text = await response.text();
+        metadata = JSON.parse(String(text || '').replace(/^\uFEFF/, ''));
+      } catch (error) {
+        const parseError = new Error(tr('viewer.loadError.badJson', {}, 'metadata.json is not valid JSON.'));
+        parseError.status = response.status;
+        throw parseError;
+      }
+
+      if (!response.ok) {
+        const httpError = new Error(metadata?.error || response.statusText || tr('viewer.loadError.httpFailed', {}, 'Metadata request failed.'));
+        httpError.status = response.status;
+        throw httpError;
+      }
+
+      if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+        throw new Error(tr('viewer.loadError.badShape', {}, 'metadata.json has an unexpected format.'));
+      }
+      if (!('points' in metadata) && !('hierarchy' in metadata) && !('octreeDir' in metadata) && !('version' in metadata)) {
+        throw new Error(tr('viewer.loadError.missingFields', {}, 'metadata.json is missing the point cloud fields needed by Potree.'));
+      }
+      return metadata;
+    }
+
+    async function loadCloud(url, context = null) {
+      const loadSequence = ++pointCloudLoadSequence;
+      hidePointCloudLoadError();
       const prepared = openLoadOrchestrationFeature?.prepareCloudOpen
         ? openLoadOrchestrationFeature.prepareCloudOpen(url, context)
         : (() => {
@@ -11811,7 +12460,18 @@ window.__CLOUDSTUDIO_THREE = THREE;
         })();
       const { name, inferredCloudName } = prepared;
 
-      Potree.loadPointCloud(url, name, e => {
+      try {
+        await validatePointCloudMetadata(url);
+      } catch (error) {
+        if (loadSequence !== pointCloudLoadSequence) return;
+        console.warn('[Viewer] Point cloud metadata validation failed:', error);
+        showPointCloudLoadError({ url, name, context: prepared.context, error });
+        return;
+      }
+
+      try {
+        Potree.loadPointCloud(url, name, e => {
+          if (loadSequence !== pointCloudLoadSequence) return;
         const pc = e.pointcloud;
         pruneScannerProjectVisuals();
         if (context?.type === 'scanner' && context.projectId) {
@@ -11908,8 +12568,31 @@ window.__CLOUDSTUDIO_THREE = THREE;
             })
             .catch(() => { });
         }
-      });
+        });
+      } catch (error) {
+        if (loadSequence !== pointCloudLoadSequence) return;
+        console.warn('[Viewer] Point cloud load failed:', error);
+        showPointCloudLoadError({ url, name, context: prepared.context, error });
+      }
     }
+
+    document.getElementById('viewer-load-error-retry')?.addEventListener('click', () => {
+      if (!lastFailedPointCloudLoad?.url) return;
+      loadCloud(lastFailedPointCloudLoad.url, lastFailedPointCloudLoad.context || null);
+    });
+
+    document.getElementById('viewer-load-error-open')?.addEventListener('click', () => {
+      hidePointCloudLoadError();
+      document.getElementById('tb-open')?.click();
+    });
+
+    document.getElementById('viewer-load-error-back')?.addEventListener('click', () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '/';
+      }
+    });
 
     // ─────────────────────────────────────────────
     // Scene Tree
@@ -12030,15 +12713,15 @@ window.__CLOUDSTUDIO_THREE = THREE;
         const name = vol.name || `Clip Box ${i + 1}`;
         const ti = document.createElement('div');
         ti.className = 'tree-item';
-        ti.innerHTML = `<span class="ti-icon">⬜</span><span class="ti-name">${name}</span><div class="ti-acts"><button class="icon-btn" title="Show/Hide">${vol.visible ? '👁' : '🚫'}</button><button class="icon-btn del" title="Delete">✕</button></div>`;
+        ti.innerHTML = `<span class="ti-icon">Clip</span><span class="ti-name">${name}</span><div class="ti-acts"><button class="icon-btn" title="Show/Hide">${vol.visible ? 'On' : 'Off'}</button><button class="icon-btn del" title="Delete">✕</button></div>`;
         const [visBtn, delBtn] = ti.querySelectorAll('.icon-btn');
-        visBtn.addEventListener('click', e => { e.stopPropagation(); vol.visible = !vol.visible; visBtn.textContent = vol.visible ? '👁' : '🚫'; });
+        visBtn.addEventListener('click', e => { e.stopPropagation(); vol.visible = !vol.visible; visBtn.textContent = vol.visible ? 'On' : 'Off'; });
         delBtn.addEventListener('click', e => { e.stopPropagation(); viewer.scene.removeVolume(vol); refreshVolumes(); });
         tree.appendChild(ti);
 
         const card = document.createElement('div');
         card.style.cssText = 'display:flex;align-items:center;gap:7px;padding:6px 8px;border:1px solid var(--border);border-radius:4px;margin-bottom:4px;';
-        card.innerHTML = `<span>⬜</span><span style="flex:1;font-size:11px;color:var(--text2);">${name}</span><button class="icon-btn del" title="Delete">✕</button>`;
+        card.innerHTML = `<span class="clip-object-badge">${tr('viewer.clipBox.workspaceTitle', {}, 'Clip Box')}</span><span style="flex:1;font-size:11px;color:var(--text2);">${name}</span><button class="icon-btn del" title="Delete">✕</button>`;
         card.querySelector('button').addEventListener('click', () => { viewer.scene.removeVolume(vol); refreshVolumes(); });
         clipList.appendChild(card);
       });
@@ -12047,7 +12730,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
         const pending = document.createElement('div');
         pending.style.cssText = 'display:flex;align-items:center;gap:7px;padding:6px 8px;border:1px solid rgba(239,68,68,.35);border-radius:4px;margin-bottom:4px;background:rgba(72,16,22,.28);';
         pending.setAttribute('data-i18n-auto-root', '');
-        pending.innerHTML = `<span>🔴</span><span style="flex:1;font-size:11px;color:var(--text2);">${escapeHtml(tr('viewer.deleteRegion.pendingRegionLabel', { name: getDeleteRegionDisplayName(region) }, `Pending Delete · ${getDeleteRegionDisplayName(region)}`))}</span><button class="icon-btn del" title="${escapeHtml(tr('viewer.deleteRegion.removePending', {}, 'Remove pending region'))}">✕</button>`;
+        pending.innerHTML = `<span class="delete-region-state-token">${tr('viewer.deleteRegion.statePending', {}, 'Previewing')}</span><span style="flex:1;font-size:11px;color:var(--text2);">${escapeHtml(tr('viewer.deleteRegion.pendingRegionLabel', { name: getDeleteRegionDisplayName(region) }, `Pending Delete · ${getDeleteRegionDisplayName(region)}`))}</span><button class="icon-btn del" title="${escapeHtml(tr('viewer.deleteRegion.removePending', {}, 'Remove pending region'))}">✕</button>`;
         pending.querySelector('button').addEventListener('click', () => removeDeleteRegion(region.id));
         clipList.appendChild(pending);
       });
@@ -12055,7 +12738,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
       deleteSelectionState.regions.forEach(region => {
         const card = document.createElement('div');
         card.style.cssText = 'display:flex;align-items:center;gap:7px;padding:6px 8px;border:1px solid rgba(248,113,113,.2);border-radius:4px;margin-bottom:4px;background:rgba(60,19,24,.18);';
-        card.innerHTML = `<span>🧹</span><span style="flex:1;font-size:11px;color:var(--text2);">${escapeHtml(getDeleteRegionDisplayName(region))}</span><button class="icon-btn del" title="${escapeHtml(tr('viewer.deleteRegion.removeApplied', {}, 'Remove delete region'))}">✕</button>`;
+        card.innerHTML = `<span class="delete-region-state-token">${tr('viewer.deleteRegion.stateApplied', {}, 'Applied')}</span><span style="flex:1;font-size:11px;color:var(--text2);">${escapeHtml(getDeleteRegionDisplayName(region))}</span><button class="icon-btn del" title="${escapeHtml(tr('viewer.deleteRegion.removeApplied', {}, 'Remove delete region'))}">✕</button>`;
         card.querySelector('button').addEventListener('click', () => removeDeleteRegion(region.id));
         clipList.appendChild(card);
       });
@@ -12065,16 +12748,16 @@ window.__CLOUDSTUDIO_THREE = THREE;
     // Tool management
     // ─────────────────────────────────────────────
     const TOOL_HINTS = {
-      point: '📍 Point — click to place, double-click to finish | ESC to cancel',
-      distance: '📏 Distance — click to add nodes, double-click to finish | ESC to cancel',
+      point: 'Point — click to place, double-click to finish | ESC to cancel',
+      distance: 'Distance — click to add nodes, double-click to finish | ESC to cancel',
       height: '↕ Height — click two points | ESC to cancel',
       area: '⬡ Area — click multiple points, double-click to close | ESC to cancel',
-      angle: '📐 Angle — click three points | ESC to cancel',
-      volume: '⛏ Volume — click to outline boundary, double-click to confirm, then set reference elevation to compute cut/fill',
-      clipbox: '⬜ Clip Box — drag to draw in the scene | ESC to cancel',
-      'polygon-delete': '🧹 Polygon Delete — click to add nodes, double-click to preview highlighted regions on the visible point cloud, add more regions if needed, then delete them together | ESC cancel',
-      profile: '✂ Profile line - click start, click end to finish | ESC cancel',
-      capture: '🎯 Point Capture — click the point cloud to capture a point | ESC stop',
+      angle: 'Angle — click three points | ESC to cancel',
+      volume: 'Volume — click to outline boundary, double-click to confirm, then set reference elevation to compute cut/fill',
+      clipbox: 'Clip Box — drag to draw in the scene | ESC to cancel',
+      'polygon-delete': 'Polygon Delete — click to add nodes, double-click to preview highlighted regions on the visible point cloud, add more regions if needed, then delete them together | ESC cancel',
+      profile: 'Profile line - click start, click end to finish | ESC cancel',
+      capture: 'Point Capture — click the point cloud to capture a point | ESC stop',
     };
 
     function getToolHintText(name) {
@@ -12097,6 +12780,12 @@ window.__CLOUDSTUDIO_THREE = THREE;
         if (btn) btn.classList.add('active');
         hint.textContent = getToolHintText(name);
         hint.classList.add('show');
+        showOperationStatus(hint.textContent, 'info', { autoHide: false });
+        if (name === 'volume') document.getElementById('volume-workflow-details')?.setAttribute('open', '');
+        if (name === 'clipbox' || name === 'polygon-delete' || name === 'profile') {
+          document.getElementById('clip-workflow-details')?.setAttribute('open', '');
+        }
+        if (name === 'capture') setActiveRightPane('capture', { expand: true });
       } else {
         hint.classList.remove('show');
       }
@@ -19739,12 +20428,12 @@ window.__CLOUDSTUDIO_THREE = THREE;
       if (captureActive) {
         badge.classList.add('active');
         statusTx.textContent = tr('viewer.capture.statusActive', {}, 'Capturing...');
-        toggleBtn.textContent = '⏹ ' + tr('viewer.capture.stop', {}, 'Stop Capture');
+        toggleBtn.textContent = tr('viewer.capture.stop', {}, 'Stop Capture');
         toggleBtn.classList.add('active');
       } else {
         badge.classList.remove('active');
         statusTx.textContent = tr('viewer.capture.statusIdle', {}, 'Idle');
-        toggleBtn.innerHTML = '🎯 <span>' + tr('viewer.capture.start', {}, 'Start Capture') + '</span>';
+        toggleBtn.textContent = tr('viewer.capture.start', {}, 'Start Capture');
         toggleBtn.classList.remove('active');
       }
       const hasPoints = capturePoints.length > 0;
@@ -20416,7 +21105,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
         const hdr = document.createElement('div');
         hdr.className = 'dxf-file-header';
           hdr.innerHTML = `
-          <span class="dxf-file-icon">📐</span>
+          <span class="dxf-file-icon">DXF</span>
           <span class="dxf-file-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
           <span class="dxf-stats-bar">${file.totalEntities} ${trText('entities')}</span>
           <button class="dxf-file-remove" title="${trText('Remove this file')}" onclick="dxfRemoveFile(${file.id})">✕</button>`;

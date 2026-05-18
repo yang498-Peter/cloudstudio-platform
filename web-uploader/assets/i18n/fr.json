@@ -61,7 +61,8 @@
     "UPLOAD_PASSWORD_NOT_CONFIGURED": "Le mot de passe d’import n’est pas configuré sur le serveur.",
     "WRONG_PASSWORD": "Mot de passe incorrect.",
     "BAD_REQUEST": "Requête invalide.",
-    "INTERNAL_ERROR": "Erreur serveur inattendue."
+    "INTERNAL_ERROR": "Erreur serveur inattendue.",
+    "DATASET_NAME_CONFLICT": "Un jeu de données portant ce nom existe déjà. Choisissez un nouveau nom pour protéger les données existantes."
   },
   "units": {
     "linear": {
@@ -126,7 +127,8 @@
       "step3Text": "Ouvrez la scène finale, validez son état et transmettez un chemin de visualisation partageable.",
       "meta1": "Format source",
       "meta2": "Prêt navigateur",
-      "meta3": "Livraison projet"
+      "meta3": "Livraison projet",
+      "uploadPublish": "Importer et publier"
     },
     "stats": {
       "maxPoints": "Taille max. de nuage",
@@ -211,22 +213,25 @@
       "potreeSubmitBtn": "Importer nuage pré-converti",
       "potreeZipNamePlaceholder": "ex. my_pointcloud",
       "tabGaussian": "3DGS / Gaussian",
-      "gaussianHint": "Importez un modèle 3D Gaussian PLY. CloudStudio génère une scène ouvrable dans le navigateur et un lien partageable.",
-      "gaussianPublishTitle": "Publication 3D Gaussian",
-      "gaussianPublishHint": "Choisissez le fichier PLY d'origine. Le système prépare une scène web et génère un lien de visualisation partageable.",
+      "gaussianHint": "Importez un modèle PLY 3D Gaussian. CloudStudio le prépare pour le navigateur avec un lien partageable.",
+      "gaussianPublishTitle": "Préparer la scène 3D Gaussian",
+      "gaussianPublishHint": "Choisissez le fichier PLY d’origine. CloudStudio conserve la source, prépare la vue navigateur et affiche l’état d’optimisation.",
       "gaussianFileLabel": "Fichier Gaussian PLY",
       "gaussianNameLabel": "Nom de la scène (optionnel, laissez vide pour utiliser le nom du fichier)",
       "gaussianNamePlaceholder": "ex. factory_gaussian_scene",
-      "gaussianSubmitBtn": "Importer et ouvrir",
-      "gaussianReadyTitle": "3DGS prêt pour la navigation : {{cloudName}}",
-      "gaussianReadyTitleShort": "3DGS prêt pour la navigation",
-      "openGaussianViewer": "Ouvrir la visionneuse"
+      "gaussianSubmitBtn": "Importer et préparer 3DGS",
+      "gaussianReadyTitle": "3DGS prêt à consulter : {{cloudName}}",
+      "gaussianReadyTitleShort": "3DGS prêt à consulter",
+      "openGaussianViewer": "Ouvrir la visionneuse",
+      "summary": "Choisissez LAS/LAZ, ZIP scanner, octree pré-converti ou 3DGS, puis publiez une scène prête pour le navigateur.",
+      "expandPanel": "Démarrer l’import",
+      "collapsePanel": "Masquer le formulaire"
     },
     "clouds": {
-      "title": "Nuages convertis",
+      "title": "Scènes publiées",
       "refresh": "Actualiser",
-      "emptyTitle": "Aucun nuage converti",
-      "emptyHint": "Importez un fichier LAS/LAZ pour commencer",
+      "emptyTitle": "Aucune scène publiée",
+      "emptyHint": "Importez et publiez une scène pour commencer",
       "pointsKnown": "Points {{count}}",
       "pointsUnknown": "Nombre de points inconnu",
       "openViewer": "Ouvrir la visionneuse",
@@ -242,8 +247,17 @@
       "sourceSize": "Source",
       "publishSize": "Web",
       "publishStatus": "État : {{status}}",
-      "directBrowseReady": "Navigation directe prête",
-      "sogStatus": "SOG : {{status}}"
+      "directBrowseReady": "Prêt à consulter",
+      "sogStatus": "SOG : {{status}}",
+      "openScene": "Ouvrir la scène",
+      "copyLink": "Copier le lien",
+      "copyLinkTitle": "Copier le lien de partage",
+      "copiedLink": "Lien de partage copié",
+      "copyFailed": "Impossible de copier le lien",
+      "shareReady": "Lien de partage prêt",
+      "gaussianProcessing": "Traitement",
+      "gaussianOptimizing": "Optimisation",
+      "gaussianOptimized": "Optimisé pour la consultation"
     },
     "adv": {
       "label": "Pourquoi CloudStudio",
@@ -271,7 +285,7 @@
       "uploadSuccess": "Conversion terminée : {{cloudName}}",
       "projectUploadSuccess": "Projet importé : {{projectName}}{{features}}",
       "preconvertedSuccess": "Nuage pré-converti ajouté : {{cloudName}}",
-      "gaussianSuccess": "3DGS prêt pour la navigation : {{cloudName}}"
+      "gaussianSuccess": "3DGS prêt à consulter : {{cloudName}}"
     },
     "toast": {
       "loadFailed": "Échec du chargement : {{message}}",
@@ -298,10 +312,10 @@
       "uploading": "Téléversement...",
       "converting": "Conversion en cours, veuillez patienter...",
       "extracting": "Extraction et conversion en cours...",
-      "gaussianPublishing": "Préparation de la scène 3D Gaussian...",
+      "gaussianPublishing": "Traitement de la scène 3D Gaussian...",
       "convertingDetail": "Téléversement terminé. Exécution de PotreeConverter...",
       "extractingDetail": "Téléversement terminé. Extraction du ZIP et exécution de PotreeConverter...",
-      "gaussianPublishingDetail": "Import terminé. Publication du lien 3D Gaussian prêt pour le navigateur...",
+      "gaussianPublishingDetail": "Import terminé. Préparation et optimisation de la vue navigateur...",
       "done": "Terminé",
       "failed": "Échec",
       "networkError": "Erreur réseau",
@@ -675,7 +689,8 @@
       "loading": "Chargement...",
       "minimapPlaceholder": "Des informations géographiques sont nécessaires pour afficher la carte",
       "minimapPlaceholderHint": "Chargez un projet scanner contenant geo_info.csv",
-      "crsBrowserSupportNote": "Ce flux de coordonnées prend en charge les coordonnées locales, WGS84, Web Mercator, UTM/UPS et la recherche hors ligne de codes d'autorité pour les définitions CRS courantes. Les fichiers paramètres peuvent être importés en `.prj / .wkt / .txt / .json / .csv`. Les ressources de grilles peuvent être prises depuis `.gsb / .gtx / .tif / .tiff`, tandis que `.ggf / .grd` peut nécessiter une conversion vers une grille compatible PROJ. Les grilles horizontales peuvent participer à l'affichage interactif des coordonnées quand la chaîne de transformation courante les autorise; les grilles géoïde verticale et plus générales sont appliquées via la chaîne native PROJ/pyproj d'exportation."
+      "crsBrowserSupportNote": "Ce flux de coordonnées prend en charge les coordonnées locales, WGS84, Web Mercator, UTM/UPS et la recherche hors ligne de codes d'autorité pour les définitions CRS courantes. Les fichiers paramètres peuvent être importés en `.prj / .wkt / .txt / .json / .csv`. Les ressources de grilles peuvent être prises depuis `.gsb / .gtx / .tif / .tiff`, tandis que `.ggf / .grd` peut nécessiter une conversion vers une grille compatible PROJ. Les grilles horizontales peuvent participer à l'affichage interactif des coordonnées quand la chaîne de transformation courante les autorise; les grilles géoïde verticale et plus générales sont appliquées via la chaîne native PROJ/pyproj d'exportation.",
+      "trajectoryTitle": "Trajectoire"
     },
     "open": {
       "loading": "Chargement...",
@@ -835,7 +850,9 @@
       "intensityTitle": "Coloration par intensité",
       "classificationLabel": "Classe",
       "classificationTitle": "Coloration par classification",
-      "toggleEdl": "Activer/désactiver l’éclairage EDL"
+      "toggleEdl": "Activer/désactiver l’éclairage EDL",
+      "moreTitle": "Plus d’outils",
+      "moreLabel": "Plus"
     },
     "menu": {
       "file": "Fichier",
@@ -1088,10 +1105,16 @@
         "metaEmpty": "Aucune tâche de volume",
         "noteActive": "Double-cliquez pour confirmer la limite. L’espace actif conserve ensemble méthode et résultats.",
         "noteEmpty": "Cliquez sur « Nouveau » pour démarrer une mesure guidée du volume."
-      }
+      },
+      "pickHeight": "Choisir dans le nuage"
     },
     "scene": {
-      "mobileScene": "☰ Scène"
+      "mobileScene": "Scène",
+      "toggleCollapse": "Masquer le panneau de scène",
+      "toggleExpand": "Afficher le panneau de scène",
+      "pointCloudLayers": "Couches de nuage de points",
+      "measurementResults": "Résultats de mesure",
+      "clippingVolumes": "Volumes de découpe"
     },
     "disclaimer": {
       "statusText": "Version de test · vérifiez les résultats indépendamment",
@@ -1126,6 +1149,46 @@
       "altitude": "Altitude",
       "recommendedProjection": "Projection recommandée",
       "extent": "Emprise"
+    },
+    "status": {
+      "ready": "Prêt",
+      "dismiss": "Fermer l’état",
+      "geoLabel": "Géo"
+    },
+    "orientation": {
+      "label": "Orientation XYZ"
+    },
+    "loadError": {
+      "kicker": "Problème de chargement",
+      "title": "Impossible de charger ce nuage de points",
+      "titleWithName": "Impossible de charger {{name}}",
+      "datasetFallback": "ce jeu de données",
+      "copy": "CloudStudio ne peut pas lire les métadonnées nécessaires au démarrage du viewer.",
+      "copyWithDetail": "CloudStudio ne peut pas lire les métadonnées nécessaires au démarrage du viewer. Détail : {{detail}}",
+      "reasonMissing": "Le lien du jeu de données est peut-être rompu ou metadata.json est absent.",
+      "reasonMoved": "Le jeu de données a peut-être été déplacé, supprimé ou pas entièrement converti.",
+      "reasonNetwork": "Le réseau ou les autorisations peuvent bloquer l’accès.",
+      "retry": "Réessayer",
+      "openAnother": "Ouvrir un autre jeu de données",
+      "back": "Retour",
+      "status": "Échec du chargement du nuage de points",
+      "toast": "Impossible de charger le nuage de points. Vérifiez le lien ou les métadonnées.",
+      "unknownDetail": "La requête de métadonnées a échoué.",
+      "badJson": "metadata.json n’est pas un JSON valide.",
+      "httpFailed": "La requête de métadonnées a échoué.",
+      "badShape": "metadata.json a un format inattendu.",
+      "missingFields": "metadata.json ne contient pas les champs requis par Potree."
+    },
+    "advanced": {
+      "volumeTitle": "Analyse de volume",
+      "volumeHint": "À utiliser pour un flux déblai/remblai guidé avec limite confirmée et altitude de référence.",
+      "clipTitle": "Outils de découpe et de profil",
+      "clipHint": "Commencez par une boîte de découpe ou un profil, puis vérifiez les objets de découpe enregistrés.",
+      "dxfTitle": "Superposition et dessin DXF",
+      "dxfHint": "Importez d’abord les calques CAD ; les outils de dessin restent groupés sous les fichiers chargés."
+    },
+    "measure": {
+      "clearAll": "Tout effacer"
     }
   },
   "phrases": {

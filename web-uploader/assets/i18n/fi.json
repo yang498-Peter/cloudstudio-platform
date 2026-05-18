@@ -61,7 +61,8 @@
     "UPLOAD_PASSWORD_NOT_CONFIGURED": "Latauksen salasanaa ei ole määritetty palvelimelle.",
     "WRONG_PASSWORD": "Väärä salasana.",
     "BAD_REQUEST": "Virheelliset pyyntöparametrit.",
-    "INTERNAL_ERROR": "Palvelimella tapahtui virhe."
+    "INTERNAL_ERROR": "Palvelimella tapahtui virhe.",
+    "DATASET_NAME_CONFLICT": "Tällä nimellä on jo aineisto. Valitse uusi nimi, jotta nykyiset tiedot eivät vaarannu."
   },
   "units": {
     "linear": {
@@ -126,7 +127,8 @@
       "step3Text": "Avaa lopullinen scena, varmista tila ja toimita jaettava katselupolku.",
       "meta1": "Latausmuoto",
       "meta2": "Selainvalmis",
-      "meta3": "Projektitoimitus"
+      "meta3": "Projektitoimitus",
+      "uploadPublish": "Lähetä ja julkaise"
     },
     "stats": {
       "maxPoints": "Pisteitä per näkymä",
@@ -195,7 +197,7 @@
         "selectLas": "Valitse LAS/LAZ-tiedosto",
         "selectZip": "Valitse ZIP-tiedosto",
         "passwordRequired": "Anna lähetyssalasana",
-        "parseFailed": "✗ Vastauksen lukeminen epäonnistui: {{message}}",
+        "parseFailed": "Vastauksen lukeminen epäonnistui: {{message}}",
         "convertUnknown": "Muunnos epäonnistui (ei lisätietoja)",
         "selectPotreeZip": "Valitse ZIP-tiedosto",
         "selectGaussian": "Valitse Gaussian-tiedosto"
@@ -211,22 +213,25 @@
       "potreeSubmitBtn": "Lähetä esimuunnettu pilvi",
       "potreeZipNamePlaceholder": "esim. my_pointcloud",
       "tabGaussian": "3D Gaussian -näkymä",
-      "gaussianHint": "Lähetä 3D Gaussian PLY -malli — CloudStudio julkaisee selainvalmiin näkymän ja palauttaa jaettavan linkin.",
-      "gaussianPublishTitle": "3D Gaussian -julkaisu",
-      "gaussianPublishHint": "Valitse alkuperäinen PLY-tiedosto. CloudStudio valmistelee optimoidun näkymän ja palauttaa jaettavan selainlinkin.",
+      "gaussianHint": "Lähetä 3D Gaussian PLY -malli. CloudStudio valmistelee selainvalmiin näkymän ja jaettavan linkin.",
+      "gaussianPublishTitle": "Valmistele 3D Gaussian -näkymä",
+      "gaussianPublishHint": "Valitse alkuperäinen PLY-tiedosto. CloudStudio tallentaa lähteen, valmistelee selainkatselun ja näyttää optimoinnin tilan.",
       "gaussianFileLabel": "Gaussian PLY -tiedosto",
       "gaussianNameLabel": "Näkymän nimi (valinnainen, käyttää tiedoston nimeä jos tyhjä)",
       "gaussianNamePlaceholder": "esim. factory_gaussian_scene",
-      "gaussianSubmitBtn": "Lähetä ja avaa katselu",
-      "gaussianReadyTitle": "3DGS valmis selaimeen: {{cloudName}}",
-      "gaussianReadyTitleShort": "3DGS valmis selaimeen",
-      "openGaussianViewer": "Avaa katselu"
+      "gaussianSubmitBtn": "Lähetä ja valmistele 3DGS",
+      "gaussianReadyTitle": "3DGS valmis katseluun: {{cloudName}}",
+      "gaussianReadyTitleShort": "3DGS valmis katseluun",
+      "openGaussianViewer": "Avaa katselu",
+      "summary": "Valitse LAS/LAZ, skanneri-ZIP, esimuunnettu octree tai 3DGS ja julkaise selainvalmis näkymä.",
+      "expandPanel": "Aloita lähetys",
+      "collapsePanel": "Piilota lähetyslomake"
     },
     "clouds": {
-      "title": "Julkaistut aineistot",
+      "title": "Julkaistut näkymät",
       "refresh": "Päivitä",
       "emptyTitle": "Yhtään näkymää ei ole vielä julkaistu",
-      "emptyHint": "Aloita lähettämällä LAS/LAZ-tiedosto",
+      "emptyHint": "Aloita lähettämällä ja julkaisemalla näkymä",
       "pointsKnown": "{{count}} pist.",
       "pointsUnknown": "Pistemäärä tuntematon",
       "openViewer": "Avaa katselu",
@@ -242,8 +247,17 @@
       "sourceSize": "Lähde",
       "publishSize": "Verkkopaketti",
       "publishStatus": "Tila: {{status}}",
-      "directBrowseReady": "Suora selaus valmis",
-      "sogStatus": "SOG: {{status}}"
+      "directBrowseReady": "Valmis katseluun",
+      "sogStatus": "SOG: {{status}}",
+      "openScene": "Avaa näkymä",
+      "copyLink": "Kopioi linkki",
+      "copyLinkTitle": "Kopioi jakolinkki",
+      "copiedLink": "Jakolinkki kopioitu",
+      "copyFailed": "Linkkiä ei voitu kopioida",
+      "shareReady": "Jakolinkki valmis",
+      "gaussianProcessing": "Käsitellään",
+      "gaussianOptimizing": "Optimoidaan",
+      "gaussianOptimized": "Optimoitu katseluun"
     },
     "adv": {
       "label": "Miksi CloudStudio",
@@ -269,9 +283,9 @@
       "waitingUpload": "Odotetaan latausta…",
       "uploading": "Lähetetään ja muunnetaan. Suuret tiedostot voivat kestää muutaman minuutin…",
       "uploadSuccess": "Muunnos valmis: {{cloudName}}",
-      "projectUploadSuccess": "✓ Projekti lähetetty: {{projectName}}{{features}}",
-      "preconvertedSuccess": "✓ Esimuunnettu pilvi lisätty: {{cloudName}}",
-      "gaussianSuccess": "3DGS valmis selaimeen: {{cloudName}}"
+      "projectUploadSuccess": "Projekti lähetetty: {{projectName}}{{features}}",
+      "preconvertedSuccess": "Esimuunnettu pilvi lisätty: {{cloudName}}",
+      "gaussianSuccess": "3DGS valmis katseluun: {{cloudName}}"
     },
     "toast": {
       "loadFailed": "Lataus epäonnistui: {{message}}",
@@ -298,10 +312,10 @@
       "uploading": "Lähetetään…",
       "converting": "Muunnetaan, odota…",
       "extracting": "Puretaan ja valmistellaan…",
-      "gaussianPublishing": "Valmistellaan 3D Gaussian -näkymää…",
+      "gaussianPublishing": "Käsitellään 3D Gaussian -näkymää…",
       "convertingDetail": "Lähetys valmis. Valmistellaan suoratoistovalmista näkymää…",
       "extractingDetail": "Lähetys valmis. Puretaan arkisto ja valmistellaan näkymä…",
-      "gaussianPublishingDetail": "Lähetys valmis. Julkaistaan selainvalmiin 3D Gaussian -linkin…",
+      "gaussianPublishingDetail": "Lähetys valmis. Selainkatselua valmistellaan ja optimoidaan…",
       "done": "Valmis",
       "failed": "Epäonnistui",
       "networkError": "Verkkovirhe",
@@ -675,7 +689,8 @@
       "loading": "Ladataan...",
       "minimapPlaceholder": "Kartan näyttämiseen tarvitaan maantieteellisiä tietoja",
       "minimapPlaceholderHint": "Lataa skanneriprojekti, joka sisältää geo_info.csv",
-      "crsBrowserSupportNote": "Tämä koordinaattityönkulku tukee paikallisia koordinaatteja, WGS84, Web Mercator, UTM/UPS ja offline authority-code haun käyttöä yleisille CRS-määritelmiä varten. Parametrin tiedostot voidaan tuoda muodossa `.prj / .wkt / .txt / .json / .csv`. Grid-resursseja voi liittää `.gsb / .gtx / .tif / .tiff`:stä, kun taas `.ggf / .grd` saattaa edellyttää muuntamista PROJ-yhteensopivaksi ruudukoksi ennen käyttöä. Vaakasuorat ruudukot voivat osallistua interaktiiviseen koordinaatinäyttöön kun nykyinen muunnosketju tukee niitä; pystysuorat geoidit ja yleisempiä ruudukoita käytetään pääasiassa alkuperäisen PROJ/pyproj-muunnos- ja vientiputken kautta."
+      "crsBrowserSupportNote": "Tämä koordinaattityönkulku tukee paikallisia koordinaatteja, WGS84, Web Mercator, UTM/UPS ja offline authority-code haun käyttöä yleisille CRS-määritelmiä varten. Parametrin tiedostot voidaan tuoda muodossa `.prj / .wkt / .txt / .json / .csv`. Grid-resursseja voi liittää `.gsb / .gtx / .tif / .tiff`:stä, kun taas `.ggf / .grd` saattaa edellyttää muuntamista PROJ-yhteensopivaksi ruudukoksi ennen käyttöä. Vaakasuorat ruudukot voivat osallistua interaktiiviseen koordinaatinäyttöön kun nykyinen muunnosketju tukee niitä; pystysuorat geoidit ja yleisempiä ruudukoita käytetään pääasiassa alkuperäisen PROJ/pyproj-muunnos- ja vientiputken kautta.",
+      "trajectoryTitle": "Reitti"
     },
     "open": {
       "loading": "Ladataan...",
@@ -834,7 +849,9 @@
       "intensityLabel": "Intensiteetti",
       "intensityTitle": "Intensiteettiväritys",
       "classificationLabel": "Luokitus",
-      "classificationTitle": "Luokitusväritys"
+      "classificationTitle": "Luokitusväritys",
+      "moreTitle": "Lisää työkaluja",
+      "moreLabel": "Lisää"
     },
     "menu": {
       "file": "Tiedosto",
@@ -1087,10 +1104,16 @@
         "metaEmpty": "Ei tilavuustöitä",
         "noteActive": "Vahvista raja kaksoisnapsautuksella. Aktiivinen työtila pitää menetelmän ja tulokset yhdessä.",
         "noteEmpty": "Aloita ohjattu tilavuusmittaus napsauttamalla \"Uusi\"."
-      }
+      },
+      "pickHeight": "Poimi pistepilvestä"
     },
     "scene": {
-      "mobileScene": "☰ Näkymä"
+      "mobileScene": "Näkymä",
+      "toggleCollapse": "Piilota näkymäpaneeli",
+      "toggleExpand": "Näytä näkymäpaneeli",
+      "pointCloudLayers": "Pistepilvitasot",
+      "measurementResults": "Mittaustulokset",
+      "clippingVolumes": "Leikkaustilavuudet"
     },
     "disclaimer": {
       "statusText": "Testiversio · tarkista tulokset itsenäisesti",
@@ -1125,6 +1148,46 @@
       "altitude": "Korkeus",
       "recommendedProjection": "Suositeltu projektio",
       "extent": "Ulottuvuus"
+    },
+    "status": {
+      "ready": "Valmis",
+      "dismiss": "Sulje tila",
+      "geoLabel": "Geo"
+    },
+    "orientation": {
+      "label": "XYZ-suunta"
+    },
+    "loadError": {
+      "kicker": "Latausongelma",
+      "title": "Tätä pistepilveä ei voi ladata",
+      "titleWithName": "Kohdetta {{name}} ei voi ladata",
+      "datasetFallback": "tämä aineisto",
+      "copy": "CloudStudio ei voinut lukea katselimen käynnistämiseen tarvittavia pistepilven metatietoja.",
+      "copyWithDetail": "CloudStudio ei voinut lukea katselimen käynnistämiseen tarvittavia pistepilven metatietoja. Tiedot: {{detail}}",
+      "reasonMissing": "Aineiston linkki voi olla rikki tai metadata.json puuttuu.",
+      "reasonMoved": "Aineisto on voitu siirtää, poistaa tai sitä ei ole muunnettu loppuun.",
+      "reasonNetwork": "Verkko- tai käyttöoikeusasetukset voivat estää pääsyn.",
+      "retry": "Yritä uudelleen",
+      "openAnother": "Avaa toinen aineisto",
+      "back": "Takaisin",
+      "status": "Pistepilven lataus epäonnistui",
+      "toast": "Pistepilveä ei voitu ladata. Tarkista linkki tai metatiedot.",
+      "unknownDetail": "Metatietopyyntö epäonnistui.",
+      "badJson": "metadata.json ei ole kelvollista JSONia.",
+      "httpFailed": "Metatietopyyntö epäonnistui.",
+      "badShape": "metadata.json on odottamattomassa muodossa.",
+      "missingFields": "metadata.jsonista puuttuvat Potreen tarvitsemat pistepilvikentät."
+    },
+    "advanced": {
+      "volumeTitle": "Tilavuusanalyysi",
+      "volumeHint": "Käytä ohjattuun leikkaus/täyttö-työnkulkuun vahvistetulla rajalla ja viitekorkeudella.",
+      "clipTitle": "Leikkaus- ja profiilityökalut",
+      "clipHint": "Aloita leikkauslaatikolla tai profiililla ja tarkista tallennetut leikkausobjektit.",
+      "dxfTitle": "DXF-peitto ja piirto",
+      "dxfHint": "Tuo CAD-peittotasot ensin; piirtotyökalut ryhmitellään ladattujen tiedostojen alle."
+    },
+    "measure": {
+      "clearAll": "Tyhjennä kaikki"
     }
   },
   "phrases": {

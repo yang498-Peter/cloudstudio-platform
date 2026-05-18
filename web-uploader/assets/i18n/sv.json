@@ -61,7 +61,8 @@
     "UPLOAD_PASSWORD_NOT_CONFIGURED": "Uppladdningslösenordet är inte konfigurerat på servern.",
     "WRONG_PASSWORD": "Fel lösenord.",
     "BAD_REQUEST": "Ogiltiga begärandeparametrar.",
-    "INTERNAL_ERROR": "Ett serverfel uppstod."
+    "INTERNAL_ERROR": "Ett serverfel uppstod.",
+    "DATASET_NAME_CONFLICT": "Det finns redan en datamängd med detta namn. Välj ett nytt namn för att skydda befintliga data."
   },
   "units": {
     "linear": {
@@ -126,7 +127,8 @@
       "step3Text": "Oppna den slutliga scenen, verifiera status och dela en visningslank.",
       "meta1": "Uppladdningsformat",
       "meta2": "Webblasarklar",
-      "meta3": "Projektleverans"
+      "meta3": "Projektleverans",
+      "uploadPublish": "Ladda upp och publicera"
     },
     "stats": {
       "maxPoints": "Punkter per scen",
@@ -195,7 +197,7 @@
         "selectLas": "Välj en LAS/LAZ-fil",
         "selectZip": "Välj en ZIP-fil",
         "passwordRequired": "Ange uppladdningslösenord",
-        "parseFailed": "✗ Det gick inte att läsa svaret: {{message}}",
+        "parseFailed": "Det gick inte att läsa svaret: {{message}}",
         "convertUnknown": "Konvertering misslyckades (inga detaljer)",
         "selectPotreeZip": "Välj en ZIP-fil",
         "selectGaussian": "Välj en Gaussian-fil"
@@ -211,22 +213,25 @@
       "potreeSubmitBtn": "Ladda upp förkonverterat moln",
       "potreeZipNamePlaceholder": "t.ex. my_pointcloud",
       "tabGaussian": "3D Gaussian-scen",
-      "gaussianHint": "Ladda upp en 3D Gaussian PLY-modell — CloudStudio publicerar en webbläsarklar scen och returnerar en delbar länk.",
-      "gaussianPublishTitle": "3D Gaussian-publicering",
-      "gaussianPublishHint": "Välj original-PLY-filen. CloudStudio förbereder en optimerad scen och returnerar en delbar webbläsarlänk.",
+      "gaussianHint": "Ladda upp en 3D Gaussian PLY-modell. CloudStudio förbereder en webbläsarklar scen och en delbar länk.",
+      "gaussianPublishTitle": "Förbered 3D Gaussian-scen",
+      "gaussianPublishHint": "Välj original-PLY-filen. CloudStudio sparar källan, förbereder webbläsarvyn och visar optimeringsstatus.",
       "gaussianFileLabel": "Gaussian PLY-fil",
       "gaussianNameLabel": "Scenens namn (valfritt, använder filnamn om tomt)",
       "gaussianNamePlaceholder": "t.ex. factory_gaussian_scene",
-      "gaussianSubmitBtn": "Ladda upp och öppna visaren",
-      "gaussianReadyTitle": "3DGS redo för visning: {{cloudName}}",
-      "gaussianReadyTitleShort": "3DGS redo för visning",
-      "openGaussianViewer": "Öppna visaren"
+      "gaussianSubmitBtn": "Ladda upp och förbered 3DGS",
+      "gaussianReadyTitle": "3DGS redo att visa: {{cloudName}}",
+      "gaussianReadyTitleShort": "3DGS redo att visa",
+      "openGaussianViewer": "Öppna visaren",
+      "summary": "Välj LAS/LAZ, skanner-ZIP, förkonverterad octree eller 3DGS och publicera en webbläsarklar scen.",
+      "expandPanel": "Starta uppladdning",
+      "collapsePanel": "Dölj uppladdningsformulär"
     },
     "clouds": {
       "title": "Publicerade scener",
       "refresh": "Uppdatera",
       "emptyTitle": "Inga scener publicerade ännu",
-      "emptyHint": "Ladda upp en LAS/LAZ-fil för att börja",
+      "emptyHint": "Ladda upp och publicera en scen för att börja",
       "pointsKnown": "{{count}} pkt",
       "pointsUnknown": "Okänt antal punkter",
       "openViewer": "Öppna visaren",
@@ -242,8 +247,17 @@
       "sourceSize": "Källa",
       "publishSize": "Webbpaket",
       "publishStatus": "Publikationsstatus: {{status}}",
-      "directBrowseReady": "Direktvisning klar",
-      "sogStatus": "SOG: {{status}}"
+      "directBrowseReady": "Redo att visa",
+      "sogStatus": "SOG: {{status}}",
+      "openScene": "Öppna scen",
+      "copyLink": "Kopiera länk",
+      "copyLinkTitle": "Kopiera delningslänk",
+      "copiedLink": "Delningslänk kopierad",
+      "copyFailed": "Kunde inte kopiera länken",
+      "shareReady": "Delningslänk klar",
+      "gaussianProcessing": "Bearbetas",
+      "gaussianOptimizing": "Optimeras",
+      "gaussianOptimized": "Optimerad för visning"
     },
     "adv": {
       "label": "Varför CloudStudio",
@@ -269,9 +283,9 @@
       "waitingUpload": "Väntar på uppladdning…",
       "uploading": "Laddar upp och konverterar. Stora filer kan ta några minuter…",
       "uploadSuccess": "Konvertering klar: {{cloudName}}",
-      "projectUploadSuccess": "✓ Projekt uppladdat: {{projectName}}{{features}}",
-      "preconvertedSuccess": "✓ Förkonverterat moln tillagt: {{cloudName}}",
-      "gaussianSuccess": "3DGS redo för visning: {{cloudName}}"
+      "projectUploadSuccess": "Projekt uppladdat: {{projectName}}{{features}}",
+      "preconvertedSuccess": "Förkonverterat moln tillagt: {{cloudName}}",
+      "gaussianSuccess": "3DGS redo att visa: {{cloudName}}"
     },
     "toast": {
       "loadFailed": "Laddning misslyckades: {{message}}",
@@ -298,10 +312,10 @@
       "uploading": "Laddar upp…",
       "converting": "Konverterar, vänta…",
       "extracting": "Packar upp och förbereder…",
-      "gaussianPublishing": "Förbereder 3D Gaussian-scen…",
+      "gaussianPublishing": "Bearbetar 3D Gaussian-scen…",
       "convertingDetail": "Uppladdning klar. Förbereder en strömningsklar scen…",
       "extractingDetail": "Uppladdning klar. Packar upp arkivet och förbereder scenen…",
-      "gaussianPublishingDetail": "Uppladdning klar. Publicerar webbläsarklar 3D Gaussian-länk…",
+      "gaussianPublishingDetail": "Uppladdning klar. Förbereder och optimerar webbläsarvyn…",
       "done": "Klart",
       "failed": "Misslyckades",
       "networkError": "Nätverksfel",
@@ -675,7 +689,8 @@
       "loading": "Laddar...",
       "minimapPlaceholder": "Geografisk information krävs för att visa kartan",
       "minimapPlaceholderHint": "Ladda ett skannerprojekt som innehåller geo_info.csv",
-      "crsBrowserSupportNote": "Detta koordinatarbetsflöde stöder lokala koordinater, WGS84, Web Mercator, UTM/UPS och offline-uppslagning av authority codes för vanliga CRS-definitioner. Parameterfiler kan importeras som `.prj / .wkt / .txt / .json / .csv`. Rutnätsresurser kan anslutas från `.gsb / .gtx / .tif / .tiff`, medan `.ggf / .grd` kan behöva konverteras till ett PROJ-kompatibelt rutnät innan de kan användas. Horisontella rutnät kan delta i den interaktiva koordinatavvisningen när den aktuella transformeringskedjan stöder dem; vertikala geoid- och höjdraster och mer generiska rutnät tillämpas främst via den inbyggda PROJ/pyproj-transformerings- och exportpipeline."
+      "crsBrowserSupportNote": "Detta koordinatarbetsflöde stöder lokala koordinater, WGS84, Web Mercator, UTM/UPS och offline-uppslagning av authority codes för vanliga CRS-definitioner. Parameterfiler kan importeras som `.prj / .wkt / .txt / .json / .csv`. Rutnätsresurser kan anslutas från `.gsb / .gtx / .tif / .tiff`, medan `.ggf / .grd` kan behöva konverteras till ett PROJ-kompatibelt rutnät innan de kan användas. Horisontella rutnät kan delta i den interaktiva koordinatavvisningen när den aktuella transformeringskedjan stöder dem; vertikala geoid- och höjdraster och mer generiska rutnät tillämpas främst via den inbyggda PROJ/pyproj-transformerings- och exportpipeline.",
+      "trajectoryTitle": "Bana"
     },
     "open": {
       "loading": "Laddar...",
@@ -834,7 +849,9 @@
       "intensityLabel": "Intensitet",
       "intensityTitle": "Intensitetsfärgning",
       "classificationLabel": "Klassificering",
-      "classificationTitle": "Klassificeringsfärgning"
+      "classificationTitle": "Klassificeringsfärgning",
+      "moreTitle": "Fler verktyg",
+      "moreLabel": "Mer"
     },
     "menu": {
       "file": "Arkiv",
@@ -1087,10 +1104,16 @@
         "metaEmpty": "Inga volymjobb ännu",
         "noteActive": "Dubbelklicka för att bekräfta gränsen. Den aktiva arbetsytan håller ihop metod och resultatsteg.",
         "noteEmpty": "Klicka på \"Ny\" för att starta en guidad volymmätning."
-      }
+      },
+      "pickHeight": "Välj från moln"
     },
     "scene": {
-      "mobileScene": "☰ Scen"
+      "mobileScene": "Scen",
+      "toggleCollapse": "Dölj scenpanelen",
+      "toggleExpand": "Visa scenpanelen",
+      "pointCloudLayers": "Punktmolnslager",
+      "measurementResults": "Mätresultat",
+      "clippingVolumes": "Klippvolymer"
     },
     "disclaimer": {
       "statusText": "Testversion · verifiera resultaten självständigt",
@@ -1125,6 +1148,46 @@
       "altitude": "Höjd",
       "recommendedProjection": "Rekommenderad projektion",
       "extent": "Utsträckning"
+    },
+    "status": {
+      "ready": "Klar",
+      "dismiss": "Stäng status",
+      "geoLabel": "Geo"
+    },
+    "orientation": {
+      "label": "XYZ-orientering"
+    },
+    "loadError": {
+      "kicker": "Laddningsproblem",
+      "title": "Det går inte att ladda detta punktmoln",
+      "titleWithName": "Det går inte att ladda {{name}}",
+      "datasetFallback": "denna datamängd",
+      "copy": "CloudStudio kunde inte läsa punktmolnets metadata som behövs för att starta visaren.",
+      "copyWithDetail": "CloudStudio kunde inte läsa punktmolnets metadata som behövs för att starta visaren. Detalj: {{detail}}",
+      "reasonMissing": "Datamängdens länk kan vara trasig eller metadata.json saknas.",
+      "reasonMoved": "Datamängden kan ha flyttats, tagits bort eller inte konverterats färdigt.",
+      "reasonNetwork": "Nätverk eller behörigheter kan blockera åtkomst.",
+      "retry": "Försök igen",
+      "openAnother": "Öppna annan data",
+      "back": "Tillbaka",
+      "status": "Punktmolnet kunde inte laddas",
+      "toast": "Punktmolnet kunde inte laddas. Kontrollera länken eller metadata.",
+      "unknownDetail": "Metadataförfrågan misslyckades.",
+      "badJson": "metadata.json är inte giltig JSON.",
+      "httpFailed": "Metadataförfrågan misslyckades.",
+      "badShape": "metadata.json har oväntat format.",
+      "missingFields": "metadata.json saknar de punktmolnsfält som Potree behöver."
+    },
+    "advanced": {
+      "volumeTitle": "Volymanalys",
+      "volumeHint": "Använd för ett guidat schakt/fyllnadsflöde med bekräftad gräns och referenshöjd.",
+      "clipTitle": "Klipp- och profilverktyg",
+      "clipHint": "Börja med en klippruta eller profil och granska sedan sparade klippobjekt.",
+      "dxfTitle": "DXF-överlägg och ritning",
+      "dxfHint": "Importera CAD-överlägg först; ritverktyg grupperas under de laddade filerna."
+    },
+    "measure": {
+      "clearAll": "Rensa alla"
     }
   },
   "phrases": {

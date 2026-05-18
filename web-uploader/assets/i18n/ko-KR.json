@@ -61,7 +61,8 @@
     "UPLOAD_PASSWORD_NOT_CONFIGURED": "업로드 비밀번호가 서버에 구성되어 있지 않습니다.",
     "WRONG_PASSWORD": "잘못된 비밀번호입니다.",
     "BAD_REQUEST": "잘못된 요청 매개변수입니다.",
-    "INTERNAL_ERROR": "서버 오류가 발생했습니다."
+    "INTERNAL_ERROR": "서버 오류가 발생했습니다.",
+    "DATASET_NAME_CONFLICT": "같은 이름의 데이터셋이 이미 있습니다. 기존 데이터를 보호하려면 새 이름을 선택하세요."
   },
   "units": {
     "linear": {
@@ -126,7 +127,8 @@
       "step3Text": "최종 장면을 열고 상태를 확인한 뒤 공유 가능한 보기 경로를 전달합니다.",
       "meta1": "업로드 형식",
       "meta2": "브라우저 준비",
-      "meta3": "프로젝트 전달"
+      "meta3": "프로젝트 전달",
+      "uploadPublish": "업로드 및 게시"
     },
     "stats": {
       "maxPoints": "장면당 포인트 수",
@@ -195,7 +197,7 @@
         "selectLas": "LAS/LAZ 파일을 선택하세요",
         "selectZip": "ZIP 파일을 선택하세요",
         "passwordRequired": "업로드 비밀번호를 입력하세요",
-        "parseFailed": "✗ 응답 파싱 실패: {{message}}",
+        "parseFailed": "응답 파싱 실패: {{message}}",
         "convertUnknown": "변환 실패 (자세한 정보 없음)",
         "selectPotreeZip": "ZIP 파일을 선택하세요",
         "selectGaussian": "Gaussian 파일을 선택하세요"
@@ -211,22 +213,25 @@
       "potreeSubmitBtn": "변환 완료 클라우드 업로드",
       "potreeZipNamePlaceholder": "예: my_pointcloud",
       "tabGaussian": "3D 가우시안 장면",
-      "gaussianHint": "3D 가우시안 PLY 모델을 업로드하세요 — CloudStudio가 브라우저에서 바로 열 수 있는 장면을 게시하고, 공유 가능한 링크를 반환합니다.",
-      "gaussianPublishTitle": "3D 가우시안 게시",
-      "gaussianPublishHint": "원본 PLY 파일을 선택하세요. CloudStudio가 최적화된 장면을 준비하여 공유 가능한 브라우저 링크를 반환합니다.",
+      "gaussianHint": "3D Gaussian PLY 모델을 업로드하면 CloudStudio가 브라우저용 장면과 공유 링크를 준비합니다.",
+      "gaussianPublishTitle": "3D Gaussian 장면 준비",
+      "gaussianPublishHint": "원본 PLY 파일을 선택하세요. CloudStudio가 원본을 저장하고 브라우저 보기를 준비하며 최적화 상태를 표시합니다.",
       "gaussianFileLabel": "가우시안 PLY 파일",
       "gaussianNameLabel": "장면 이름 (선택사항, 비워두면 파일 이름 사용)",
       "gaussianNamePlaceholder": "예: factory_gaussian_scene",
-      "gaussianSubmitBtn": "업로드 후 뷰어 열기",
-      "gaussianReadyTitle": "3DGS 바로 보기 준비됨: {{cloudName}}",
-      "gaussianReadyTitleShort": "3DGS 바로 보기 준비됨",
-      "openGaussianViewer": "뷰어 열기"
+      "gaussianSubmitBtn": "3DGS 업로드 및 준비",
+      "gaussianReadyTitle": "3DGS 보기 준비됨: {{cloudName}}",
+      "gaussianReadyTitleShort": "3DGS 보기 준비됨",
+      "openGaussianViewer": "뷰어 열기",
+      "summary": "LAS/LAZ, 스캐너 ZIP, 사전 변환 옥트리 또는 3DGS를 선택한 뒤 브라우저용 장면으로 게시하세요.",
+      "expandPanel": "업로드 시작",
+      "collapsePanel": "업로드 양식 숨기기"
     },
     "clouds": {
       "title": "게시된 장면",
       "refresh": "새로고침",
       "emptyTitle": "아직 게시된 장면이 없습니다",
-      "emptyHint": "LAS/LAZ 파일을 업로드하여 시작하세요",
+      "emptyHint": "장면을 업로드하고 게시하여 시작하세요",
       "pointsKnown": "{{count}} 점",
       "pointsUnknown": "점 개수 알 수 없음",
       "openViewer": "뷰어 열기",
@@ -242,8 +247,17 @@
       "sourceSize": "원본",
       "publishSize": "웹 패키지",
       "publishStatus": "상태: {{status}}",
-      "directBrowseReady": "바로 보기 준비됨",
-      "sogStatus": "SOG: {{status}}"
+      "directBrowseReady": "보기 준비됨",
+      "sogStatus": "SOG: {{status}}",
+      "openScene": "장면 열기",
+      "copyLink": "링크 복사",
+      "copyLinkTitle": "공유 링크 복사",
+      "copiedLink": "공유 링크가 복사되었습니다",
+      "copyFailed": "링크를 복사할 수 없습니다",
+      "shareReady": "공유 링크 준비됨",
+      "gaussianProcessing": "처리 중",
+      "gaussianOptimizing": "최적화 중",
+      "gaussianOptimized": "보기 최적화 완료"
     },
     "adv": {
       "label": "CloudStudio를 선택하는 이유",
@@ -269,9 +283,9 @@
       "waitingUpload": "업로드 대기 중…",
       "uploading": "업로드 및 변환 중. 큰 파일은 몇 분 걸릴 수 있습니다…",
       "uploadSuccess": "변환 완료: {{cloudName}}",
-      "projectUploadSuccess": "✓ 프로젝트 업로드됨: {{projectName}}{{features}}",
-      "preconvertedSuccess": "✓ 변환 완료 클라우드 추가됨: {{cloudName}}",
-      "gaussianSuccess": "3DGS 바로 보기 준비됨: {{cloudName}}"
+      "projectUploadSuccess": "프로젝트 업로드됨: {{projectName}}{{features}}",
+      "preconvertedSuccess": "변환 완료 클라우드 추가됨: {{cloudName}}",
+      "gaussianSuccess": "3DGS 보기 준비됨: {{cloudName}}"
     },
     "toast": {
       "loadFailed": "로드 실패: {{message}}",
@@ -298,10 +312,10 @@
       "uploading": "업로드 중…",
       "converting": "변환 중, 잠시만 기다려주세요…",
       "extracting": "압축 해제 및 준비 중…",
-      "gaussianPublishing": "3D 가우시안 장면 준비 중…",
+      "gaussianPublishing": "3D Gaussian 장면 처리 중…",
       "convertingDetail": "업로드 완료. 스트리밍 가능한 장면 준비 중…",
       "extractingDetail": "업로드 완료. 압축 해제 및 장면 준비 중…",
-      "gaussianPublishingDetail": "업로드 완료. 브라우저용 3D 가우시안 링크 게시 중…",
+      "gaussianPublishingDetail": "업로드 완료. 브라우저 보기를 준비하고 최적화 중…",
       "done": "완료",
       "failed": "실패",
       "networkError": "네트워크 오류",
@@ -676,7 +690,8 @@
       "loading": "로딩 중...",
       "minimapPlaceholder": "지도를 표시하려면 지리 정보가 필요합니다",
       "minimapPlaceholderHint": "geo_info.csv가 포함된 스캐너 프로젝트를 로드하세요",
-      "crsBrowserSupportNote": "이 좌표 워크플로우는 로컬 좌표, WGS84, Web Mercator, UTM/UPS, 그리고 일반적인 CRS 정의를 위한 오프라인 authority-code 조회를 지원합니다. 파라미터 파일은 `.prj / .wkt / .txt / .json / .csv` 형식으로 가져올 수 있습니다. 그리드 리소스는 `.gsb / .gtx / .tif / .tiff`에서 직접 첨부할 수 있으며, `.ggf / .grd`는 PROJ 호환 그리드로 변환된 경우에만 사용할 수 있습니다. 수평 그리드는 현재 변환 체인이 지원할 때 대화형 좌표 표시에서 참여할 수 있으며, 수직 지오이드 및 더 일반적인 그리드는 기본 PROJ/pyproj 변환 및 내보내기 파이프라인을 통해 적용됩니다."
+      "crsBrowserSupportNote": "이 좌표 워크플로우는 로컬 좌표, WGS84, Web Mercator, UTM/UPS, 그리고 일반적인 CRS 정의를 위한 오프라인 authority-code 조회를 지원합니다. 파라미터 파일은 `.prj / .wkt / .txt / .json / .csv` 형식으로 가져올 수 있습니다. 그리드 리소스는 `.gsb / .gtx / .tif / .tiff`에서 직접 첨부할 수 있으며, `.ggf / .grd`는 PROJ 호환 그리드로 변환된 경우에만 사용할 수 있습니다. 수평 그리드는 현재 변환 체인이 지원할 때 대화형 좌표 표시에서 참여할 수 있으며, 수직 지오이드 및 더 일반적인 그리드는 기본 PROJ/pyproj 변환 및 내보내기 파이프라인을 통해 적용됩니다.",
+      "trajectoryTitle": "궤적"
     },
     "open": {
       "loading": "로딩 중...",
@@ -836,7 +851,9 @@
       "intensityLabel": "강도",
       "intensityTitle": "강도 색상",
       "classificationLabel": "분류",
-      "classificationTitle": "분류 색상"
+      "classificationTitle": "분류 색상",
+      "moreTitle": "도구 더보기",
+      "moreLabel": "더보기"
     },
     "menu": {
       "file": "파일",
@@ -1089,10 +1106,16 @@
         "metaEmpty": "체적 작업 없음",
         "noteActive": "두 번 클릭해 경계를 확인하세요. 활성 작업공간은 방법과 결과 단계를 함께 유지합니다.",
         "noteEmpty": "\"새로 만들기\"를 클릭해 안내형 체적 측정을 시작하세요."
-      }
+      },
+      "pickHeight": "점군에서 선택"
     },
     "scene": {
-      "mobileScene": "☰ 장면"
+      "mobileScene": "장면",
+      "toggleCollapse": "장면 패널 숨기기",
+      "toggleExpand": "장면 패널 표시",
+      "pointCloudLayers": "포인트 클라우드 레이어",
+      "measurementResults": "측정 결과",
+      "clippingVolumes": "클리핑 볼륨"
     },
     "disclaimer": {
       "statusText": "테스트 버전 · 결과를 별도로 확인하세요",
@@ -1127,6 +1150,46 @@
       "altitude": "고도",
       "recommendedProjection": "권장 투영",
       "extent": "범위"
+    },
+    "status": {
+      "ready": "준비됨",
+      "dismiss": "상태 닫기",
+      "geoLabel": "좌표"
+    },
+    "orientation": {
+      "label": "XYZ 방향 표시"
+    },
+    "loadError": {
+      "kicker": "로드 문제",
+      "title": "이 포인트 클라우드를 로드할 수 없습니다",
+      "titleWithName": "{{name}}을(를) 로드할 수 없습니다",
+      "datasetFallback": "이 데이터셋",
+      "copy": "CloudStudio가 뷰어 시작에 필요한 포인트 클라우드 메타데이터를 읽지 못했습니다.",
+      "copyWithDetail": "CloudStudio가 뷰어 시작에 필요한 포인트 클라우드 메타데이터를 읽지 못했습니다. 상세: {{detail}}",
+      "reasonMissing": "데이터셋 링크가 깨졌거나 metadata.json 파일이 없을 수 있습니다.",
+      "reasonMoved": "데이터셋이 이동/삭제되었거나 변환이 완료되지 않았을 수 있습니다.",
+      "reasonNetwork": "네트워크 또는 권한 설정이 접근을 차단할 수 있습니다.",
+      "retry": "다시 시도",
+      "openAnother": "다른 데이터 열기",
+      "back": "뒤로",
+      "status": "포인트 클라우드 로드 실패",
+      "toast": "포인트 클라우드를 로드할 수 없습니다. 링크 또는 메타데이터를 확인하세요.",
+      "unknownDetail": "메타데이터 요청이 실패했습니다.",
+      "badJson": "metadata.json이 유효한 JSON이 아닙니다.",
+      "httpFailed": "메타데이터 요청이 실패했습니다.",
+      "badShape": "metadata.json 형식이 올바르지 않습니다.",
+      "missingFields": "metadata.json에 Potree에 필요한 포인트 클라우드 필드가 없습니다."
+    },
+    "advanced": {
+      "volumeTitle": "체적 분석",
+      "volumeHint": "확정된 경계와 기준 고도로 절성토 워크플로를 수행할 때 사용합니다.",
+      "clipTitle": "클리핑 및 프로파일 도구",
+      "clipHint": "클립 박스 또는 프로파일로 시작한 뒤 저장된 클리핑 객체를 확인합니다.",
+      "dxfTitle": "DXF 오버레이 및 드로잉",
+      "dxfHint": "CAD 오버레이를 먼저 가져오면 드로잉 도구가 로드된 파일 아래에 그룹화됩니다."
+    },
+    "measure": {
+      "clearAll": "모두 지우기"
     }
   },
   "phrases": {

@@ -61,7 +61,8 @@
     "UPLOAD_PASSWORD_NOT_CONFIGURED": "服务器未配置上传密码。",
     "WRONG_PASSWORD": "密码错误。",
     "BAD_REQUEST": "请求参数无效。",
-    "INTERNAL_ERROR": "服务器发生异常。"
+    "INTERNAL_ERROR": "服务器发生异常。",
+    "DATASET_NAME_CONFLICT": "已存在同名数据集。请使用新名称，以避免覆盖现有数据。"
   },
   "units": {
     "linear": {
@@ -126,7 +127,8 @@
       "step3Text": "打开最终场景、确认状态，并交付可分享的浏览路径。",
       "meta1": "上传格式",
       "meta2": "浏览器可开",
-      "meta3": "项目交付"
+      "meta3": "项目交付",
+      "uploadPublish": "上传并发布"
     },
     "stats": {
       "maxPoints": "单场景点数",
@@ -195,7 +197,7 @@
         "selectLas": "请选择 LAS/LAZ 文件",
         "selectZip": "请选择 ZIP 文件",
         "passwordRequired": "请输入上传密码",
-        "parseFailed": "✗ 解析响应失败: {{message}}",
+        "parseFailed": "解析响应失败：{{message}}",
         "convertUnknown": "转换失败（无详细信息）",
         "selectPotreeZip": "请选择 ZIP 文件",
         "selectGaussian": "请选择 Gaussian 文件"
@@ -211,22 +213,25 @@
       "potreeSubmitBtn": "上传已转换点云",
       "potreeZipNamePlaceholder": "例如：my_pointcloud",
       "tabGaussian": "3D 高斯场景",
-      "gaussianHint": "上传 3D 高斯 PLY 模型，CloudStudio 自动生成可在浏览器直接打开的场景，并返回可分享的链接。",
-      "gaussianPublishTitle": "3D 高斯浏览发布",
-      "gaussianPublishHint": "选择原始 PLY 上传。系统会自动准备网页浏览版场景，并生成可分享的浏览器链接。",
+      "gaussianHint": "上传 3D 高斯 PLY 模型，CloudStudio 会处理成浏览器可浏览场景并生成分享链接。",
+      "gaussianPublishTitle": "准备 3D 高斯场景",
+      "gaussianPublishHint": "选择原始 PLY 文件。系统会保存源文件、准备浏览器视图，并展示后续优化状态。",
       "gaussianFileLabel": "Gaussian PLY 文件",
       "gaussianNameLabel": "场景名称（可选，留空使用文件名）",
       "gaussianNamePlaceholder": "例如：factory_gaussian_scene",
-      "gaussianSubmitBtn": "上传并打开浏览",
-      "gaussianReadyTitle": "3DGS 可直接浏览：{{cloudName}}",
-      "gaussianReadyTitleShort": "3DGS 可直接浏览",
-      "openGaussianViewer": "打开浏览"
+      "gaussianSubmitBtn": "上传并准备 3DGS",
+      "gaussianReadyTitle": "3DGS 可浏览：{{cloudName}}",
+      "gaussianReadyTitleShort": "3DGS 可浏览",
+      "openGaussianViewer": "打开浏览",
+      "summary": "选择 LAS/LAZ、扫描项目 ZIP、已转换八叉树或 3DGS，然后发布为浏览器可打开的场景。",
+      "expandPanel": "开始上传",
+      "collapsePanel": "收起上传表单"
     },
     "clouds": {
       "title": "已发布场景",
       "refresh": "刷新",
       "emptyTitle": "尚未发布任何场景",
-      "emptyHint": "上传 LAS/LAZ 文件开始使用",
+      "emptyHint": "上传并发布一个场景即可开始",
       "pointsKnown": "{{count}} 点",
       "pointsUnknown": "点数未知",
       "openViewer": "打开查看器",
@@ -242,8 +247,17 @@
       "sourceSize": "源文件",
       "publishSize": "网页浏览",
       "publishStatus": "状态：{{status}}",
-      "directBrowseReady": "可直接浏览",
-      "sogStatus": "SOG：{{status}}"
+      "directBrowseReady": "可浏览",
+      "sogStatus": "SOG：{{status}}",
+      "openScene": "打开场景",
+      "copyLink": "复制链接",
+      "copyLinkTitle": "复制分享链接",
+      "copiedLink": "分享链接已复制",
+      "copyFailed": "无法复制链接",
+      "shareReady": "分享链接可用",
+      "gaussianProcessing": "处理中",
+      "gaussianOptimizing": "优化中",
+      "gaussianOptimized": "已优化可浏览"
     },
     "adv": {
       "label": "为何选择",
@@ -269,9 +283,9 @@
       "waitingUpload": "等待上传…",
       "uploading": "上传转换中，大文件可能需要数分钟…",
       "uploadSuccess": "转换成功: {{cloudName}}",
-      "projectUploadSuccess": "✓ 项目上传完成: {{projectName}}{{features}}",
-      "preconvertedSuccess": "✓ 预转换点云已上传：{{cloudName}}",
-      "gaussianSuccess": "3DGS 可直接浏览：{{cloudName}}"
+      "projectUploadSuccess": "项目上传完成：{{projectName}}{{features}}",
+      "preconvertedSuccess": "预转换点云已添加：{{cloudName}}",
+      "gaussianSuccess": "3DGS 可浏览：{{cloudName}}"
     },
     "toast": {
       "loadFailed": "加载失败: {{message}}",
@@ -298,10 +312,10 @@
       "uploading": "上传中…",
       "converting": "转换中，请稍候…",
       "extracting": "解压并准备场景中…",
-      "gaussianPublishing": "正在准备 3D 高斯场景…",
+      "gaussianPublishing": "正在处理 3D 高斯场景…",
       "convertingDetail": "文件已上传，正在准备流式可观看的场景…",
       "extractingDetail": "文件已上传，正在解压并准备场景…",
-      "gaussianPublishingDetail": "上传完成，正在生成可分享的浏览器链接…",
+      "gaussianPublishingDetail": "上传完成，正在准备并优化浏览器视图…",
       "done": "完成",
       "failed": "失败",
       "networkError": "网络错误",
@@ -675,7 +689,8 @@
       "loading": "加载中...",
       "minimapPlaceholder": "需要地理信息才能显示地图",
       "minimapPlaceholderHint": "加载含 geo_info.csv 的扫描仪项目",
-      "crsBrowserSupportNote": "当前坐标工作流支持本地坐标、WGS84、Web Mercator、UTM/UPS，以及常见坐标系定义的离线 authority code 查询。参数文件支持 `.prj / .wkt / .txt / .json / .csv`。格网方面可直接附加 `.gsb / .gtx / .tif / .tiff`；`.ggf / .grd` 是否可用取决于能否先转换为 PROJ 兼容格网。水平格网在当前转换链支持时可参与交互式坐标显示；垂直 geoid 和更通用格网将主要通过原生 PROJ/pyproj 的转换与导出链应用。"
+      "crsBrowserSupportNote": "当前坐标工作流支持本地坐标、WGS84、Web Mercator、UTM/UPS，以及常见坐标系定义的离线 authority code 查询。参数文件支持 `.prj / .wkt / .txt / .json / .csv`。格网方面可直接附加 `.gsb / .gtx / .tif / .tiff`；`.ggf / .grd` 是否可用取决于能否先转换为 PROJ 兼容格网。水平格网在当前转换链支持时可参与交互式坐标显示；垂直 geoid 和更通用格网将主要通过原生 PROJ/pyproj 的转换与导出链应用。",
+      "trajectoryTitle": "轨迹"
     },
     "open": {
       "loading": "加载中...",
@@ -834,7 +849,9 @@
       "intensityLabel": "强度",
       "intensityTitle": "强度着色",
       "classificationLabel": "分类",
-      "classificationTitle": "分类着色"
+      "classificationTitle": "分类着色",
+      "moreTitle": "更多工具",
+      "moreLabel": "更多"
     },
     "menu": {
       "file": "文件",
@@ -1087,10 +1104,16 @@
         "metaEmpty": "暂无体积任务",
         "noteActive": "双击确认边界。当前工作区会把方法和结果步骤保持在一起。",
         "noteEmpty": "点击“新建”开始引导式体积测量。"
-      }
+      },
+      "pickHeight": "从点云拾取"
     },
     "scene": {
-      "mobileScene": "☰ 场景"
+      "mobileScene": "场景",
+      "toggleCollapse": "隐藏场景面板",
+      "toggleExpand": "显示场景面板",
+      "pointCloudLayers": "点云图层",
+      "measurementResults": "测量结果",
+      "clippingVolumes": "裁剪体"
     },
     "disclaimer": {
       "statusText": "测试版本 · 请独立核验结果",
@@ -1125,6 +1148,46 @@
       "altitude": "高度",
       "recommendedProjection": "建议投影",
       "extent": "边界范围"
+    },
+    "status": {
+      "ready": "就绪",
+      "dismiss": "关闭状态提示",
+      "geoLabel": "坐标"
+    },
+    "orientation": {
+      "label": "XYZ 方位指示"
+    },
+    "loadError": {
+      "kicker": "加载问题",
+      "title": "无法加载此点云",
+      "titleWithName": "无法加载 {{name}}",
+      "datasetFallback": "此数据集",
+      "copy": "CloudStudio 无法读取启动查看器所需的点云 metadata。",
+      "copyWithDetail": "CloudStudio 无法读取启动查看器所需的点云 metadata。详情：{{detail}}",
+      "reasonMissing": "数据链接可能已失效，或 metadata.json 文件缺失。",
+      "reasonMoved": "数据集可能已被移动、删除，或尚未完成转换。",
+      "reasonNetwork": "网络或权限设置可能阻止了访问。",
+      "retry": "重试",
+      "openAnother": "打开其他数据",
+      "back": "返回",
+      "status": "点云加载失败",
+      "toast": "无法加载点云，请检查数据链接或 metadata。",
+      "unknownDetail": "metadata 请求失败。",
+      "badJson": "metadata.json 不是有效 JSON。",
+      "httpFailed": "metadata 请求失败。",
+      "badShape": "metadata.json 格式异常。",
+      "missingFields": "metadata.json 缺少 Potree 所需的点云字段。"
+    },
+    "advanced": {
+      "volumeTitle": "体积分析",
+      "volumeHint": "需要按边界和参考高程执行填挖方流程时使用。",
+      "clipTitle": "裁剪与剖面工具",
+      "clipHint": "先使用裁剪框或剖面，再在下方查看已保存的裁剪对象。",
+      "dxfTitle": "DXF 叠加与绘制",
+      "dxfHint": "先导入 CAD 叠加图层，绘制工具会集中在已加载文件下方。"
+    },
+    "measure": {
+      "clearAll": "全部清除"
     }
   },
   "phrases": {

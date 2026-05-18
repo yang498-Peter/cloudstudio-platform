@@ -70,6 +70,7 @@ In `/health`, verify:
 
 - `ok: true`
 - `pathsExposed: false`
+- `potreeRuntime.ok: true` with `potreeRuntime.missing: []`; if `build/potree/potree.js`, `build/potree/potree.css`, or any `build/potree/workers/*` runtime file is listed as missing, stop the deploy because the viewer can render blank or fail to decode point data.
 - `storage.configured: true` and `storage.external: true` for new deployments using `CLOUDSTUDIO_DATA_DIR`
 - Existing staging data may temporarily report `storage.configured: false` while legacy colocated runtime directories are preserved for a separate migration task.
 - each `storage.directories.*.primaryWritable: true`

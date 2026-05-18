@@ -61,7 +61,8 @@
     "UPLOAD_PASSWORD_NOT_CONFIGURED": "La password di caricamento non è configurata sul server.",
     "WRONG_PASSWORD": "Password errata.",
     "BAD_REQUEST": "Parametri della richiesta non validi.",
-    "INTERNAL_ERROR": "Si è verificato un errore sul server."
+    "INTERNAL_ERROR": "Si è verificato un errore sul server.",
+    "DATASET_NAME_CONFLICT": "Esiste già un dataset con questo nome. Scegliere un nuovo nome per proteggere i dati esistenti."
   },
   "units": {
     "linear": {
@@ -126,7 +127,8 @@
       "step3Text": "Apri la scena finale, valida lo stato e consegna un percorso di visualizzazione condivisibile.",
       "meta1": "Formato upload",
       "meta2": "Pronto browser",
-      "meta3": "Consegna progetto"
+      "meta3": "Consegna progetto",
+      "uploadPublish": "Carica e pubblica"
     },
     "stats": {
       "maxPoints": "Punti per scena",
@@ -195,7 +197,7 @@
         "selectLas": "Seleziona un file LAS/LAZ",
         "selectZip": "Seleziona un file ZIP",
         "passwordRequired": "Inserisci la password di caricamento",
-        "parseFailed": "✗ Lettura della risposta non riuscita: {{message}}",
+        "parseFailed": "Lettura della risposta non riuscita: {{message}}",
         "convertUnknown": "Conversione non riuscita (nessun dettaglio)",
         "selectPotreeZip": "Seleziona un file ZIP",
         "selectGaussian": "Seleziona un file Gaussian"
@@ -211,22 +213,25 @@
       "potreeSubmitBtn": "Carica nuvola pre-convertita",
       "potreeZipNamePlaceholder": "es. my_pointcloud",
       "tabGaussian": "Scena 3D Gaussian",
-      "gaussianHint": "Carica un modello PLY 3D Gaussian — CloudStudio pubblica una scena pronta per il browser e restituisce un link condivisibile.",
-      "gaussianPublishTitle": "Pubblicazione 3D Gaussian",
-      "gaussianPublishHint": "Scegli il file PLY originale. CloudStudio prepara una scena ottimizzata e restituisce un link da browser condivisibile.",
+      "gaussianHint": "Carica un modello PLY 3D Gaussian. CloudStudio lo prepara come scena per browser con link condivisibile.",
+      "gaussianPublishTitle": "Prepara scena 3D Gaussian",
+      "gaussianPublishHint": "Scegli il PLY originale. CloudStudio salva la sorgente, prepara la vista browser e mostra lo stato di ottimizzazione.",
       "gaussianFileLabel": "File PLY Gaussian",
       "gaussianNameLabel": "Nome scena (opzionale, usa il nome del file se vuoto)",
       "gaussianNamePlaceholder": "es. factory_gaussian_scene",
-      "gaussianSubmitBtn": "Carica e apri il viewer",
-      "gaussianReadyTitle": "3DGS pronto per la visualizzazione: {{cloudName}}",
-      "gaussianReadyTitleShort": "3DGS pronto per la visualizzazione",
-      "openGaussianViewer": "Apri Visualizzatore"
+      "gaussianSubmitBtn": "Carica e prepara 3DGS",
+      "gaussianReadyTitle": "3DGS pronto da visualizzare: {{cloudName}}",
+      "gaussianReadyTitleShort": "3DGS pronto da visualizzare",
+      "openGaussianViewer": "Apri Visualizzatore",
+      "summary": "Scegli LAS/LAZ, ZIP scanner, octree pre-convertito o 3DGS, quindi pubblica una scena pronta per il browser.",
+      "expandPanel": "Avvia caricamento",
+      "collapsePanel": "Nascondi modulo"
     },
     "clouds": {
       "title": "Scene pubblicate",
       "refresh": "Aggiorna",
       "emptyTitle": "Nessuna scena pubblicata",
-      "emptyHint": "Carica un file LAS/LAZ per iniziare",
+      "emptyHint": "Carica e pubblica una scena per iniziare",
       "pointsKnown": "{{count}} pt",
       "pointsUnknown": "Numero di punti sconosciuto",
       "openViewer": "Apri viewer",
@@ -242,8 +247,17 @@
       "sourceSize": "Origine",
       "publishSize": "Pacchetto web",
       "publishStatus": "Stato: {{status}}",
-      "directBrowseReady": "Visualizzazione diretta pronta",
-      "sogStatus": "SOG: {{status}}"
+      "directBrowseReady": "Pronto da visualizzare",
+      "sogStatus": "SOG: {{status}}",
+      "openScene": "Apri scena",
+      "copyLink": "Copia link",
+      "copyLinkTitle": "Copia link di condivisione",
+      "copiedLink": "Link di condivisione copiato",
+      "copyFailed": "Impossibile copiare il link",
+      "shareReady": "Link di condivisione pronto",
+      "gaussianProcessing": "Elaborazione",
+      "gaussianOptimizing": "Ottimizzazione",
+      "gaussianOptimized": "Ottimizzato per la visualizzazione"
     },
     "adv": {
       "label": "Perché CloudStudio",
@@ -269,9 +283,9 @@
       "waitingUpload": "In attesa del caricamento…",
       "uploading": "Caricamento e conversione in corso. I file grandi possono richiedere alcuni minuti…",
       "uploadSuccess": "Conversione completata: {{cloudName}}",
-      "projectUploadSuccess": "✓ Progetto caricato: {{projectName}}{{features}}",
-      "preconvertedSuccess": "✓ Nuvola pre-convertita aggiunta: {{cloudName}}",
-      "gaussianSuccess": "3DGS pronto per la visualizzazione: {{cloudName}}"
+      "projectUploadSuccess": "Progetto caricato: {{projectName}}{{features}}",
+      "preconvertedSuccess": "Nuvola pre-convertita aggiunta: {{cloudName}}",
+      "gaussianSuccess": "3DGS pronto da visualizzare: {{cloudName}}"
     },
     "toast": {
       "loadFailed": "Caricamento non riuscito: {{message}}",
@@ -298,10 +312,10 @@
       "uploading": "Caricamento…",
       "converting": "Conversione in corso, attendere…",
       "extracting": "Estrazione e preparazione…",
-      "gaussianPublishing": "Preparazione scena 3D Gaussian…",
+      "gaussianPublishing": "Elaborazione scena 3D Gaussian…",
       "convertingDetail": "Caricamento completato. Preparazione di una scena pronta per lo streaming…",
       "extractingDetail": "Caricamento completato. Estrazione dell'archivio e preparazione della scena…",
-      "gaussianPublishingDetail": "Caricamento completato. Pubblicazione del link 3D Gaussian per il browser…",
+      "gaussianPublishingDetail": "Caricamento completato. Preparazione e ottimizzazione della vista browser…",
       "done": "Fatto",
       "failed": "Non riuscito",
       "networkError": "Errore di rete",
@@ -675,7 +689,8 @@
       "loading": "Caricamento...",
       "minimapPlaceholder": "Per visualizzare la mappa sono necessarie informazioni geografiche",
       "minimapPlaceholderHint": "Carica un progetto scanner che contenga geo_info.csv",
-      "crsBrowserSupportNote": "Questo flusso di lavoro per coordinate supporta coordinate locali, WGS84, Web Mercator, UTM/UPS e la ricerca offline di codici authority per definizioni CRS comuni. I file parametro possono essere importati come `.prj / .wkt / .txt / .json / .csv`. Le risorse di griglia possono essere collegate da `.gsb / .gtx / .tif / .tiff`, mentre `.ggf / .grd` potrebbe richiedere conversione in una griglia compatibile PROJ prima di poter essere usata. Le griglie orizzontali possono partecipare alla visualizzazione interattiva delle coordinate quando la catena di trasformazione corrente lo supporta; i geoid verticali e le griglie più generiche sono applicati principalmente tramite la pipeline di trasformazione/esportazione PROJ/pyproj."
+      "crsBrowserSupportNote": "Questo flusso di lavoro per coordinate supporta coordinate locali, WGS84, Web Mercator, UTM/UPS e la ricerca offline di codici authority per definizioni CRS comuni. I file parametro possono essere importati come `.prj / .wkt / .txt / .json / .csv`. Le risorse di griglia possono essere collegate da `.gsb / .gtx / .tif / .tiff`, mentre `.ggf / .grd` potrebbe richiedere conversione in una griglia compatibile PROJ prima di poter essere usata. Le griglie orizzontali possono partecipare alla visualizzazione interattiva delle coordinate quando la catena di trasformazione corrente lo supporta; i geoid verticali e le griglie più generiche sono applicati principalmente tramite la pipeline di trasformazione/esportazione PROJ/pyproj.",
+      "trajectoryTitle": "Traiettoria"
     },
     "open": {
       "loading": "Caricamento...",
@@ -834,7 +849,9 @@
       "intensityLabel": "Intensità",
       "intensityTitle": "Colorazione intensità",
       "classificationLabel": "Classificazione",
-      "classificationTitle": "Colorazione classificazione"
+      "classificationTitle": "Colorazione classificazione",
+      "moreTitle": "Altri strumenti",
+      "moreLabel": "Altro"
     },
     "menu": {
       "file": "Archivio",
@@ -1087,10 +1104,16 @@
         "metaEmpty": "Nessun job volume",
         "noteActive": "Doppio clic per confermare il bordo. Lo spazio attivo mantiene insieme metodo e risultati.",
         "noteEmpty": "Fai clic su \"Nuovo\" per avviare una misura volume guidata."
-      }
+      },
+      "pickHeight": "Seleziona dalla nuvola"
     },
     "scene": {
-      "mobileScene": "☰ Scena"
+      "mobileScene": "Scena",
+      "toggleCollapse": "Nascondi pannello scena",
+      "toggleExpand": "Mostra pannello scena",
+      "pointCloudLayers": "Layer nuvola di punti",
+      "measurementResults": "Risultati di misura",
+      "clippingVolumes": "Volumi di clipping"
     },
     "disclaimer": {
       "statusText": "Versione di test · verifica indipendente richiesta",
@@ -1125,6 +1148,46 @@
       "altitude": "Altitudine",
       "recommendedProjection": "Proiezione consigliata",
       "extent": "Estensione"
+    },
+    "status": {
+      "ready": "Pronto",
+      "dismiss": "Chiudi stato",
+      "geoLabel": "Geo"
+    },
+    "orientation": {
+      "label": "Orientamento XYZ"
+    },
+    "loadError": {
+      "kicker": "Problema di caricamento",
+      "title": "Impossibile caricare questa nuvola di punti",
+      "titleWithName": "Impossibile caricare {{name}}",
+      "datasetFallback": "questo dataset",
+      "copy": "CloudStudio non riesce a leggere i metadati necessari per avviare il viewer.",
+      "copyWithDetail": "CloudStudio non riesce a leggere i metadati necessari per avviare il viewer. Dettaglio: {{detail}}",
+      "reasonMissing": "Il link del dataset potrebbe essere interrotto o metadata.json mancante.",
+      "reasonMoved": "Il dataset potrebbe essere stato spostato, eliminato o non ancora convertito completamente.",
+      "reasonNetwork": "Rete o permessi potrebbero bloccare l’accesso.",
+      "retry": "Riprova",
+      "openAnother": "Apri un altro dataset",
+      "back": "Indietro",
+      "status": "Caricamento nuvola di punti non riuscito",
+      "toast": "Impossibile caricare la nuvola di punti. Verificare link o metadati.",
+      "unknownDetail": "La richiesta dei metadati non è riuscita.",
+      "badJson": "metadata.json non è un JSON valido.",
+      "httpFailed": "La richiesta dei metadati non è riuscita.",
+      "badShape": "metadata.json ha un formato inatteso.",
+      "missingFields": "metadata.json non contiene i campi richiesti da Potree."
+    },
+    "advanced": {
+      "volumeTitle": "Analisi volume",
+      "volumeHint": "Usare per un flusso guidato di scavo/riporto con confine confermato e quota di riferimento.",
+      "clipTitle": "Strumenti di clipping e profilo",
+      "clipHint": "Inizia con una clip box o un profilo, poi verifica gli oggetti di clipping salvati.",
+      "dxfTitle": "Overlay e disegno DXF",
+      "dxfHint": "Importa prima gli overlay CAD; gli strumenti di disegno restano raggruppati sotto i file caricati."
+    },
+    "measure": {
+      "clearAll": "Cancella tutto"
     }
   },
   "phrases": {

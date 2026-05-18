@@ -58,7 +58,11 @@
     }
 
     body[data-i18n-ready="0"] {
-      visibility: hidden;
+      opacity: 0;
+      animation: i18n-fallback-reveal 1ms linear .8s forwards;
+    }
+    @keyframes i18n-fallback-reveal {
+      to { opacity: 1; }
     }
 
     /* ── Dot-grid texture — subtle on light ── */
@@ -606,46 +610,31 @@
     .panel-fold-meta .panel-title {
       margin-bottom: 8px;
     }
-    .upload-preview-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .upload-preview-chip {
-      display: inline-flex;
-      align-items: center;
-      min-height: 28px;
-      padding: 0 11px;
-      border-radius: 999px;
-      border: 1px solid rgba(16, 24, 40, 0.08);
-      background: rgba(255, 255, 255, 0.84);
+    .panel-fold-summary {
       color: var(--text2);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: .01em;
-      white-space: nowrap;
-      transition: background .2s, border-color .2s, color .2s, box-shadow .2s;
-    }
-    .upload-preview-chip.active {
-      background: rgba(230, 0, 39, 0.08);
-      border-color: rgba(230, 0, 39, 0.18);
-      color: var(--accent);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+      font-size: 12px;
+      line-height: 1.55;
+      max-width: 680px;
     }
     .panel-fold-toggle {
-      width: 46px;
-      height: 46px;
-      border-radius: 14px;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 10px;
       border: 1px solid rgba(230, 0, 39, 0.16);
       background: linear-gradient(180deg, rgba(230, 0, 39, 0.10) 0%, rgba(230, 0, 39, 0.05) 100%);
       color: var(--accent);
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 8px;
       box-shadow: 0 8px 24px rgba(230, 0, 39, 0.10), inset 0 1px 0 rgba(255,255,255,0.8);
       cursor: pointer;
       transition: transform .18s, box-shadow .18s, border-color .18s, background .18s;
       flex-shrink: 0;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
     }
     .panel-fold-toggle:hover {
       transform: translateY(-1px);
@@ -653,8 +642,8 @@
       box-shadow: 0 12px 28px rgba(230, 0, 39, 0.14), inset 0 1px 0 rgba(255,255,255,0.82);
     }
     .panel-fold-toggle svg {
-      width: 20px;
-      height: 20px;
+      width: 16px;
+      height: 16px;
       display: block;
       transition: transform .22s ease;
     }
@@ -1007,12 +996,31 @@
       gap: 8px;
       flex-shrink: 0;
     }
+    .cloud-action-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
     .cloud-open {
       min-width: 110px;
       justify-content: center;
       text-decoration: none;
       font-size: 11px;
       padding-inline: 14px;
+    }
+    .cloud-copy {
+      min-width: 92px;
+      justify-content: center;
+      font-size: 11px;
+      padding-inline: 12px;
+    }
+    .cloud-share-note {
+      color: var(--text3);
+      font-size: 10px;
+      margin-top: 4px;
+      line-height: 1.45;
     }
     .gaussian-publish-panel {
       margin-bottom: 14px;
@@ -1534,13 +1542,7 @@
         align-items: start;
       }
       .panel-fold-toggle {
-        justify-self: end;
-      }
-      .upload-preview-chips {
-        gap: 6px;
-      }
-      .upload-preview-chip {
-        max-width: 100%;
+        justify-self: start;
       }
 
       /* Upload tabs: scroll horizontally so 4 chips don't crush */
@@ -2071,6 +2073,7 @@
         grid-column: 2;
         justify-content: flex-start;
         padding-top: 4px;
+        flex-wrap: wrap;
       }
       .cloud-open {
         min-width: 0;
@@ -2125,8 +2128,8 @@
       <h1 data-i18n-html="index.hero.title">Upload, publish, and review survey data in one place.<br><span class="h1-sub">Open point clouds and 3D Gaussian scenes directly in the browser, with the control surface your delivery team actually needs.</span></h1>
       <p data-i18n="index.hero.subtitle">CloudStudio helps survey and mobile scanning teams move from raw capture to shareable web viewing faster. Publish LAS, scanner projects, and 3DGS scenes with a workflow designed for real project delivery, not just demo playback.</p>
       <div class="hero-buttons">
-        <a class="btn-hero primary" href="/viewer" target="_blank" data-i18n="index.hero.launchViewer">Open Viewer</a>
-        <a class="btn-hero secondary" href="#workflow" data-i18n="index.hero.uploadPointCloud">Upload Data</a>
+        <a class="btn-hero primary" href="#workflow" data-i18n="index.hero.uploadPublish">Upload &amp; Publish</a>
+        <a class="btn-hero secondary" href="/viewer" target="_blank" data-i18n="index.hero.launchViewer">Open Viewer</a>
       </div>
     </div>
     <div class="hero-side">
@@ -2234,14 +2237,10 @@
               </span>
               <span data-i18n="index.upload.title">Upload Point Cloud</span>
             </div>
-            <div class="upload-preview-chips" aria-hidden="true">
-              <span class="upload-preview-chip active" data-preview-tab="las" data-i18n="index.upload.tabLas">Single LAS / LAZ</span>
-              <span class="upload-preview-chip" data-preview-tab="zip" data-i18n="index.upload.tabZip">Scanner Project (ZIP)</span>
-              <span class="upload-preview-chip" data-preview-tab="potree" data-i18n="index.upload.tabPotree">Pre-converted Octree</span>
-              <span class="upload-preview-chip" data-preview-tab="gaussian" data-i18n="index.upload.tabGaussian">3D Gaussian Scene</span>
-            </div>
+            <div class="panel-fold-summary" data-i18n="index.upload.summary">Choose LAS/LAZ, scanner ZIP, pre-converted octree, or 3DGS, then publish a browser-ready scene.</div>
           </div>
-          <button type="button" class="panel-fold-toggle" id="uploadPanelToggle" aria-expanded="false" aria-controls="uploadPanelBody" title="Upload Point Cloud">
+          <button type="button" class="panel-fold-toggle" id="uploadPanelToggle" aria-expanded="false" aria-controls="uploadPanelBody" data-i18n-title="index.upload.expandPanel" data-i18n-aria-label="index.upload.expandPanel" title="Start upload">
+            <span id="uploadPanelToggleLabel" data-i18n="index.upload.expandPanel">Start upload</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
           </button>
         </div>
@@ -2354,14 +2353,14 @@
               <input id="f-gaussian-password" type="password" autocomplete="off" placeholder="Enter upload password" data-i18n-placeholder="index.upload.passwordPlaceholder">
             </div>
             <div class="actions">
-              <button type="submit" id="submitGaussianBtn" class="btn pri" data-i18n="index.upload.gaussianSubmitBtn">Upload and Open Viewer</button>
+              <button type="submit" id="submitGaussianBtn" class="btn pri" data-i18n="index.upload.gaussianSubmitBtn">Upload &amp; prepare 3DGS</button>
             </div>
             <div class="gaussian-secondary-actions">
               <button type="button" id="clearBtn4" class="btn" data-i18n="index.upload.clearBtn">Clear Logs</button>
             </div>
           </form>
           <div id="gaussianResult" class="gaussian-result" aria-live="polite">
-            <div class="gaussian-result-title" id="gaussianResultTitle" data-i18n="index.upload.gaussianReadyTitleShort">3DGS published</div>
+            <div class="gaussian-result-title" id="gaussianResultTitle" data-i18n="index.upload.gaussianReadyTitleShort">3DGS ready to browse</div>
             <div class="gaussian-result-meta" id="gaussianResultMeta"></div>
             <a id="gaussianResultOpen" class="btn pri" href="#" target="_blank" data-i18n="index.upload.openGaussianViewer">Open Viewer</a>
           </div>
@@ -2520,12 +2519,53 @@
       if (!errorCode) return fallback;
       return tr(`errors.${errorCode}`, {}, fallback || errorCode);
     }
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      }[char]));
+    }
+    function toAbsoluteUrl(url) {
+      try {
+        return new URL(url, window.location.origin).href;
+      } catch {
+        return String(url || '');
+      }
+    }
+    async function copyText(value) {
+      const text = String(value || '');
+      if (!text) return false;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.top = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      let ok = false;
+      try {
+        ok = document.execCommand('copy');
+      } finally {
+        textarea.remove();
+      }
+      return ok;
+    }
 
     async function applyLocaleToPage(locale) {
       window.__APP_ACTIVE_LOCALE = locale;
       document.getElementById('locale-select').value = locale;
       document.title = I18N.translateText(document.body.dataset.pageTitle || document.title, locale);
       await I18N.applyTranslations(document);
+      if (document.getElementById('uploadPanel')) {
+        setUploadPanelOpen(document.getElementById('uploadPanel').classList.contains('is-open'));
+      }
       const localeSelect = document.getElementById('locale-select');
       if (localeSelect) {
         localeSelect.setAttribute('aria-label', tr('common.locale.label', {}, 'Language'));
@@ -2592,6 +2632,11 @@
           || c.gaussianPublishStatus === 'optimized-ready'
         );
         const gaussianOptimizationStatus = c.gaussianOptimizationStatus || 'not-applicable';
+        const gaussianOptimizationText = gaussianOptimizationStatus === 'ready'
+          ? tr('index.clouds.gaussianOptimized', {}, 'Optimized for viewing')
+          : ['queued', 'processing', 'running', 'optimizing'].includes(gaussianOptimizationStatus)
+            ? tr('index.clouds.gaussianOptimizing', {}, 'Optimizing')
+            : '';
         const formatLabel = (c.gaussianFormat || 'unknown').toUpperCase();
         const sourceSize = fmtMaybeBytes(c.originalBytes);
         const pts = isGaussian
@@ -2604,24 +2649,24 @@
         const detail = isGaussian
           ? [
               sourceSize ? `${tr('index.clouds.sourceSize', {}, 'Source')} ${sourceSize}` : '',
-              gaussianDirectReady ? tr('index.clouds.directBrowseReady', {}, 'Direct browse ready') : '',
-              gaussianOptimizationStatus && gaussianOptimizationStatus !== 'not-applicable'
-                ? tr('index.clouds.sogStatus', { status: gaussianOptimizationStatus }, `SOG: ${gaussianOptimizationStatus}`)
-                : '',
+              gaussianDirectReady ? tr('index.clouds.directBrowseReady', {}, 'Ready to browse') : tr('index.clouds.gaussianProcessing', {}, 'Processing'),
+              gaussianOptimizationText,
             ].filter(Boolean).join(' · ')
           : '';
         const cloudKey = c.cloudName || c.name || '';
         const viewerUrl = isGaussian
           ? (c.viewerUrl || `/3dgs/${encodeURIComponent(cloudKey)}`)
           : (c.viewerUrl || `/viewer?pointcloud=/pointclouds/${encodeURIComponent(c.name)}/metadata.json`);
+        const shareUrl = toAbsoluteUrl(viewerUrl);
+        const displayName = c.name || cloudKey || tr('index.clouds.title', {}, 'Published Scenes');
 
         // Build feature tag strip for scanner projects
         let featureTags = '';
         if (isScanner) {
           const tags = [];
-          if (c.features?.hasOdom) tags.push(`<span class="feat-tag">🛣 ${tr('index.clouds.featureOdom', {}, 'Trajectory')}</span>`);
-          if (c.features?.hasCameras) tags.push(`<span class="feat-tag">📷 ${tr('index.clouds.featureCameras', {}, 'Camera')}</span>`);
-          if (c.features?.hasGeo) tags.push(`<span class="feat-tag">📍 ${tr('index.clouds.featureGeo', {}, 'Georeference')}</span>`);
+          if (c.features?.hasOdom) tags.push(`<span class="feat-tag">${escapeHtml(tr('index.clouds.featureOdom', {}, 'Trajectory'))}</span>`);
+          if (c.features?.hasCameras) tags.push(`<span class="feat-tag">${escapeHtml(tr('index.clouds.featureCameras', {}, 'Camera'))}</span>`);
+          if (c.features?.hasGeo) tags.push(`<span class="feat-tag">${escapeHtml(tr('index.clouds.featureGeo', {}, 'Georeference'))}</span>`);
           featureTags = tags.length
             ? `<div class="cloud-tags">${tags.join('')}</div>`
             : '';
@@ -2629,31 +2674,37 @@
 
         const icon = isGaussian ? '3D' : (isScanner ? 'SC' : (isPreconverted ? 'PC' : 'PC'));
         const typeLabel = isGaussian
-          ? `<span class="cloud-type-tag ${gaussianDirectReady ? 'supersplat-tag' : 'preconverted-tag'}">${gaussianDirectReady ? tr('index.clouds.supersplatScene', {}, 'SuperSplat') : tr('index.clouds.gaussianScene', {}, 'Gaussian Scene')}</span>`
+          ? `<span class="cloud-type-tag ${gaussianDirectReady ? 'supersplat-tag' : 'preconverted-tag'}">${escapeHtml(gaussianDirectReady ? tr('index.clouds.supersplatScene', {}, 'SuperSplat') : tr('index.clouds.gaussianScene', {}, 'Gaussian Scene'))}</span>`
           : isScanner
-            ? `<span class="cloud-type-tag scanner-tag">${tr('index.clouds.scannerProject', {}, 'Scanner Project')}</span>`
+            ? `<span class="cloud-type-tag scanner-tag">${escapeHtml(tr('index.clouds.scannerProject', {}, 'Scanner Project'))}</span>`
             : isPreconverted
-              ? `<span class="cloud-type-tag preconverted-tag">${tr('index.clouds.preconverted', {}, 'Pre-converted')}</span>`
+              ? `<span class="cloud-type-tag preconverted-tag">${escapeHtml(tr('index.clouds.preconverted', {}, 'Pre-converted'))}</span>`
               : '';
 
         const li = document.createElement('div');
         li.className = 'cloud-item' + (isScanner ? ' cloud-item-scanner' : '');
-        li.dataset.cloud = c.cloudName || c.name;
+        li.dataset.cloud = cloudKey || displayName;
         li.dataset.resourceType = isGaussian ? 'gaussian' : 'pointcloud';
         li.innerHTML = `
-          <div class="cloud-icon">${icon}</div>
+          <div class="cloud-icon">${escapeHtml(icon)}</div>
           <div class="cloud-info">
             <div class="cloud-name-row">
-              <div class="cloud-name cloud-name-label" title="${c.name}">${c.name}</div>
+              <div class="cloud-name cloud-name-label" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</div>
               ${typeLabel}
             </div>
-            <div class="cloud-meta">${pts}</div>
-            ${detail ? `<div class="cloud-meta-detail">${detail}</div>` : ''}
+            <div class="cloud-meta">${escapeHtml(pts)}</div>
+            ${detail ? `<div class="cloud-meta-detail">${escapeHtml(detail)}</div>` : ''}
+            <div class="cloud-share-note">${escapeHtml(tr('index.clouds.shareReady', {}, 'Share link ready'))}</div>
             ${featureTags}
           </div>
           <div class="cloud-actions">
-            <a class="btn pri cloud-open" href="${viewerUrl}" target="_blank" rel="noopener">${tr('index.clouds.openViewer', {}, 'Open Viewer')}</a>
-            <button class="btn-delete" data-cloud="${c.name}" title="${tr('index.delete.title', {}, 'Delete')}">🗑</button>
+            <div class="cloud-action-row">
+              <a class="btn pri cloud-open" href="${escapeHtml(viewerUrl)}" target="_blank" rel="noopener">${escapeHtml(tr('index.clouds.openScene', {}, 'Open scene'))}</a>
+              <button type="button" class="btn cloud-copy" data-url="${escapeHtml(shareUrl)}" title="${escapeHtml(tr('index.clouds.copyLinkTitle', {}, 'Copy share link'))}">${escapeHtml(tr('index.clouds.copyLink', {}, 'Copy link'))}</button>
+            </div>
+            <button class="btn-delete" data-cloud="${escapeHtml(cloudKey || displayName)}" title="${escapeHtml(tr('index.delete.title', {}, 'Delete'))}" aria-label="${escapeHtml(tr('index.delete.title', {}, 'Delete'))}">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>
+            </button>
           </div>
         `;
         list.appendChild(li);
@@ -2669,6 +2720,12 @@
       if (!uploadPanel || !uploadPanelBody || !uploadPanelToggle) return;
       uploadPanel.classList.toggle('is-open', !!open);
       uploadPanelToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      const label = document.getElementById('uploadPanelToggleLabel');
+      const key = open ? 'index.upload.collapsePanel' : 'index.upload.expandPanel';
+      const fallback = open ? 'Hide upload form' : 'Start upload';
+      if (label) label.textContent = tr(key, {}, fallback);
+      uploadPanelToggle.setAttribute('title', tr(key, {}, fallback));
+      uploadPanelToggle.setAttribute('aria-label', tr(key, {}, fallback));
       uploadPanelBody.inert = !open;
       uploadPanelBody.setAttribute('aria-hidden', open ? 'false' : 'true');
     }
@@ -2686,7 +2743,6 @@
       btn.addEventListener('click', () => {
         upCurrentTab = btn.dataset.tab;
         document.querySelectorAll('.up-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === upCurrentTab));
-        document.querySelectorAll('.upload-preview-chip').forEach(chip => chip.classList.toggle('active', chip.dataset.previewTab === upCurrentTab));
         document.getElementById('up-panel-las').style.display    = upCurrentTab === 'las'    ? '' : 'none';
         document.getElementById('up-panel-zip').style.display    = upCurrentTab === 'zip'    ? '' : 'none';
         document.getElementById('up-panel-potree').style.display = upCurrentTab === 'potree' ? '' : 'none';
@@ -2708,7 +2764,7 @@
       fill.style.width = '0%';
       fill.style.background = '';
       document.getElementById('progressPct').textContent = '0%';
-      document.getElementById('progressLabel').textContent = tr('index.progress.uploading', {}, '⬆ Uploading...');
+      document.getElementById('progressLabel').textContent = tr('index.progress.uploading', {}, 'Uploading...');
       document.getElementById('progressSpeed').textContent = '';
     }
 
@@ -2755,10 +2811,15 @@
       const runtimeSize = fmtMaybeBytes(data.runtimeBytes || data.publish?.bytes);
       title.textContent = tr('index.upload.gaussianReadyTitle', { cloudName: name }, `3DGS browse ready: ${name}`);
       const optimizationStatus = data.optimizationStatus || data.publish?.optimizationStatus || 'not-applicable';
+      const optimizationText = optimizationStatus === 'ready'
+        ? tr('index.clouds.gaussianOptimized', {}, 'Optimized for viewing')
+        : ['queued', 'processing', 'running', 'optimizing'].includes(optimizationStatus)
+          ? tr('index.clouds.gaussianOptimizing', {}, 'Optimizing')
+          : '';
       meta.textContent = [
         sourceSize ? `${tr('index.clouds.sourceSize', {}, 'Source')} ${sourceSize}` : '',
-        tr('index.clouds.directBrowseReady', {}, 'Direct browse ready'),
-        optimizationStatus && optimizationStatus !== 'not-applicable' ? tr('index.clouds.sogStatus', { status: optimizationStatus }, `SOG: ${optimizationStatus}`) : '',
+        tr('index.clouds.directBrowseReady', {}, 'Ready to browse'),
+        optimizationText,
         runtimeSize && optimizationStatus === 'ready' ? `SOG ${runtimeSize}` : '',
         data.publish?.pipeline ? data.publish.pipeline : '',
       ].filter(Boolean).join(' · ');
@@ -2816,14 +2877,14 @@
         fill.className = 'progress-fill converting';
         pctEl.textContent = '100%';
         lbl.textContent = isGaussian
-          ? tr('index.progress.gaussianPublishing', {}, '⚙ Publishing 3DGS viewer...')
+          ? tr('index.progress.gaussianPublishing', {}, 'Processing 3D Gaussian scene...')
           : isPotree
-          ? tr('index.progress.preconverted', {}, '⚙ Extracting Potree octree...')
+          ? tr('index.progress.preconverted', {}, 'Extracting Potree octree...')
           : isZip
-            ? tr('index.progress.extracting', {}, '⚙ Extracting and converting...')
-            : tr('index.progress.converting', {}, '⚙ Converting, please wait...');
+            ? tr('index.progress.extracting', {}, 'Extracting and converting...')
+            : tr('index.progress.converting', {}, 'Converting, please wait...');
         spd.textContent = isGaussian
-          ? tr('index.progress.gaussianPublishingDetail', {}, 'Upload finished. Preparing the browser viewer...')
+          ? tr('index.progress.gaussianPublishingDetail', {}, 'Upload finished. Preparing and optimizing the browser view...')
           : isPotree
           ? tr('index.progress.preconvertedDetail', {}, 'Upload finished. Extracting octree...')
           : isZip
@@ -2837,7 +2898,7 @@
         fill.className = 'progress-fill';
         let data;
         try { data = JSON.parse(xhr.responseText); } catch (e) {
-          setStatus('err', tr('index.upload.errors.parseFailed', { message: e.message }, `✗ Failed to parse response: ${e.message}`), {}, { raw: true });
+          setStatus('err', tr('index.upload.errors.parseFailed', { message: e.message }, `Failed to parse response: ${e.message}`), {}, { raw: true });
           submitBtn.disabled = false;
           return;
         }
@@ -2846,8 +2907,8 @@
 
         if (data.ok) {
           fill.style.width = '100%';
-          pctEl.textContent = '✓';
-          lbl.textContent = tr('index.progress.done', {}, '✓ Done');
+          pctEl.textContent = '100%';
+          lbl.textContent = tr('index.progress.done', {}, 'Done');
           spd.textContent = '';
 
           if (data.resourceType === 'gaussian') {
@@ -2856,15 +2917,15 @@
             toast('ok', msg);
             showGaussianResult(data);
           } else if (isPotree) {
-            setStatus('ok', tr('index.status.preconvertedSuccess', { cloudName: data.cloudName }, `✓ Pre-converted cloud added: ${data.cloudName}`), {}, { raw: true });
+            setStatus('ok', tr('index.status.preconvertedSuccess', { cloudName: data.cloudName }, `Pre-converted cloud added: ${data.cloudName}`), {}, { raw: true });
             toast('ok', tr('index.toast.preconvertedSuccess', { cloudName: data.cloudName }, `Pre-converted cloud added: ${data.cloudName}`));
           } else if (isZip) {
             const featStr = [
-              data.features?.hasGeo     ? `📍${tr('index.clouds.featureGeo', {}, 'Georeference')}` : '',
-              data.features?.hasOdom    ? `🛣${tr('index.clouds.featureOdom', {}, 'Trajectory')}`  : '',
-              data.features?.hasCameras ? `📷${tr('index.clouds.featureCameras', {}, 'Camera')}` : '',
+              data.features?.hasGeo     ? tr('index.clouds.featureGeo', {}, 'Georeference') : '',
+              data.features?.hasOdom    ? tr('index.clouds.featureOdom', {}, 'Trajectory')  : '',
+              data.features?.hasCameras ? tr('index.clouds.featureCameras', {}, 'Camera') : '',
             ].filter(Boolean).join(' ');
-            const msg = tr('index.status.projectUploadSuccess', { projectName: data.projectName, features: featStr ? `  ${featStr}` : '' }, `✓ Project uploaded: ${data.projectName}${featStr ? '  ' + featStr : ''}`);
+            const msg = tr('index.status.projectUploadSuccess', { projectName: data.projectName, features: featStr ? `  ${featStr}` : '' }, `Project uploaded: ${data.projectName}${featStr ? '  ' + featStr : ''}`);
             setStatus('ok', msg, {}, { raw: true });
             toast('ok', msg);
           } else {
@@ -2874,7 +2935,7 @@
           loadClouds();
         } else {
           fill.style.background = 'var(--err)';
-          lbl.textContent = tr('index.progress.failed', {}, '✗ Failed');
+          lbl.textContent = tr('index.progress.failed', {}, 'Failed');
           pctEl.textContent = '';
           spd.textContent = '';
 
@@ -2887,10 +2948,10 @@
 
           // For ZIP uploads: files may be extracted even if conversion failed
           const partialNote = isZip && data.projectName
-            ? `\n📁 ${tr('index.upload.partialNote', {}, 'Project files were extracted on server (you can retry conversion manually).')}`
+            ? `\n${tr('index.upload.partialNote', {}, 'Project files were extracted on server (you can retry conversion manually).')}`
             : '';
 
-          setStatus('err', `✗ ${errMsg}${partialNote}`, {}, { raw: true });
+          setStatus('err', `${errMsg}${partialNote}`, {}, { raw: true });
           toast('err', errMsg.slice(0, 100));
 
           // Expand log box so user sees full details
@@ -2912,7 +2973,7 @@
       xhr.addEventListener('error', () => {
         fill.className = 'progress-fill';
         fill.style.background = 'var(--err)';
-        lbl.textContent = tr('index.progress.networkError', {}, '✗ Network error');
+        lbl.textContent = tr('index.progress.networkError', {}, 'Network error');
         pctEl.textContent = '';
         const msg = tr('index.toast.networkError', { message: tr('index.messages.networkErrorShort', {}, 'Network error') }, tr('index.messages.networkCheck', {}, 'Network error, please check your connection'));
         setStatus('err', msg, {}, { raw: true });
@@ -3021,7 +3082,15 @@
     let _delTargetCloud = null;
 
     // Delegate click on dynamically rendered delete buttons in cloud list
-    document.getElementById('cloudList').addEventListener('click', e => {
+    document.getElementById('cloudList').addEventListener('click', async e => {
+      const copyBtn = e.target.closest('.cloud-copy');
+      if (copyBtn) {
+        const ok = await copyText(copyBtn.dataset.url || '');
+        toast(ok ? 'ok' : 'err', ok
+          ? tr('index.clouds.copiedLink', {}, 'Share link copied')
+          : tr('index.clouds.copyFailed', {}, 'Could not copy link'));
+        return;
+      }
       const btn = e.target.closest('.btn-delete');
       if (!btn) return;
       _delTargetCloud = btn.dataset.cloud;
