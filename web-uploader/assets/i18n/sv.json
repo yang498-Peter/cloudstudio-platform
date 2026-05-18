@@ -809,7 +809,7 @@
       "screenshotLabel": "Skärmbild",
       "screenshotTitle": "Skärmbild",
       "fitLabel": "Anpassa",
-      "fitTitle": "Anpassa vy (F)",
+      "fitTitle": "Anpassa vy",
       "magnifierLabel": "Förstorare",
       "magnifierTitle": "Förstorare",
       "orbitLabel": "Bana",
@@ -885,7 +885,6 @@
       "classificationColor": "Klassificeringsfärgning",
       "lodColor": "LOD-nivå",
       "toggleEdl": "Växla EDL-belysning",
-      "shortcuts": "Kortkommandon",
       "about": "Om CloudStudio"
     },
     "pageTitle": "CloudStudio - Professionell punktmolnsplattform",

@@ -809,7 +809,7 @@
       "screenshotLabel": "Screenshot",
       "screenshotTitle": "Screenshot",
       "fitLabel": "Fit",
-      "fitTitle": "Fit View (F)",
+      "fitTitle": "Fit View",
       "magnifierLabel": "Magnifier",
       "magnifierTitle": "Magnifier",
       "orbitLabel": "Orbit",
@@ -885,7 +885,6 @@
       "classificationColor": "Classification Coloring",
       "lodColor": "LOD Level",
       "toggleEdl": "Toggle EDL Lighting",
-      "shortcuts": "Keyboard Shortcuts",
       "about": "About CloudStudio"
     },
     "pageTitle": "CloudStudio - Professional Point Cloud Platform",

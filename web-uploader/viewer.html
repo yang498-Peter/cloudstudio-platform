@@ -489,36 +489,60 @@
     }
 
     .left-panel-toggle {
-      width: 42px;
-      height: 30px;
-      margin: 8px auto 0;
-      flex-shrink: 0;
-      border: 1px solid rgba(255, 255, 255, 0.10);
+      position: absolute;
+      top: 9px;
+      right: 8px;
+      z-index: 6;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid rgba(8, 15, 30, 0.11);
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--text2);
+      background: rgba(255, 255, 255, 0.70);
+      color: #6b7280;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      transition: background .15s ease, color .15s ease, border-color .15s ease;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.10);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: opacity .15s ease, background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
     }
 
     .left-panel-toggle:hover {
-      background: rgba(255, 255, 255, 0.10);
-      color: var(--accent2);
-      border-color: rgba(126, 176, 255, 0.28);
+      background: rgba(255, 255, 255, 0.88);
+      color: var(--accent);
+      border-color: rgba(0, 122, 255, 0.20);
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.14);
     }
 
     .left-panel-toggle .quick-btn-icon {
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
+    }
+
+    #left-panel.left-panel-collapsed .left-panel-toggle {
+      top: 10px;
+      right: -12px;
+      width: 24px;
+      height: 36px;
+      border-radius: 0 999px 999px 0;
+      background: rgba(255, 255, 255, 0.46);
+      border-left-color: transparent;
+      opacity: .52;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    #left-panel.left-panel-collapsed .left-panel-toggle:hover {
+      opacity: .86;
+      background: rgba(255, 255, 255, 0.76);
     }
 
     .quickbar-scroll {
       flex: 1;
       overflow-y: auto;
-      padding: 8px 6px 10px;
+      padding: 48px 6px 10px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -885,17 +909,16 @@
 
     .orientation-gizmo {
       position: absolute;
-      right: 14px;
-      bottom: 14px;
+      right: 12px;
+      bottom: 12px;
       z-index: 130;
-      width: 96px;
-      height: 96px;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.78);
-      box-shadow: var(--elev-2);
-      backdrop-filter: saturate(180%) blur(14px);
-      -webkit-backdrop-filter: saturate(180%) blur(14px);
+      width: 68px;
+      height: 68px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      opacity: .72;
       pointer-events: none;
     }
 
@@ -906,24 +929,30 @@
     }
 
     .orientation-gizmo line {
-      stroke-width: 3;
+      stroke-width: 2.6;
       stroke-linecap: round;
     }
 
     .orientation-gizmo text {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       dominant-baseline: middle;
       text-anchor: middle;
-      paint-order: stroke;
-      stroke: rgba(255, 255, 255, 0.85);
-      stroke-width: 3px;
+      paint-order: normal;
+      stroke: none;
+      filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.70)) drop-shadow(0 1px 4px rgba(15, 23, 42, 0.25));
     }
 
     #potree_render_area {
       position: absolute;
       inset: 0;
       touch-action: none; /* prevent browser from intercepting touch gestures */
+    }
+
+    .potree_menu_toggle {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
     }
 
     #potree_render_area canvas {
@@ -1122,33 +1151,33 @@
 
     .right-tools-toggle {
       position: absolute;
-      top: 50%;
-      right: 10px;
+      top: 12px;
+      right: 8px;
       z-index: 1600;
       display: none;
       align-items: center;
       justify-content: center;
-      width: 34px;
-      height: 54px;
+      width: 26px;
+      height: 38px;
       padding: 0;
-      border: 1px solid rgba(0, 0, 0, 0.13);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.88);
-      color: #5f6673;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10), inset 1px 0 0 rgba(255, 255, 255, 0.7);
-      backdrop-filter: saturate(180%) blur(16px);
-      -webkit-backdrop-filter: saturate(180%) blur(16px);
+      border: 1px solid rgba(8, 15, 30, 0.09);
+      border-radius: 999px 0 0 999px;
+      background: rgba(255, 255, 255, 0.44);
+      color: #6b7280;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       cursor: pointer;
-      transform: translateY(-50%);
-      transition: width .16s ease, background .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease;
+      opacity: .54;
+      transition: opacity .16s ease, background .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease;
     }
 
     .right-tools-toggle:hover {
-      width: 38px;
-      background: rgba(255, 255, 255, 0.92);
+      opacity: .86;
+      background: rgba(255, 255, 255, 0.76);
       color: var(--accent);
-      border-color: rgba(0, 122, 255, 0.28);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14), inset 1px 0 0 rgba(255, 255, 255, 0.8);
+      border-color: rgba(0, 122, 255, 0.20);
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.11);
     }
 
     #layout.right-panel-collapsed .right-tools-toggle {
@@ -1162,8 +1191,8 @@
 
     .right-tools-toggle::before {
       content: '';
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-left: 2px solid currentColor;
       border-bottom: 2px solid currentColor;
       transform: rotate(45deg) translateX(1px);
@@ -2634,26 +2663,41 @@
     /* ========== MOBILE PANEL TOGGLE BUTTON ========== */
     #btn-mobile-left-open {
       position: absolute;
-      top: 18px;
-      left: 18px;
+      top: 12px;
+      left: 0;
       z-index: 1600;
       display: none;
       align-items: center;
-      gap: 8px;
-      border: 1px solid rgba(126, 176, 255, 0.28);
-      border-radius: 999px;
-      background: rgba(11, 16, 24, 0.9);
-      color: var(--text);
-      padding: 9px 14px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: .04em;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      justify-content: center;
+      width: 26px;
+      height: 38px;
+      border: 1px solid rgba(8, 15, 30, 0.09);
+      border-left: 0;
+      border-radius: 0 999px 999px 0;
+      background: rgba(255, 255, 255, 0.48);
+      color: #6b7280;
+      padding: 0;
+      font-size: 0;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+      opacity: .58;
       cursor: pointer;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
 
     #btn-mobile-left-open:hover {
-      background: rgba(18, 26, 40, 0.96);
+      background: rgba(255, 255, 255, 0.76);
+      opacity: .86;
+      color: var(--accent);
+    }
+
+    #btn-mobile-left-open::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-right: 2px solid currentColor;
+      border-top: 2px solid currentColor;
+      transform: rotate(45deg) translateX(-1px);
     }
 
     /* ========== MOBILE BACKDROP ========== */
@@ -2697,9 +2741,7 @@
       #tb-edl,
       #tb-point,
       #tb-height,
-      #tb-area,
-      #tb-col-elev,
-      #tb-col-int {
+      #tb-area {
         display: none;
       }
 
@@ -6553,10 +6595,10 @@
       <div class="menu-item" data-menu="file">
         File
         <div class="menu-dropdown">
-          <div class="mdi" id="mi-open"><span class="mi-icon" data-cs-icon="open"></span>Open Point Cloud<span class="kbd">Ctrl+O</span></div>
+          <div class="mdi" id="mi-open"><span class="mi-icon" data-cs-icon="open"></span>Open Point Cloud</div>
           <div class="mdi" id="mi-export-las"><span class="mi-icon" data-cs-icon="export"></span>Export Point Cloud</div>
           <div class="mdi-sep"></div>
-          <div class="mdi" id="mi-screenshot"><span class="mi-icon" data-cs-icon="screenshot"></span>Export Screenshot<span class="kbd">Ctrl+S</span></div>
+          <div class="mdi" id="mi-screenshot"><span class="mi-icon" data-cs-icon="screenshot"></span>Export Screenshot</div>
           <div class="mdi-sep"></div>
           <div class="mdi" id="mi-home"><span class="mi-icon" data-cs-icon="home"></span>Back to Home</div>
         </div>
@@ -6574,7 +6616,7 @@
           <div class="mdi" id="mi-bg-black">Background: Black</div>
           <div class="mdi" id="mi-bg-white">Background: White</div>
           <div class="mdi-sep"></div>
-          <div class="mdi" id="mi-fullscreen">Fullscreen<span class="kbd">F11</span></div>
+          <div class="mdi" id="mi-fullscreen">Fullscreen</div>
         </div>
       </div>
 
@@ -6615,7 +6657,6 @@
       <div class="menu-item" data-menu="help">
         Help
         <div class="menu-dropdown">
-          <div class="mdi" id="mi-shortcuts">Keyboard Shortcuts</div>
           <div class="mdi" id="mi-about">About CloudStudio</div>
         </div>
       </div>
@@ -6644,7 +6685,7 @@
   <div id="toolbar" data-i18n-auto-root>
     <!-- File -->
     <div class="tb-group">
-      <button class="tb-btn" id="tb-open" title="Open point cloud (Ctrl+O)" data-i18n-title="viewer.toolbar.openTitle">
+      <button class="tb-btn" id="tb-open" title="Open point cloud" data-i18n-title="viewer.toolbar.openTitle">
         <span class="tb-icon" data-cs-icon="open"></span><span class="tb-label" data-i18n="viewer.toolbar.openLabel">Open</span>
       </button>
       <button class="tb-btn" id="tb-export-las" title="Export point cloud" data-i18n-title="viewer.toolbar.exportTitle">
@@ -6681,19 +6722,6 @@
       </button>
       <button class="tb-btn tool-btn" id="tb-area" data-tool="area" title="Area" data-i18n-title="viewer.toolbar.areaTitle">
         <span class="tb-icon" data-cs-icon="area"></span><span class="tb-label" data-i18n="viewer.toolbar.areaLabel">Area</span>
-      </button>
-    </div>
-    <div class="tb-sep"></div>
-    <!-- Color modes -->
-    <div class="tb-group">
-      <button class="tb-btn color-btn active" id="tb-col-rgb" data-attr="rgba" title="RGB color" data-i18n-title="viewer.toolbar.rgbTitle">
-        <span class="tb-icon" data-cs-icon="rgb"></span><span class="tb-label" data-i18n="viewer.toolbar.rgbLabel">RGB</span>
-      </button>
-      <button class="tb-btn color-btn" id="tb-col-elev" data-attr="elevation" title="Elevation color" data-i18n-title="viewer.toolbar.elevationTitle">
-        <span class="tb-icon" data-cs-icon="elevation"></span><span class="tb-label" data-i18n="viewer.toolbar.elevationLabel">Elevation</span>
-      </button>
-      <button class="tb-btn color-btn" id="tb-col-int" data-attr="intensity" title="Intensity color" data-i18n-title="viewer.toolbar.intensityTitle">
-        <span class="tb-icon" data-cs-icon="intensity"></span><span class="tb-label" data-i18n="viewer.toolbar.intensityLabel">Intensity</span>
       </button>
     </div>
     <div class="tb-sep"></div>
@@ -6768,10 +6796,10 @@
 
     <!-- Left panel -->
     <div id="left-panel">
+      <button class="left-panel-toggle" id="btn-left-panel-toggle" type="button" title="Hide scene panel" aria-label="Hide scene panel" data-i18n-title="viewer.scene.toggleCollapse" data-i18n-aria-label="viewer.scene.toggleCollapse">
+        <span class="quick-btn-icon" data-cs-icon="left"></span>
+      </button>
       <div id="left-quickbar">
-        <button class="left-panel-toggle" id="btn-left-panel-toggle" type="button" title="Hide scene panel" aria-label="Hide scene panel" data-i18n-title="viewer.scene.toggleCollapse" data-i18n-aria-label="viewer.scene.toggleCollapse">
-          <span class="quick-btn-icon" data-cs-icon="left"></span>
-        </button>
         <div class="quickbar-scroll">
           <div class="quickbar-group">
             <div class="quickbar-title">View</div>
@@ -6930,10 +6958,21 @@
       </div>
       <div class="orientation-gizmo" id="orientation-gizmo" aria-label="XYZ orientation" data-i18n-aria-label="viewer.orientation.label">
         <svg viewBox="0 0 96 96" aria-hidden="true">
-          <line id="axis-z-line" x1="48" y1="52" x2="48" y2="18" stroke="#007aff"></line>
-          <line id="axis-y-line" x1="48" y1="52" x2="28" y2="74" stroke="#34c759"></line>
-          <line id="axis-x-line" x1="48" y1="52" x2="76" y2="58" stroke="#ff3b30"></line>
-          <circle cx="48" cy="52" r="3.2" fill="rgba(29,29,31,0.74)"></circle>
+          <defs>
+            <marker id="axis-arrow-z" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#007aff"></path>
+            </marker>
+            <marker id="axis-arrow-y" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#34c759"></path>
+            </marker>
+            <marker id="axis-arrow-x" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#ff3b30"></path>
+            </marker>
+          </defs>
+          <line id="axis-z-line" x1="48" y1="52" x2="48" y2="18" stroke="#007aff" marker-end="url(#axis-arrow-z)"></line>
+          <line id="axis-y-line" x1="48" y1="52" x2="28" y2="74" stroke="#34c759" marker-end="url(#axis-arrow-y)"></line>
+          <line id="axis-x-line" x1="48" y1="52" x2="76" y2="58" stroke="#ff3b30" marker-end="url(#axis-arrow-x)"></line>
+          <circle cx="48" cy="52" r="2.4" fill="rgba(29,29,31,0.62)"></circle>
           <text id="axis-z-label" x="48" y="16" fill="#007aff">Z</text>
           <text id="axis-y-label" x="25" y="77" fill="#34c759">Y</text>
           <text id="axis-x-label" x="80" y="58" fill="#ff3b30">X</text>
@@ -6945,7 +6984,7 @@
         <canvas id="cursor-magnifier-canvas"></canvas>
       </div>
       <div id="potree_sidebar_container"></div>
-      <button id="btn-mobile-left-open" class="mobile-panel-toggle" type="button" data-i18n="viewer.scene.mobileScene">&#9776; Scene</button>
+      <button id="btn-mobile-left-open" class="mobile-panel-toggle" type="button" title="Show scene panel" aria-label="Show scene panel" data-i18n-title="viewer.scene.toggleExpand" data-i18n-aria-label="viewer.scene.toggleExpand"></button>
       <button id="btn-right-panel-reopen" class="right-tools-toggle" type="button" title="Show tools" aria-label="Show tools" data-i18n-title="viewer.inspector.reopen"></button>
     </div>
 
@@ -8042,76 +8081,6 @@
       <button id="photo-toggle-lr">Toggle L/R</button>
     </div>
     <div class="photo-info" id="photo-info">—</div>
-  </div>
-
-  <!-- Shortcuts -->
-  <div class="modal-overlay" id="modal-shortcuts">
-    <div class="modal-box" style="width:420px;">
-      <div class="modal-title">⌨ Shortcuts</div>
-      <table style="width:100%;border-collapse:collapse;font-size:11px;color:var(--text2);">
-        <tr>
-          <td style="padding:5px 0;color:var(--text);font-weight:600;" colspan="2">Navigation</td>
-        </tr>
-        <tr>
-          <td style="padding:3px 0;"><kbd style="background:var(--border2);padding:2px 6px;border-radius:3px;">F</kbd>
-          </td>
-          <td>Fit to Screen</td>
-        </tr>
-        <tr>
-          <td><kbd style="background:var(--border2);padding:2px 6px;border-radius:3px;">Ctrl+O</kbd></td>
-          <td>Open Point Cloud</td>
-        </tr>
-        <tr>
-          <td><kbd style="background:var(--border2);padding:2px 6px;border-radius:3px;">F11</kbd></td>
-          <td>Toggle Fullscreen</td>
-        </tr>
-        <tr>
-          <td><kbd style="background:var(--border2);padding:2px 6px;border-radius:3px;">ESC</kbd></td>
-          <td>Exit current tool</td>
-        </tr>
-        <tr>
-          <td style="padding:5px 0;color:var(--text);font-weight:600;" colspan="2">Measure</td>
-        </tr>
-        <tr>
-          <td><kbd style="background:var(--border2);padding:2px 6px;border-radius:3px;">1</kbd></td>
-          <td>Distance</td>
-        </tr>
-        <tr>
-          <td><kbd style="background:var(--border2);padding:2px 6px;border-radius:3px;">2</kbd></td>
-          <td>Height</td>
-        </tr>
-        <tr>
-          <td><kbd style="background:var(--border2);padding:2px 6px;border-radius:3px;">3</kbd></td>
-          <td>Area</td>
-        </tr>
-        <tr>
-          <td><kbd style="background:var(--border2);padding:2px 6px;border-radius:3px;">4</kbd></td>
-          <td>Angle</td>
-        </tr>
-        <tr>
-          <td><kbd style="background:var(--border2);padding:2px 6px;border-radius:3px;">5</kbd></td>
-          <td>Coordinate Point</td>
-        </tr>
-        <tr>
-          <td style="padding:5px 0;color:var(--text);font-weight:600;" colspan="2">Visualization</td>
-        </tr>
-        <tr>
-          <td><kbd style="background:var(--border2);padding:2px 6px;border-radius:3px;">R</kbd></td>
-          <td>RGB Color</td>
-        </tr>
-        <tr>
-          <td><kbd style="background:var(--border2);padding:2px 6px;border-radius:3px;">E</kbd></td>
-          <td>Elevation Coloring</td>
-        </tr>
-        <tr>
-          <td><kbd style="background:var(--border2);padding:2px 6px;border-radius:3px;">I</kbd></td>
-          <td>Intensity Coloring</td>
-        </tr>
-      </table>
-      <div class="modal-footer">
-        <button class="btn" id="shortcuts-close">Close</button>
-      </div>
-    </div>
   </div>
 
   <!-- About -->
@@ -9490,10 +9459,10 @@ window.__CLOUDSTUDIO_THREE = THREE;
       setMenuLabel('vis', 'viewer.menu.visualization', 'Visualization');
       setMenuLabel('help', 'viewer.menu.help', 'Help');
 
-      setButtonLocale('tb-open', 'viewer.toolbar.openLabel', 'Open', 'viewer.toolbar.openTitle', 'Open Point Cloud (Ctrl+O)');
+      setButtonLocale('tb-open', 'viewer.toolbar.openLabel', 'Open', 'viewer.toolbar.openTitle', 'Open Point Cloud');
       setButtonLocale('tb-export-las', 'viewer.toolbar.exportLabel', 'Export', 'viewer.toolbar.exportTitle', 'Export Point Cloud');
       setButtonLocale('tb-screenshot', 'viewer.toolbar.screenshotLabel', 'Screenshot', 'viewer.toolbar.screenshotTitle', 'Screenshot');
-      setButtonLocale('tb-fit', 'viewer.toolbar.fitLabel', 'Fit', 'viewer.toolbar.fitTitle', 'Fit View (F)');
+      setButtonLocale('tb-fit', 'viewer.toolbar.fitLabel', 'Fit', 'viewer.toolbar.fitTitle', 'Fit View');
       setButtonLocale('tb-orbit', 'viewer.toolbar.orbitLabel', 'Orbit', 'viewer.toolbar.orbitTitle', 'Orbit Navigation');
       setButtonLocale('tb-fly', 'viewer.toolbar.flyLabel', 'Fly', 'viewer.toolbar.flyTitle', 'Fly Navigation');
       setButtonLocale('tb-edl', 'viewer.toolbar.edlLabel', 'EDL', 'viewer.toolbar.edlTitle', 'Eye-Dome Lighting');
@@ -9510,23 +9479,20 @@ window.__CLOUDSTUDIO_THREE = THREE;
       setButtonLocale('tb-delete-poly', 'viewer.toolbar.deleteRegionLabel', 'Delete', 'viewer.toolbar.deleteRegionTitle', 'Delete Selected Region');
       setButtonLocale('tb-profile', 'viewer.toolbar.profileLabel', 'Profile', 'viewer.toolbar.profileTitle', 'Section / Profile');
       setButtonLocale('tb-clearclip', 'viewer.toolbar.clearClipLabel', 'Clear Clip', 'viewer.toolbar.clearClipTitle', 'Clear Clipping');
-      setButtonLocale('tb-col-rgb', 'viewer.toolbar.rgbLabel', 'RGB', 'viewer.toolbar.rgbTitle', 'RGB Color');
-      setButtonLocale('tb-col-elev', 'viewer.toolbar.elevationLabel', 'Elevation', 'viewer.toolbar.elevationTitle', 'Elevation Coloring');
-      setButtonLocale('tb-col-int', 'viewer.toolbar.intensityLabel', 'Intensity', 'viewer.toolbar.intensityTitle', 'Intensity Coloring');
       setButtonLocale('tb-col-cls', 'viewer.toolbar.classificationLabel', 'Class', 'viewer.toolbar.classificationTitle', 'Classification Coloring');
       setButtonLocale('tb-more', 'viewer.toolbar.moreLabel', 'More', 'viewer.toolbar.moreTitle', 'More tools');
 
       const miOpen = document.getElementById('mi-open');
-      if (miOpen) miOpen.innerHTML = `<span class="mi-icon" data-cs-icon="open"></span>${tr('viewer.toolbar.openTitle', {}, 'Open Point Cloud')}<span class="kbd">Ctrl+O</span>`;
+      if (miOpen) miOpen.innerHTML = `<span class="mi-icon" data-cs-icon="open"></span>${tr('viewer.toolbar.openTitle', {}, 'Open Point Cloud')}`;
       const miExportLas = document.getElementById('mi-export-las');
       if (miExportLas) miExportLas.innerHTML = `<span class="mi-icon" data-cs-icon="export"></span>${tr('viewer.toolbar.exportLabel', {}, 'Export Point Cloud')}`;
       const miScreenshot = document.getElementById('mi-screenshot');
-      if (miScreenshot) miScreenshot.innerHTML = `<span class="mi-icon" data-cs-icon="screenshot"></span>${tr('viewer.toolbar.screenshotTitle', {}, 'Screenshot')}<span class="kbd">Ctrl+S</span>`;
+      if (miScreenshot) miScreenshot.innerHTML = `<span class="mi-icon" data-cs-icon="screenshot"></span>${tr('viewer.toolbar.screenshotTitle', {}, 'Screenshot')}`;
       const miHome = document.getElementById('mi-home');
       if (miHome) miHome.innerHTML = `<span class="mi-icon" data-cs-icon="home"></span>${tr('viewer.menu.home', {}, 'Back to Home')}`;
       renderAppIcons(document.getElementById('menubar'));
       const miFit = document.getElementById('mi-fit');
-      if (miFit) miFit.innerHTML = `<span class="mi-icon" data-cs-icon="fit"></span>${tr('viewer.toolbar.fitTitle', {}, 'Fit View')}<span class="kbd">F</span>`;
+      if (miFit) miFit.innerHTML = `<span class="mi-icon" data-cs-icon="fit"></span>${tr('viewer.toolbar.fitTitle', {}, 'Fit View')}`;
       const miTopView = document.getElementById('mi-topview');
       if (miTopView) miTopView.innerHTML = `<span class="mi-icon" data-cs-icon="top"></span>${tr('viewer.menu.topView', {}, 'Top View')}`;
       const miSideView = document.getElementById('mi-sideview');
@@ -9540,7 +9506,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
       const miBgWhite = document.getElementById('mi-bg-white');
       if (miBgWhite) miBgWhite.textContent = tr('viewer.menu.bgWhite', {}, 'Background: White');
       const miFullscreen = document.getElementById('mi-fullscreen');
-      if (miFullscreen) miFullscreen.innerHTML = `${tr('viewer.menu.fullscreen', {}, 'Fullscreen')}<span class="kbd">F11</span>`;
+      if (miFullscreen) miFullscreen.innerHTML = `${tr('viewer.menu.fullscreen', {}, 'Fullscreen')}`;
       const miPoint = document.getElementById('mi-t-point');
       if (miPoint) miPoint.innerHTML = `<span class="mi-icon" data-cs-icon="point"></span>${tr('viewer.menu.pointMeasure', {}, 'Point Coordinate Measure')}`;
       const miDist = document.getElementById('mi-t-dist');
@@ -9577,8 +9543,6 @@ window.__CLOUDSTUDIO_THREE = THREE;
       if (miColLod) miColLod.innerHTML = `<span class="mi-icon" data-cs-icon="lod"></span>${tr('viewer.menu.lodColor', {}, 'LOD Level')}`;
       const miEdlToggle = document.getElementById('mi-edl-toggle');
       if (miEdlToggle) miEdlToggle.innerHTML = `<span class="mi-icon" data-cs-icon="edl"></span>${tr('viewer.menu.toggleEdl', {}, 'Toggle EDL Lighting')}`;
-      const miShortcuts = document.getElementById('mi-shortcuts');
-      if (miShortcuts) miShortcuts.textContent = tr('viewer.menu.shortcuts', {}, 'Keyboard Shortcuts');
       const miAbout = document.getElementById('mi-about');
       if (miAbout) miAbout.textContent = tr('viewer.menu.about', {}, 'About CloudStudio');
       renderAppIcons(document.getElementById('menubar'));
@@ -12116,11 +12080,13 @@ window.__CLOUDSTUDIO_THREE = THREE;
       ra.style.width = '100%';
       ra.style.height = '100%';
 
-      // Hijack Potree's hamburger button to toggle our custom left panel instead
+      // Hide Potree's native hamburger; CloudStudio owns the scene panel controls.
       const hamburger = document.querySelector('.potree_menu_toggle');
       if (hamburger) {
         hamburger.onclick = null;
-        hamburger.addEventListener('click', toggleLeftPanel);
+        hamburger.style.display = 'none';
+        hamburger.style.visibility = 'hidden';
+        hamburger.setAttribute('aria-hidden', 'true');
       }
       applyNavigationPivotMode(getNavigationPivotMode(), { activate: true, notify: false, force: true });
       syncRightPanelUi();
@@ -14244,7 +14210,6 @@ window.__CLOUDSTUDIO_THREE = THREE;
     document.getElementById('mi-col-class').addEventListener('click', () => setColorMode('classification'));
     document.getElementById('mi-col-lod').addEventListener('click', () => setColorMode('level of detail'));
     document.getElementById('mi-edl-toggle').addEventListener('click', () => setEDLEnabledState(!edlOn));
-    document.getElementById('mi-shortcuts').addEventListener('click', () => document.getElementById('modal-shortcuts').classList.add('open'));
     document.getElementById('mi-about').addEventListener('click', () => document.getElementById('modal-about').classList.add('open'));
     document.getElementById('btn-refresh').addEventListener('click', () => { refreshSceneTree(); toast('Scene tree refreshed', 'info'); });
 
@@ -14877,10 +14842,9 @@ window.__CLOUDSTUDIO_THREE = THREE;
     }
 
     // Close modals on overlay click
-    ['modal-open', 'modal-export-las', 'modal-shortcuts', 'modal-about', 'modal-disclaimer'].forEach(id => {
+    ['modal-open', 'modal-export-las', 'modal-about', 'modal-disclaimer'].forEach(id => {
       document.getElementById(id)?.addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
     });
-    document.getElementById('shortcuts-close').addEventListener('click', () => document.getElementById('modal-shortcuts').classList.remove('open'));
     document.getElementById('about-close').addEventListener('click', () => document.getElementById('modal-about').classList.remove('open'));
     document.getElementById('disclaimer-close').addEventListener('click', () => {
       document.getElementById('modal-disclaimer').classList.remove('open');
@@ -14898,34 +14862,16 @@ window.__CLOUDSTUDIO_THREE = THREE;
     }
 
     // ─────────────────────────────────────────────
-    // Keyboard shortcuts
+    // Keyboard safety cancel
     // ─────────────────────────────────────────────
     document.addEventListener('keydown', e => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-      if (e.ctrlKey || e.metaKey) {
-        if (e.key.toLowerCase() === 'o') { e.preventDefault(); openOpenModal(); }
-        if (e.key.toLowerCase() === 's') { e.preventDefault(); takeScreenshot(); }
-        return;
-      }
-      switch (e.key) {
-        case 'f': case 'F': viewer.fitToScreen(); break;
-        case '1': startMeasurement('distance'); break;
-        case '2': startMeasurement('height'); break;
-        case '3': startMeasurement('area'); break;
-        case '4': startMeasurement('angle'); break;
-        case '5': startMeasurement('point'); break;
-        case 'r': case 'R': setColorMode('rgba'); break;
-        case 'e': case 'E': setColorMode('elevation'); break;
-        case 'i': case 'I': setColorMode('intensity'); break;
-        case 'F11': e.preventDefault(); toggleFS(); break;
-        case 'Escape':
-          measurementFeature?.cancelActiveMeasurement?.({ notify: false });
-          profileFeature?.cancelActiveProfile?.({ notify: false });
-          cancelCurrentClipBoxSelection({ notify: false });
-          setTool(null);
-          setStatus('Ready');
-          break;
-      }
+      if (e.key !== 'Escape') return;
+      measurementFeature?.cancelActiveMeasurement?.({ notify: false });
+      profileFeature?.cancelActiveProfile?.({ notify: false });
+      cancelCurrentClipBoxSelection({ notify: false });
+      setTool(null);
+      setStatus('Ready');
     });
 
     // ═══════════════════════════════════════════════════════════

@@ -809,7 +809,7 @@
       "screenshotLabel": "Kuvakaappaus",
       "screenshotTitle": "Kuvakaappaus",
       "fitLabel": "Sovita",
-      "fitTitle": "Sovita näkymä (F)",
+      "fitTitle": "Sovita näkymään",
       "magnifierLabel": "Suurennus",
       "magnifierTitle": "Suurennus",
       "orbitLabel": "Kierto",
@@ -885,7 +885,6 @@
       "classificationColor": "Luokitusväritys",
       "lodColor": "LOD-taso",
       "toggleEdl": "Vaihda EDL-valaistus",
-      "shortcuts": "Pikanäppäimet",
       "about": "Tietoja CloudStudiosta"
     },
     "pageTitle": "CloudStudio - Ammattimainen pistepilvialusta",

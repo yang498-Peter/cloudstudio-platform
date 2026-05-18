@@ -809,7 +809,7 @@
       "screenshotLabel": "Schermata",
       "screenshotTitle": "Schermata",
       "fitLabel": "Adatta",
-      "fitTitle": "Adatta vista (F)",
+      "fitTitle": "Adatta vista",
       "magnifierLabel": "Lente",
       "magnifierTitle": "Lente",
       "orbitLabel": "Orbita",
@@ -885,7 +885,6 @@
       "classificationColor": "Colorazione classificazione",
       "lodColor": "Livello LOD",
       "toggleEdl": "Attiva/disattiva illuminazione EDL",
-      "shortcuts": "Scorciatoie da tastiera",
       "about": "Informazioni su CloudStudio"
     },
     "pageTitle": "CloudStudio - Piattaforma professionale per nuvole di punti",

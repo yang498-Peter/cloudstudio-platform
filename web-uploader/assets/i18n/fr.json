@@ -801,7 +801,7 @@
     "toolbar": {
       "localeLabel": "Langue",
       "openLabel": "Ouvrir",
-      "openTitle": "Ouvrir un nuage de points",
+      "openTitle": "Ouvrir le nuage de points",
       "uploadLabel": "Importer",
       "uploadTitle": "Importer et convertir",
       "exportLabel": "Exporter le nuage",
@@ -809,7 +809,7 @@
       "screenshotLabel": "Capture",
       "screenshotTitle": "Capture d’écran",
       "fitLabel": "Ajuster",
-      "fitTitle": "Ajuster la vue (F)",
+      "fitTitle": "Ajuster la vue",
       "magnifierLabel": "Loupe",
       "magnifierTitle": "Loupe",
       "orbitLabel": "Orbite",
@@ -886,7 +886,6 @@
       "classificationColor": "Coloration par classification",
       "lodColor": "Niveau de LOD",
       "toggleEdl": "Basculer l’éclairage EDL",
-      "shortcuts": "Raccourcis clavier",
       "about": "À propos de CloudStudio"
     },
     "pageTitle": "CloudStudio - Plateforme professionnelle de traitement de nuages de points",

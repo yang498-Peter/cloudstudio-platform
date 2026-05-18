@@ -809,7 +809,7 @@
       "screenshotLabel": "截图",
       "screenshotTitle": "截图",
       "fitLabel": "适配",
-      "fitTitle": "适配视图 (F)",
+      "fitTitle": "适合视图",
       "magnifierLabel": "放大镜",
       "magnifierTitle": "鼠标放大镜",
       "orbitLabel": "旋转",
@@ -885,7 +885,6 @@
       "classificationColor": "分类着色",
       "lodColor": "LOD 层级",
       "toggleEdl": "切换 EDL 照明",
-      "shortcuts": "快捷键说明",
       "about": "关于 CloudStudio"
     },
     "pageTitle": "CloudStudio - 专业点云处理平台",

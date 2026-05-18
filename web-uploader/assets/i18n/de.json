@@ -809,7 +809,7 @@
       "screenshotLabel": "Screenshot",
       "screenshotTitle": "Screenshot",
       "fitLabel": "Anpassen",
-      "fitTitle": "Ansicht anpassen (F)",
+      "fitTitle": "Ansicht anpassen",
       "magnifierLabel": "Lupe",
       "magnifierTitle": "Lupe",
       "orbitLabel": "Umlaufbahn",
@@ -885,7 +885,6 @@
       "classificationColor": "Klassifikationsfärbung",
       "lodColor": "LOD-Stufe",
       "toggleEdl": "EDL-Beleuchtung umschalten",
-      "shortcuts": "Tastenkürzel",
       "about": "Über CloudStudio"
     },
     "pageTitle": "CloudStudio - Professionelle Punktwolkenplattform",

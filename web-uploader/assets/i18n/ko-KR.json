@@ -803,7 +803,7 @@
     "toolbar": {
       "localeLabel": "언어",
       "openLabel": "열기",
-      "openTitle": "점구름 열기",
+      "openTitle": "포인트 클라우드 열기",
       "uploadLabel": "업로드",
       "uploadTitle": "가져오기 및 변환",
       "exportLabel": "점구름 내보내기",
@@ -811,7 +811,7 @@
       "screenshotLabel": "스크린샷",
       "screenshotTitle": "스크린샷",
       "fitLabel": "맞춤",
-      "fitTitle": "화면에 맞춤 (F)",
+      "fitTitle": "화면에 맞춤",
       "magnifierLabel": "돋보기",
       "magnifierTitle": "돋보기",
       "orbitLabel": "회전",
@@ -887,7 +887,6 @@
       "classificationColor": "분류 색상",
       "lodColor": "LOD 레벨",
       "toggleEdl": "EDL 조명 전환",
-      "shortcuts": "키보드 단축키",
       "about": "CloudStudio 정보"
     },
     "pageTitle": "CloudStudio - 전문 점구름 처리 플랫폼",

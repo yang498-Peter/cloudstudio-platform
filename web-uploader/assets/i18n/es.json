@@ -810,7 +810,7 @@
       "screenshotLabel": "Captura",
       "screenshotTitle": "Captura de pantalla",
       "fitLabel": "Ajustar",
-      "fitTitle": "Ajustar vista (F)",
+      "fitTitle": "Ajustar vista",
       "magnifierLabel": "Lupa",
       "magnifierTitle": "Lupa",
       "orbitLabel": "Órbita",
@@ -886,7 +886,6 @@
       "classificationColor": "Color por clasificación",
       "lodColor": "Nivel LOD",
       "toggleEdl": "Alternar iluminación EDL",
-      "shortcuts": "Atajos de teclado",
       "about": "Acerca de CloudStudio"
     },
     "pageTitle": "CloudStudio - Plataforma profesional de nubes de puntos",
