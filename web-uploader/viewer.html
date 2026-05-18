@@ -489,60 +489,78 @@
     }
 
     .left-panel-toggle {
-      position: absolute;
-      top: 9px;
-      right: 8px;
-      z-index: 6;
-      width: 28px;
-      height: 28px;
+      width: 22px;
+      height: 22px;
       padding: 0;
-      border: 1px solid rgba(8, 15, 30, 0.11);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.70);
-      color: #6b7280;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text3);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.10);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      transition: opacity .15s ease, background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+      flex-shrink: 0;
+      transition: background .12s ease, color .12s ease;
     }
 
     .left-panel-toggle:hover {
-      background: rgba(255, 255, 255, 0.88);
-      color: var(--accent);
-      border-color: rgba(0, 122, 255, 0.20);
-      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.14);
+      background: var(--border2);
+      color: var(--text);
     }
 
     .left-panel-toggle .quick-btn-icon {
-      width: 14px;
-      height: 14px;
+      width: 13px;
+      height: 13px;
     }
 
     #left-panel.left-panel-collapsed .left-panel-toggle {
+      display: none;
+    }
+
+    .left-panel-expand {
+      position: absolute;
       top: 10px;
       right: -12px;
+      z-index: 6;
       width: 24px;
       height: 36px;
+      padding: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: #6b7280;
+      cursor: pointer;
+      border: 1px solid rgba(8, 15, 30, 0.09);
       border-radius: 0 999px 999px 0;
       background: rgba(255, 255, 255, 0.46);
       border-left-color: transparent;
       opacity: .52;
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: opacity .15s ease, background .15s ease, color .15s ease;
     }
 
-    #left-panel.left-panel-collapsed .left-panel-toggle:hover {
+    #left-panel.left-panel-collapsed .left-panel-expand {
+      display: inline-flex;
+    }
+
+    #left-panel.left-panel-collapsed .left-panel-expand:hover {
       opacity: .86;
       background: rgba(255, 255, 255, 0.76);
+      color: var(--accent);
+    }
+
+    .left-panel-expand .quick-btn-icon {
+      width: 13px;
+      height: 13px;
     }
 
     .quickbar-scroll {
       flex: 1;
       overflow-y: auto;
-      padding: 48px 6px 10px;
+      padding: 8px 6px 10px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -648,6 +666,13 @@
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
+    }
+
+    .panel-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 8px;
     }
 
     .sec-hd {
@@ -6796,8 +6821,8 @@
 
     <!-- Left panel -->
     <div id="left-panel">
-      <button class="left-panel-toggle" id="btn-left-panel-toggle" type="button" title="Hide scene panel" aria-label="Hide scene panel" data-i18n-title="viewer.scene.toggleCollapse" data-i18n-aria-label="viewer.scene.toggleCollapse">
-        <span class="quick-btn-icon" data-cs-icon="left"></span>
+      <button class="left-panel-expand" id="btn-left-panel-expand" type="button" title="Show scene panel" aria-label="Show scene panel" data-i18n-title="viewer.scene.toggleExpand" data-i18n-aria-label="viewer.scene.toggleExpand">
+        <span class="quick-btn-icon" data-cs-icon="right"></span>
       </button>
       <div id="left-quickbar">
         <div class="quickbar-scroll">
@@ -6870,7 +6895,12 @@
       <div id="left-content">
         <div class="panel-hd">
           <span>Scene Manager</span>
-          <button class="icon-btn" id="btn-refresh" title="Refresh">↺</button>
+          <div class="panel-actions">
+            <button class="icon-btn" id="btn-refresh" title="Refresh">↺</button>
+            <button class="left-panel-toggle" id="btn-left-panel-toggle" type="button" title="Hide scene panel" aria-label="Hide scene panel" data-i18n-title="viewer.scene.toggleCollapse" data-i18n-aria-label="viewer.scene.toggleCollapse">
+              <span class="quick-btn-icon" data-cs-icon="left"></span>
+            </button>
+          </div>
         </div>
 
         <!-- Point clouds -->
@@ -12097,14 +12127,20 @@ window.__CLOUDSTUDIO_THREE = THREE;
     function syncLeftPanelUi() {
       const panel = document.getElementById('left-panel');
       const toggle = document.getElementById('btn-left-panel-toggle');
+      const expand = document.getElementById('btn-left-panel-expand');
       panel?.classList.toggle('left-panel-collapsed', leftPanelCollapsed);
-      if (!toggle) return;
-      const title = leftPanelCollapsed
-        ? tr('viewer.scene.toggleExpand', {}, 'Show scene panel')
-        : tr('viewer.scene.toggleCollapse', {}, 'Hide scene panel');
-      toggle.title = title;
-      toggle.setAttribute('aria-label', title);
-      setIconElement(toggle.querySelector('.quick-btn-icon'), leftPanelCollapsed ? 'right' : 'left');
+      const hideTitle = tr('viewer.scene.toggleCollapse', {}, 'Hide scene panel');
+      const showTitle = tr('viewer.scene.toggleExpand', {}, 'Show scene panel');
+      if (toggle) {
+        toggle.title = hideTitle;
+        toggle.setAttribute('aria-label', hideTitle);
+        setIconElement(toggle.querySelector('.quick-btn-icon'), 'left');
+      }
+      if (expand) {
+        expand.title = showTitle;
+        expand.setAttribute('aria-label', showTitle);
+        setIconElement(expand.querySelector('.quick-btn-icon'), 'right');
+      }
     }
 
     function toggleLeftPanel() {
@@ -12118,6 +12154,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
     }
 
     document.getElementById('btn-left-panel-toggle')?.addEventListener('click', toggleLeftPanel);
+    document.getElementById('btn-left-panel-expand')?.addEventListener('click', toggleLeftPanel);
     syncLeftPanelUi();
 
     // ── Mobile panel helpers ──────────────────────────────────────────────────
