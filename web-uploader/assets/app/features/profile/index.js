@@ -1,9 +1,12 @@
 export function createProfileFeature({
   viewer,
+  translateText = value => value,
   toast,
   setStatus,
   setToolMode,
   stopCapture,
+  cancelActiveMeasurement,
+  cancelClipBoxSelection,
   cancelVolumeSelection,
   cancelDeletePolygonSelection,
   hideAllVolumeRegionOverlays,
@@ -27,6 +30,7 @@ export function createProfileFeature({
   hideProfileSelectionProperties,
 } = {}) {
   let controlsBound = false;
+  let activeProfileInsertion = null;
 
   function startProfile() {
     if (!viewer.scene.pointclouds.length) {
@@ -35,6 +39,8 @@ export function createProfileFeature({
     }
 
     stopCapture();
+    cancelActiveMeasurement?.({ notify: false });
+    cancelClipBoxSelection?.({ notify: false });
     cancelVolumeSelection({ notify: false });
     cancelDeletePolygonSelection({ notify: false });
     hideAllVolumeRegionOverlays();
@@ -44,6 +50,7 @@ export function createProfileFeature({
     activateClipTab?.();
 
     const width = getProfileWidth();
+    cancelActiveProfile({ notify: false });
     const profile = getProfileTool?.()?.startInsertion?.({
       maxMarkers: 2,
       name: 'Profile',
@@ -51,9 +58,11 @@ export function createProfileFeature({
     setActiveProfile(profile);
 
     if (!profile) return null;
+    activeProfileInsertion = profile;
 
     profile.setWidth(width);
     profile.addEventListener('finish', () => {
+      if (activeProfileInsertion === profile) activeProfileInsertion = null;
       setToolMode(null);
       setStatus('Profile ready - review the section below or create a clip box');
       ensureProfileInScene(profile);
@@ -65,6 +74,28 @@ export function createProfileFeature({
     });
 
     return profile;
+  }
+
+  function cancelActiveProfile({ notify = false } = {}) {
+    const profile = activeProfileInsertion;
+    activeProfileInsertion = null;
+    if (!profile) return false;
+
+    try {
+      viewer.dispatchEvent?.({ type: 'cancel_insertions' });
+    } catch (error) { }
+
+    const pointCount = Array.isArray(profile.points) ? profile.points.length : 0;
+    if (pointCount < 2) {
+      try { viewer.scene.removeProfile(profile); } catch (error) { }
+      if (getActiveProfile?.() === profile) setActiveProfile(null);
+      setToolMode(null);
+      setStatus('Ready');
+      if (notify) toast(translateText('Cancel'), 'info');
+      return true;
+    }
+
+    return false;
   }
 
   function openProfilePanel() {
@@ -133,6 +164,7 @@ export function createProfileFeature({
 
   return {
     bindControls,
+    cancelActiveProfile,
     closeProfilePanel,
     openProfilePanel,
     startProfile,

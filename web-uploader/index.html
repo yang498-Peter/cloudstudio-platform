@@ -1545,18 +1545,17 @@
         justify-self: start;
       }
 
-      /* Upload tabs: scroll horizontally so 4 chips don't crush */
+      /* Upload tabs: keep every mode visible on phones. */
       .up-tabs {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        margin-left: -4px;
-        margin-right: -4px;
-        padding: 4px;
-        scrollbar-width: none;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        overflow: visible;
       }
-      .up-tabs::-webkit-scrollbar { display: none; }
       .up-tab {
-        flex: 0 0 auto;
+        width: 100%;
+        white-space: normal;
+        min-height: 42px;
       }
 
       /* Footer */
@@ -2513,6 +2512,8 @@
     const I18N = APP_SERVICES.i18n;
     const apiClient = APP_SERVICES.apiClient;
     let lastStatus = { type: '', key: 'waitingUpload', vars: {}, raw: false };
+    let cloudListCache = [];
+    let cloudLoadSeq = 0;
 
     function tr(key, vars = {}, fallback = '') { return I18N.t(key, vars, fallback); }
     function trError(errorCode, fallback = '') {
@@ -2539,8 +2540,13 @@
       const text = String(value || '');
       if (!text) return false;
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-        return true;
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch (error) {
+          // Embedded browsers can deny the async Clipboard API on the first click.
+          // Keep the customer flow graceful by falling back to the legacy copy path.
+        }
       }
       const textarea = document.createElement('textarea');
       textarea.value = text;
@@ -2556,6 +2562,22 @@
         textarea.remove();
       }
       return ok;
+    }
+
+    function getCurrentLocale() {
+      return window.__APP_ACTIVE_LOCALE || document.getElementById('locale-select')?.value || 'en';
+    }
+
+    function withCurrentLocale(url) {
+      const locale = getCurrentLocale();
+      if (!locale || locale === 'en') return url;
+      try {
+        const parsed = new URL(url, window.location.origin);
+        parsed.searchParams.set('lng', locale);
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      } catch {
+        return url;
+      }
     }
 
     async function applyLocaleToPage(locale) {
@@ -2588,7 +2610,7 @@
       document.body.dataset.i18nReady = '1';
       if (lastStatus.raw) setStatus(lastStatus.type, lastStatus.key, lastStatus.vars, { raw: true });
       else setStatus(lastStatus.type, lastStatus.key, lastStatus.vars);
-      loadClouds();
+      renderClouds(cloudListCache);
     }
 
     function toast(type, msg) {
@@ -2602,13 +2624,18 @@
     }
 
     async function loadClouds() {
+      const requestSeq = ++cloudLoadSeq;
       try {
         const data = await apiClient.getJson('/api/clouds');
         const clouds = data.clouds || [];
+        if (requestSeq !== cloudLoadSeq) return;
+        cloudListCache = clouds;
         renderClouds(clouds);
         const statEl = document.getElementById('stat-clouds');
         if (statEl) statEl.textContent = clouds.length || '0';
       } catch (e) {
+        if (requestSeq !== cloudLoadSeq) return;
+        cloudListCache = [];
         renderClouds([]);
         toast('err', tr('index.toast.loadFailed', { message: e.message }, `Load failed: ${e.message}`));
       }
@@ -2657,7 +2684,8 @@
         const viewerUrl = isGaussian
           ? (c.viewerUrl || `/3dgs/${encodeURIComponent(cloudKey)}`)
           : (c.viewerUrl || `/viewer?pointcloud=/pointclouds/${encodeURIComponent(c.name)}/metadata.json`);
-        const shareUrl = toAbsoluteUrl(viewerUrl);
+        const localizedViewerUrl = withCurrentLocale(viewerUrl);
+        const shareUrl = toAbsoluteUrl(localizedViewerUrl);
         const displayName = c.name || cloudKey || tr('index.clouds.title', {}, 'Published Scenes');
 
         // Build feature tag strip for scanner projects
@@ -2699,7 +2727,7 @@
           </div>
           <div class="cloud-actions">
             <div class="cloud-action-row">
-              <a class="btn pri cloud-open" href="${escapeHtml(viewerUrl)}" target="_blank" rel="noopener">${escapeHtml(tr('index.clouds.openScene', {}, 'Open scene'))}</a>
+              <a class="btn pri cloud-open" href="${escapeHtml(localizedViewerUrl)}" target="_blank" rel="noopener">${escapeHtml(tr('index.clouds.openScene', {}, 'Open scene'))}</a>
               <button type="button" class="btn cloud-copy" data-url="${escapeHtml(shareUrl)}" title="${escapeHtml(tr('index.clouds.copyLinkTitle', {}, 'Copy share link'))}">${escapeHtml(tr('index.clouds.copyLink', {}, 'Copy link'))}</button>
             </div>
             <button class="btn-delete" data-cloud="${escapeHtml(cloudKey || displayName)}" title="${escapeHtml(tr('index.delete.title', {}, 'Delete'))}" aria-label="${escapeHtml(tr('index.delete.title', {}, 'Delete'))}">

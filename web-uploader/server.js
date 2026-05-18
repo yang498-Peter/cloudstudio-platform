@@ -450,7 +450,7 @@ const CRS_BOOTSTRAP_FILE = path.join(ASSETS_DIR, 'crs', 'bootstrap.json');
 const CRS_CACHE_FILE = path.join(CACHE_DIR, 'crs-cache.json');
 const GRID_REGISTRY_FILE = path.join(CACHE_DIR, 'grid-registry.json');
 const GRID_CATALOG_FILE = path.join(ASSETS_DIR, 'grids', 'catalog.json');
-const GAUSSIAN_EDITOR_VERSION = 'cloudstudio-browse-20260505-4';
+const GAUSSIAN_EDITOR_VERSION = 'cloudstudio-browse-20260518-1';
 const EXPORT_POINTCLOUD_SCRIPT = path.join(__dirname, 'scripts', 'export_pointcloud.py');
 const FLOORPLAN_EXTRACT_SCRIPT = path.join(__dirname, 'scripts', 'extract_floorplan.py');
 const GRID_PROBE_SCRIPT = path.join(__dirname, 'scripts', 'grid_probe.py');
@@ -2823,17 +2823,31 @@ function resolveGaussianViewerRotation(manifest = {}, publishInfo = {}, fallback
   return topLevelRotation || publishRotation || normalizeGaussianViewerRotation(null, fallback);
 }
 
-function buildGaussianEditorUrl(assetName, manifest = {}, publishInfo = {}) {
+function normalizeGaussianEditorLocale(value) {
+  const raw = String(value || '').trim();
+  const supported = new Set(['en', 'zh-CN', 'fr', 'ko-KR', 'de', 'es', 'it', 'fi', 'sv']);
+  const aliases = {
+    zh: 'zh-CN',
+    'zh-cn': 'zh-CN',
+    ko: 'ko-KR',
+    'ko-kr': 'ko-KR',
+  };
+  const normalized = aliases[raw.toLowerCase()] || raw;
+  return supported.has(normalized) ? normalized : 'en';
+}
+
+function buildGaussianEditorUrl(assetName, manifest = {}, publishInfo = {}, options = {}) {
   const fileName = manifest.fileName || manifest.originalName || 'scene.ply';
   const rotation = resolveGaussianViewerRotation(
     manifest,
     publishInfo,
     publishInfo.rotationBaked ? BAKED_GAUSSIAN_VIEWER_ROTATION : DEFAULT_GAUSSIAN_VIEWER_ROTATION,
   );
+  const locale = normalizeGaussianEditorLocale(options.locale || options.lng || 'en');
   const params = new URLSearchParams({
     load: `/gaussians/${assetName}/${fileName}`,
     filename: fileName,
-    lng: 'en',
+    lng: locale,
     rx: String(rotation.rx),
     ry: String(rotation.ry),
     rz: String(rotation.rz),
@@ -4168,7 +4182,7 @@ app.get('/3dgs/:assetName', (req, res) => {
     }
 
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    return res.redirect(302, buildGaussianEditorUrl(assetName, manifest, manifest.publish || {}));
+    return res.redirect(302, buildGaussianEditorUrl(assetName, manifest, manifest.publish || {}, { locale: req.query?.lng }));
   } catch (error) {
     return sendApiError(res, error, {
       fallbackCode: error?.code || 'BAD_REQUEST',

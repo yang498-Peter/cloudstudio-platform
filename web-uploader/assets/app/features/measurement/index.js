@@ -35,6 +35,8 @@ export function createMeasurementFeature({
   stopCapture,
   cancelVolumeSelection,
   cancelDeletePolygonSelection,
+  cancelClipBoxSelection,
+  cancelActiveProfile,
   hideAllVolumeRegionOverlays,
   getVolumeRegions = () => [],
   clearAllVolumeRegions,
@@ -45,6 +47,7 @@ export function createMeasurementFeature({
   activateMeasureTab,
 } = {}) {
   let controlsBound = false;
+  let activeInsertion = null;
 
   function getMeasurements() {
     return Array.from(viewer?.scene?.measurements || []).filter(measurement => !measurement?.userData?.isDxfDraw);
@@ -247,6 +250,8 @@ export function createMeasurementFeature({
     }
 
     stopCapture();
+    cancelActiveProfile?.({ notify: false });
+    cancelClipBoxSelection?.({ notify: false });
     cancelVolumeSelection({ notify: false });
     cancelDeletePolygonSelection({ notify: false });
     hideAllVolumeRegionOverlays();
@@ -266,24 +271,50 @@ export function createMeasurementFeature({
     setStatus(translateText('Measuring... double-click to finish / ESC to cancel'));
     activateMeasureTab();
 
+    cancelActiveMeasurement({ notify: false });
     const measurement = viewer.measuringTool.startInsertion(config);
     if (!measurement) return null;
     if (!measurement.userData) measurement.userData = {};
     measurement.userData.scannerProjectId = getCurrentCoordinateProjectContext?.()?.projectId || null;
+    activeInsertion = measurement;
 
     measurement.addEventListener('marker_added', () => {
       refreshMeasurements();
       if (measurement.maxMarkers !== undefined && measurement.points && measurement.points.length >= measurement.maxMarkers) {
         setTimeout(() => {
+          if (activeInsertion === measurement) activeInsertion = null;
           finishMeasurement();
         }, 200);
       }
     });
     measurement.addEventListener('finish', () => {
+      if (activeInsertion === measurement) activeInsertion = null;
       finishMeasurement();
     });
 
     return measurement;
+  }
+
+  function cancelActiveMeasurement({ notify = false } = {}) {
+    const measurement = activeInsertion;
+    activeInsertion = null;
+    if (!measurement) return false;
+
+    try {
+      viewer.dispatchEvent?.({ type: 'cancel_insertions' });
+    } catch (error) { }
+
+    const pointCount = Array.isArray(measurement.points) ? measurement.points.length : 0;
+    if (pointCount < 2 || measurement.maxMarkers === 1) {
+      try { removeMeasurement(measurement); } catch (error) { }
+      refreshSceneTree();
+      refreshMeasurements();
+      if (notify) toast(translateText('Cancel'), 'info');
+      return true;
+    }
+
+    refreshMeasurements();
+    return false;
   }
 
   function clearAllMeasurements({ toastMessage = translateText('All measurements cleared') } = {}) {
@@ -340,6 +371,7 @@ export function createMeasurementFeature({
 
   return {
     bindControls,
+    cancelActiveMeasurement,
     clearAllMeasurements,
     refreshMeasurements,
     startMeasurement,

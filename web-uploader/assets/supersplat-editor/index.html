@@ -7,7 +7,7 @@
         <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
         <meta http-equiv="Pragma" content="no-cache" />
         <meta http-equiv="Expires" content="0" />
-        <link rel="stylesheet" href="./index.css?v=cloudstudio-browse-20260505-4">
+        <link rel="stylesheet" href="./index.css?v=cloudstudio-browse-20260518-1">
         <link rel="shortcut icon" href="#">
         <meta name="description" content="SuperSplat is an advanced browser-based editor for manipulating and optimizing 3D Gaussian Splats. It is open source and engine agnostic." />
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
@@ -51,7 +51,9 @@
                         description: 'CloudStudio 3DGS-visaren öppnar, granskar och delar 3D Gaussian Splat-scener direkt i webbläsaren.'
                     }
                 };
-                const lng = new URLSearchParams(window.location.search).get('lng') || 'en';
+                const requestedLng = new URLSearchParams(window.location.search).get('lng') || 'en';
+                const aliases = { zh: 'zh-CN', 'zh-cn': 'zh-CN', ko: 'ko-KR', 'ko-kr': 'ko-KR' };
+                const lng = copy[requestedLng] ? requestedLng : (aliases[String(requestedLng).toLowerCase()] || 'en');
                 const active = copy[lng] || copy.en;
                 document.documentElement.lang = lng;
                 document.title = active.title;
@@ -205,6 +207,6 @@
     </head>
 
     <body>
-        <script type="module" src="./index.js?v=cloudstudio-browse-20260505-4"></script>
+        <script type="module" src="./index.js?v=cloudstudio-browse-20260518-1"></script>
     </body>
 </html>

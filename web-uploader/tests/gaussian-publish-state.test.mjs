@@ -31,6 +31,17 @@ test('manifest viewerRotation overrides SuperSplat URL rotation params', () => {
   assert.equal(params.get('rz'), '33');
 });
 
+test('SuperSplat URL carries requested CloudStudio locale', () => {
+  const params = editorParams(buildGaussianEditorUrl(
+    'cramo_scene',
+    { fileName: 'scene.ply' },
+    { directBrowseStatus: 'ready' },
+    { locale: 'zh-CN' },
+  ));
+
+  assert.equal(params.get('lng'), 'zh-CN');
+});
+
 test('non-default publish viewerRotation is preserved when top-level rotation is the old default', () => {
   const rotation = resolveGaussianViewerRotation({
     viewerRotation: { rx: 90, ry: 0, rz: 180 },
