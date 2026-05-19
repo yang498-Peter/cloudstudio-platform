@@ -739,9 +739,9 @@
       "serverGridExecutionNote": "Dessa rutnät exekveras i backendens inbyggda PROJ-exportpipeline. För vertikala geoid- och höjdraster kanske liveetiketter i webbläsaren inte helt återger slutresultatet.",
       "readingSources": "Läser exporterbara LAS / LAZ källfiler...",
       "sourcesFailed": "Det gick inte att läsa exportkällor: {{message}}",
-      "exporting": "Exporterar LAS. Stora punktmoln kan ta några minuter...",
+      "exporting": "Exporterar {{format}}. Stora punktmoln kan ta några minuter...",
       "failed": "Export misslyckades: {{message}}",
-      "failedShort": "LAS-export misslyckades: {{message}}",
+      "failedShort": "Export av punktmoln misslyckades: {{message}}",
       "unknownError": "Okänt fel",
       "multiFormatTitle": "📦 Export i flera format",
       "currentDataset": "Aktuella data",
@@ -761,7 +761,8 @@
       "extraSettings": "Extra inställningar",
       "writeCrsMetadata": "Skriv standard CRS-metadata när den aktuella koordinatdefinitionen kan uttryckas korrekt",
       "writeSummaryVlr": "Skriv en exportsammanfattning VLR med denna transformation och enhetsinställning",
-      "startExport": "Starta export"
+      "startExport": "Starta export",
+      "downloadAgain": "Ladda ned igen"
     },
     "navigationPivot": {
       "centerLabel": "Centerbana",
@@ -1187,6 +1188,21 @@
     },
     "measure": {
       "clearAll": "Rensa alla"
+    },
+    "screenshot": {
+      "title": "Exportera skärmbild",
+      "scale": "Upplösning",
+      "scale1x": "Aktuell vy (1x)",
+      "scale2x": "Hög upplösning (2x)",
+      "scale4x": "Ultrahög upplösning (4x)",
+      "note": "Exporterar aktuell vy som PNG. Högre upplösningar kan ta några sekunder.",
+      "save": "Spara PNG",
+      "saved": "Skärmbild sparad",
+      "failed": "Skärmbild misslyckades: {{message}}",
+      "tooLarge": "Den begärda skärmbilden är för stor. Maximal texturstorlek: {{max}} px."
+    },
+    "performance": {
+      "detailLoading": "Klar - högdetaljerade rutor fortsätter att laddas upp till {{budget}} punkter"
     }
   },
   "phrases": {

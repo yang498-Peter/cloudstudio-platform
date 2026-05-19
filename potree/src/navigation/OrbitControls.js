@@ -78,7 +78,7 @@ export class OrbitControls extends EventDispatcher{
 		let scroll = (e) => {
 			let resolvedRadius = this.scene.view.radius + this.radiusDelta;
 
-			this.radiusDelta += -e.delta * resolvedRadius * 0.1;
+			this.radiusDelta += -e.delta * resolvedRadius * 0.045;
 
 			this.stopTweens();
 		};

@@ -740,9 +740,9 @@
       "serverGridExecutionNote": "이 그리드는 백엔드 기본 PROJ 내보내기 파이프라인에서 실행됩니다. 수직 지오이드/높이 그리드의 경우 브라우저 실시간 라벨이 최종 내보내기 결과를 완전히 반영하지 못할 수 있습니다.",
       "readingSources": "내보낼 수 있는 LAS / LAZ 소스 파일을 읽는 중...",
       "sourcesFailed": "내보내기 소스를 읽지 못했습니다: {{message}}",
-      "exporting": "LAS를 내보내는 중입니다. 큰 포인트 클라우드는 몇 분 정도 걸릴 수 있습니다.",
+      "exporting": "{{format}} 내보내는 중입니다. 큰 포인트 클라우드는 몇 분 정도 걸릴 수 있습니다.",
       "failed": "내보내기 실패: {{message}}",
-      "failedShort": "LAS 내보내기 실패: {{message}}",
+      "failedShort": "포인트 클라우드 내보내기 실패: {{message}}",
       "unknownError": "알 수 없는 오류",
       "multiFormatTitle": "📦 다중 형식 내보내기",
       "currentDataset": "현재 데이터",
@@ -762,7 +762,8 @@
       "extraSettings": "추가 설정",
       "writeCrsMetadata": "현재 좌표 정의를 정확히 표현할 수 있으면 표준 CRS metadata를 씁니다",
       "writeSummaryVlr": "이번 변환과 단위 설정을 기록하는 내보내기 요약 VLR을 씁니다",
-      "startExport": "내보내기 시작"
+      "startExport": "내보내기 시작",
+      "downloadAgain": "다시 다운로드"
     },
     "navigationPivot": {
       "centerLabel": "중심 회전",
@@ -1189,6 +1190,21 @@
     },
     "measure": {
       "clearAll": "모두 지우기"
+    },
+    "screenshot": {
+      "title": "스크린샷 내보내기",
+      "scale": "해상도",
+      "scale1x": "현재 보기 (1x)",
+      "scale2x": "고해상도 (2x)",
+      "scale4x": "초고해상도 (4x)",
+      "note": "현재 뷰포트를 PNG로 내보냅니다. 고해상도는 몇 초가 걸릴 수 있습니다.",
+      "save": "PNG 저장",
+      "saved": "스크린샷이 저장되었습니다",
+      "failed": "스크린샷 실패: {{message}}",
+      "tooLarge": "요청한 스크린샷이 너무 큽니다. 최대 텍스처 크기: {{max}}px."
+    },
+    "performance": {
+      "detailLoading": "준비됨 - 고해상도 타일이 {{budget}} 포인트까지 계속 로드됩니다"
     }
   },
   "phrases": {

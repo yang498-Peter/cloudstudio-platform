@@ -739,9 +739,9 @@
       "serverGridExecutionNote": "Diese Raster werden in der backend-nativen PROJ-Exportpipeline ausgeführt. Bei vertikalen Geoid-/Höhengittern spiegeln Browser-Labels möglicherweise nicht vollständig das endgültige Exportergebnis wider.",
       "readingSources": "Exportierbare LAS-/LAZ-Quelldateien werden gelesen...",
       "sourcesFailed": "Exportquellen konnten nicht gelesen werden: {{message}}",
-      "exporting": "Exportieren LAS. Große Punktwolken können einige Minuten dauern...",
+      "exporting": "{{format}} wird exportiert. Große Punktwolken können einige Minuten dauern...",
       "failed": "Export fehlgeschlagen: {{message}}",
-      "failedShort": "LAS-Export fehlgeschlagen: {{message}}",
+      "failedShort": "Punktwolkenexport fehlgeschlagen: {{message}}",
       "unknownError": "Unbekannter Fehler",
       "multiFormatTitle": "📦 Multiformat-Export",
       "currentDataset": "Aktuelle Daten",
@@ -761,7 +761,8 @@
       "extraSettings": "Zusätzliche Einstellungen",
       "writeCrsMetadata": "Schreiben Sie Standard-CRS-Metadaten, wenn die aktuelle Koordinatendefinition genau ausgedrückt werden kann",
       "writeSummaryVlr": "Schreiben Sie eine Exportzusammenfassung VLR mit diesem Transformations- und Einheiten-Setup",
-      "startExport": "Starten Sie den Export"
+      "startExport": "Starten Sie den Export",
+      "downloadAgain": "Erneut herunterladen"
     },
     "navigationPivot": {
       "centerLabel": "Zentrale Umlaufbahn",
@@ -1187,6 +1188,21 @@
     },
     "measure": {
       "clearAll": "Alles löschen"
+    },
+    "screenshot": {
+      "title": "Screenshot exportieren",
+      "scale": "Auflösung",
+      "scale1x": "Aktuelle Ansicht (1x)",
+      "scale2x": "Hohe Auflösung (2x)",
+      "scale4x": "Sehr hohe Auflösung (4x)",
+      "note": "Exportiert den aktuellen Ansichtsbereich als PNG. Höhere Auflösungen können einige Sekunden dauern.",
+      "save": "PNG speichern",
+      "saved": "Screenshot gespeichert",
+      "failed": "Screenshot fehlgeschlagen: {{message}}",
+      "tooLarge": "Der angeforderte Screenshot ist zu groß. Maximale Texturgröße: {{max}} px."
+    },
+    "performance": {
+      "detailLoading": "Bereit - hochdetaillierte Kacheln werden bis zu {{budget}} Punkten weiter geladen"
     }
   },
   "phrases": {

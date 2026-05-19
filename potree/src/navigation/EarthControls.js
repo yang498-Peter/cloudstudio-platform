@@ -246,7 +246,7 @@ export class EarthControls extends EventDispatcher {
 			if (I) {
 				let resolvedPos = new THREE.Vector3().addVectors(view.position, this.zoomDelta);
 				let distance = I.location.distanceTo(resolvedPos);
-				let jumpDistance = distance * 0.2 * this.wheelDelta;
+				let jumpDistance = distance * 0.08 * this.wheelDelta;
 				let targetDir = new THREE.Vector3().subVectors(I.location, view.position);
 				targetDir.normalize();
 

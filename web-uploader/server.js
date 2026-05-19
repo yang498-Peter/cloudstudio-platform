@@ -1773,6 +1773,7 @@ const API_ERROR_STATUS = Object.freeze({
   CRS_INTERNAL_ERROR: 500,
   CRS_UNSUPPORTED_AUTHORITY: 400,
   DELETE_PASSWORD_NOT_CONFIGURED: 500,
+  DELETE_DISABLED: 403,
   DATASET_NAME_CONFLICT: 409,
   DTM_BAD_JOB_ID: 400,
   DTM_FILE_NOT_FOUND: 404,
@@ -7702,6 +7703,13 @@ app.post('/api/forestry/export', async (req, res) => {
 
 app.post('/api/delete-cloud', (req, res) => {
   try {
+    const deleteEnabled = String(process.env.ENABLE_CLOUD_DELETE || '').trim().toLowerCase();
+    if (!['1', 'true', 'yes', 'on'].includes(deleteEnabled)) {
+      const error = new Error('Cloud deletion is disabled on this server');
+      error.code = 'DELETE_DISABLED';
+      throw error;
+    }
+
     const deletePassword = process.env.DELETE_CLOUD_PASSWORD;
     if (!deletePassword) {
       const error = new Error('Delete password not configured on server');

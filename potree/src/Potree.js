@@ -101,7 +101,7 @@ console.log('Potree ' + version.major + '.' + version.minor + version.suffix);
 export let pointBudget = 1 * 1000 * 1000;
 export let framenumber = 0;
 export let numNodesLoading = 0;
-export let maxNodesLoading = 4;
+export let maxNodesLoading = 6;
 
 export const debug = {};
 

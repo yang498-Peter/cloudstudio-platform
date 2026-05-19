@@ -739,9 +739,9 @@
       "serverGridExecutionNote": "Queste griglie sono eseguite nel pipeline di esportazione PROJ nativa del backend. Per le griglie geoid/altezza verticali, le etichette live del browser potrebbero non riflettere pienamente il risultato finale dell'esportazione.",
       "readingSources": "Lettura dei file sorgente LAS / LAZ esportabili in corso...",
       "sourcesFailed": "Impossibile leggere le origini di esportazione: {{message}}",
-      "exporting": "Esportazione LAS. Le nuvole di punti di grandi dimensioni potrebbero richiedere alcuni minuti...",
+      "exporting": "Esportazione {{format}} in corso. Le nuvole di punti grandi possono richiedere alcuni minuti...",
       "failed": "Esportazione non riuscita: {{message}}",
-      "failedShort": "Esportazione LAS non riuscita: {{message}}",
+      "failedShort": "Esportazione della nuvola di punti non riuscita: {{message}}",
       "unknownError": "Errore sconosciuto",
       "multiFormatTitle": "📦 Esportazione multiformato",
       "currentDataset": "Dati attuali",
@@ -761,7 +761,8 @@
       "extraSettings": "Impostazioni aggiuntive",
       "writeCrsMetadata": "Scrivi metadati CRS standard quando la definizione delle coordinate correnti può essere espressa con precisione",
       "writeSummaryVlr": "Scrivi un riepilogo dell'esportazione VLR con questa configurazione di trasformazione e unità",
-      "startExport": "Avvia l'esportazione"
+      "startExport": "Avvia l'esportazione",
+      "downloadAgain": "Scarica di nuovo"
     },
     "navigationPivot": {
       "centerLabel": "Orbita centrale",
@@ -1187,6 +1188,21 @@
     },
     "measure": {
       "clearAll": "Cancella tutto"
+    },
+    "screenshot": {
+      "title": "Esporta screenshot",
+      "scale": "Risoluzione",
+      "scale1x": "Vista corrente (1x)",
+      "scale2x": "Alta risoluzione (2x)",
+      "scale4x": "Risoluzione ultra alta (4x)",
+      "note": "Esporta la vista corrente come PNG. Le risoluzioni elevate possono richiedere alcuni secondi.",
+      "save": "Salva PNG",
+      "saved": "Screenshot salvato",
+      "failed": "Screenshot non riuscito: {{message}}",
+      "tooLarge": "Lo screenshot richiesto è troppo grande. Dimensione massima texture: {{max}} px."
+    },
+    "performance": {
+      "detailLoading": "Pronto - i tile ad alto dettaglio continuano a caricarsi fino a {{budget}} punti"
     }
   },
   "phrases": {

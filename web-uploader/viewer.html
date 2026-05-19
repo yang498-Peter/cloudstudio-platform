@@ -1058,13 +1058,15 @@
     /* ========== RIGHT PANEL ========== */
     #right-panel {
       width: var(--right-w);
-      min-width: 160px;
+      min-width: 300px;
+      max-width: min(520px, 42vw);
       background: linear-gradient(180deg, rgba(24, 27, 40, 0.98) 0%, rgba(18, 21, 32, 0.98) 100%);
       border-left: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
       overflow: hidden;
+      resize: horizontal;
       transition: width .2s ease, min-width .2s ease, border-color .2s ease, opacity .2s ease;
     }
 
@@ -1137,8 +1139,8 @@
     .tab-bar {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      padding: 12px;
+      gap: 6px;
+      padding: 8px;
       border-bottom: 1px solid var(--border);
       background: rgba(0, 0, 0, .14);
       flex-shrink: 0;
@@ -1148,11 +1150,11 @@
     .tab {
       min-width: 0;
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 10px 12px;
+      border-radius: 8px;
+      padding: 7px 9px;
       background: rgba(255, 255, 255, 0.03);
       color: var(--text2);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       line-height: 1.2;
       cursor: pointer;
@@ -1164,7 +1166,7 @@
       background: rgba(255, 255, 255, 0.06);
       border-color: rgba(126, 176, 255, 0.18);
       color: var(--text);
-      transform: translateY(-1px);
+      transform: none;
     }
 
     .tab.active {
@@ -3615,14 +3617,15 @@
       font-size: 10px;
       font-weight: 600;
       letter-spacing: .03em;
-      background: rgba(100, 116, 139, .2);
-      color: var(--text3);
+      background: rgba(100, 116, 139, .10);
+      color: var(--text2);
+      border: 1px solid rgba(100, 116, 139, .16);
       transition: all .25s;
     }
 
     .cap-status-badge.active {
-      background: rgba(34, 197, 94, .18);
-      color: #4ade80;
+      background: rgba(34, 197, 94, .10);
+      color: #16803c;
       border: 1px solid rgba(34, 197, 94, .28);
     }
 
@@ -3656,15 +3659,15 @@
       flex-direction: column;
       gap: 6px;
       padding: 9px 10px;
-      background: rgba(255, 255, 255, .03);
-      border: 1px solid rgba(255, 255, 255, .07);
+      background: rgba(248, 250, 252, .86);
+      border: 1px solid rgba(15, 23, 42, .08);
       border-radius: 7px;
       margin-top: 2px;
     }
 
     .cap-template-title {
       font-size: 10px;
-      color: var(--text3);
+      color: var(--text2);
       font-weight: 600;
       letter-spacing: .04em;
       text-transform: uppercase;
@@ -3685,8 +3688,8 @@
 
     .cap-input {
       flex: 1;
-      background: rgba(0, 0, 0, .35);
-      border: 1px solid rgba(255, 255, 255, .12);
+      background: #fff;
+      border: 1px solid rgba(15, 23, 42, .12);
       border-radius: 5px;
       color: var(--text);
       font-size: 11px;
@@ -3697,7 +3700,8 @@
     }
 
     .cap-input:focus {
-      border-color: rgba(99, 179, 237, .5);
+      border-color: rgba(64, 120, 255, .45);
+      box-shadow: 0 0 0 3px rgba(64, 120, 255, .10);
     }
 
     .cap-list-header {
@@ -3710,7 +3714,7 @@
 
     .cap-list-title {
       font-size: 10px;
-      color: var(--text3);
+      color: var(--text2);
       font-weight: 600;
       letter-spacing: .04em;
       text-transform: uppercase;
@@ -3731,7 +3735,7 @@
 
     .cap-empty {
       font-size: 11px;
-      color: var(--text3);
+      color: var(--text2);
       text-align: center;
       padding: 20px 0;
     }
@@ -3741,15 +3745,16 @@
       flex-direction: column;
       gap: 4px;
       padding: 8px 9px;
-      border: 1px solid rgba(148, 163, 184, .14);
+      border: 1px solid rgba(15, 23, 42, .10);
       border-radius: 7px;
-      background: rgba(15, 23, 42, .40);
+      background: #fff;
       transition: border-color .2s;
       position: relative;
     }
 
     .cap-row:hover {
-      border-color: rgba(148, 163, 184, .28);
+      border-color: rgba(64, 120, 255, .28);
+      box-shadow: 0 8px 22px rgba(15, 23, 42, .08);
     }
 
     .cap-row-head {
@@ -3760,8 +3765,8 @@
 
     .cap-row-id {
       font-size: 9px;
-      color: var(--text3);
-      background: rgba(255, 255, 255, .06);
+      color: var(--text2);
+      background: rgba(15, 23, 42, .06);
       border-radius: 3px;
       padding: 1px 5px;
       flex-shrink: 0;
@@ -3770,7 +3775,7 @@
     .cap-row-feat {
       font-size: 11px;
       font-weight: 600;
-      color: #93c5fd;
+      color: var(--text);
       flex: 1;
       min-width: 0;
       overflow: hidden;
@@ -3812,7 +3817,7 @@
 
     .cap-row-coords {
       font-size: 10px;
-      color: var(--text3);
+      color: var(--text2);
       font-family: monospace;
       letter-spacing: .02em;
     }
@@ -3822,7 +3827,7 @@
       flex-direction: column;
       gap: 5px;
       padding-top: 5px;
-      border-top: 1px solid rgba(255, 255, 255, .07);
+      border-top: 1px solid rgba(15, 23, 42, .08);
       margin-top: 3px;
     }
 
@@ -4449,6 +4454,7 @@
       flex-direction: column;
       gap: 10px;
       padding: 10px;
+      overflow-x: auto;
     }
 
     .dxf-toolbar {
@@ -4649,6 +4655,7 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      min-width: 280px;
     }
 
     .dxf-draw-topbar {
@@ -4668,7 +4675,7 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      flex: 1 1 124px;
+      flex: 1 1 112px;
       min-height: 34px;
       min-width: 0;
       text-align: center;
@@ -5242,21 +5249,21 @@
     .tab-bar {
       background: transparent;
       border-bottom: 1px solid var(--border);
-      padding: 12px;
+      padding: 8px;
     }
     .tab {
       background: rgba(255, 255, 255, 0.94);
       border: 1px solid rgba(0, 0, 0, 0.11);
       color: #5f6673;
-      box-shadow: var(--elev-1);
-      border-radius: 10px;
+      box-shadow: none;
+      border-radius: 8px;
     }
     .tab:hover {
       background: rgba(0, 122, 255, 0.06);
       border-color: rgba(0, 122, 255, 0.22);
       color: var(--accent);
-      transform: translateY(-1px);
-      box-shadow: var(--elev-2);
+      transform: none;
+      box-shadow: none;
     }
     .tab.active {
       background: linear-gradient(180deg, rgba(0, 122, 255, 0.10) 0%, rgba(0, 122, 255, 0.04) 100%);
@@ -6787,9 +6794,6 @@
         <button class="tb-btn" id="tb-clearclip" title="Clear Clip" data-i18n-title="viewer.toolbar.clearClipTitle">
           <span class="tb-icon" data-cs-icon="clear"></span><span class="tb-label" data-i18n="viewer.toolbar.clearClipLabel">Clear Clip</span>
         </button>
-        <button class="tb-btn color-btn" id="tb-col-cls" data-attr="classification" title="Classification color" data-i18n-title="viewer.toolbar.classificationTitle">
-          <span class="tb-icon" data-cs-icon="classification"></span><span class="tb-label" data-i18n="viewer.toolbar.classificationLabel">Class</span>
-        </button>
       </div>
     </div>
     <div class="tb-sep"></div>
@@ -8096,6 +8100,23 @@
       <div class="modal-footer">
         <button class="btn" id="export-las-cancel" data-i18n="common.actions.cancel">Cancel</button>
         <button class="btn pri" id="export-las-submit" data-i18n="viewer.export.startExport">Start Export</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-screenshot">
+    <div class="modal-box" style="width:420px;">
+      <div class="modal-title" data-i18n="viewer.screenshot.title">Export screenshot</div>
+      <label class="modal-label" data-i18n="viewer.screenshot.scale">Resolution</label>
+      <select class="modal-input" id="screenshot-scale">
+        <option value="1" data-i18n="viewer.screenshot.scale1x">Current view (1x)</option>
+        <option value="2" selected data-i18n="viewer.screenshot.scale2x">High resolution (2x)</option>
+        <option value="4" data-i18n="viewer.screenshot.scale4x">Ultra high resolution (4x)</option>
+      </select>
+      <div id="screenshot-note" class="modal-msg show info" data-i18n="viewer.screenshot.note">Exports the current viewport as a PNG. Higher resolutions may take a few seconds.</div>
+      <div class="modal-footer">
+        <button class="btn" id="screenshot-cancel" data-i18n="common.actions.cancel">Cancel</button>
+        <button class="btn pri" id="screenshot-save" data-i18n="viewer.screenshot.save">Save PNG</button>
       </div>
     </div>
   </div>
@@ -9667,6 +9688,12 @@ window.__CLOUDSTUDIO_THREE = THREE;
       clipBoxFeature?.updatePanel?.();
       renderDeleteRegionLists();
       updateVolumePanel();
+      captureFeature?.updatePanelUI?.();
+      captureFeature?.renderList?.();
+      if (!captureFeature) {
+        _updateCapturePanelUI?.();
+        renderCaptureList?.();
+      }
       refreshSceneTree();
       setTool(uiState.toolMode);
       syncDisplayQuickButtons?.();
@@ -12514,12 +12541,13 @@ window.__CLOUDSTUDIO_THREE = THREE;
         if (openLoadOrchestrationFeature?.handlePointCloudLoaded) {
           openLoadOrchestrationFeature.handlePointCloudLoaded({ name, pointcloud: pc, url, context: prepared.context });
         } else {
-          setStatus('Ready');
           toast(`✓ Point cloud loaded: ${name}`, 'ok');
           refreshSceneTree();
           refreshClassification();
           pruneScannerProjectVisuals();
         }
+        const budget = viewer.getPointBudget ? (viewer.getPointBudget() / 1e6).toFixed(1) + 'M' : '2.0M';
+        setStatus(tr('viewer.performance.detailLoading', { budget }, `Ready - high-detail tiles continue loading up to ${budget} points`));
 
         // Fetch point count
         fetch(url).then(r => r.json()).then(meta => {
@@ -14440,14 +14468,51 @@ window.__CLOUDSTUDIO_THREE = THREE;
     });
 
     function takeScreenshot() {
+      const modal = document.getElementById('modal-screenshot');
+      if (modal) {
+        modal.classList.add('open');
+        return;
+      }
+      saveScreenshot(1);
+    }
+
+    function saveScreenshot(scale = 1) {
+      let oldSize = null;
+      let oldPixelRatio = null;
+      let resized = false;
       try {
         const canvas = viewer.renderer.domElement;
+        const ratio = Math.max(1, Math.min(4, Number(scale) || 1));
+        const gl = viewer.renderer.getContext?.();
+        const maxTextureSize = gl?.getParameter?.(gl.MAX_TEXTURE_SIZE) || 8192;
+        const currentWidth = canvas.clientWidth || canvas.width || 1;
+        const currentHeight = canvas.clientHeight || canvas.height || 1;
+        const targetWidth = Math.round(currentWidth * ratio);
+        const targetHeight = Math.round(currentHeight * ratio);
+        if (targetWidth > maxTextureSize || targetHeight > maxTextureSize) {
+          throw new Error(tr('viewer.screenshot.tooLarge', { max: maxTextureSize }, `Requested screenshot is too large. Maximum texture size: ${maxTextureSize}px.`));
+        }
+
+        oldSize = viewer.renderer.getSize(new THREE.Vector2());
+        oldPixelRatio = viewer.renderer.getPixelRatio?.() || window.devicePixelRatio || 1;
+        viewer.renderer.setPixelRatio(1);
+        viewer.renderer.setSize(targetWidth, targetHeight, false);
+        resized = true;
+        viewer.render?.();
         const url = canvas.toDataURL('image/png');
         const a = document.createElement('a'); a.href = url;
         a.download = `CloudStudio_${new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')}.png`;
         a.click();
-        toast('Screenshot saved', 'ok');
-      } catch (e) { toast('Screenshot failed: ' + e.message, 'err'); }
+        toast(tr('viewer.screenshot.saved', {}, 'Screenshot saved'), 'ok');
+      } catch (e) {
+        toast(tr('viewer.screenshot.failed', { message: e.message }, `Screenshot failed: ${e.message}`), 'err');
+      } finally {
+        if (resized && oldSize) {
+          viewer.renderer.setPixelRatio(oldPixelRatio);
+          viewer.renderer.setSize(oldSize.x, oldSize.y, false);
+          viewer.render?.();
+        }
+      }
     }
 
     // ─────────────────────────────────────────────
@@ -14633,7 +14698,15 @@ window.__CLOUDSTUDIO_THREE = THREE;
       const modal = document.getElementById('modal-export-las');
       const datasetEl = document.getElementById('export-dataset-summary');
       const sourceSelect = document.getElementById('sel-export-source');
+      const submitBtn = document.getElementById('export-las-submit');
+      const cancelBtn = document.getElementById('export-las-cancel');
       modal.classList.add('open');
+      submitBtn.disabled = false;
+      submitBtn.dataset.exportState = 'idle';
+      submitBtn.dataset.downloadUrl = '';
+      submitBtn.dataset.downloadName = '';
+      submitBtn.textContent = tr('viewer.export.startExport', {}, 'Start Export');
+      cancelBtn.textContent = tr('common.actions.cancel', {}, 'Cancel');
       sourceSelect.innerHTML = '';
       exportSourceOptions = [];
       document.getElementById('inp-export-filename').value = buildDefaultExportFilename();
@@ -14682,6 +14755,15 @@ window.__CLOUDSTUDIO_THREE = THREE;
       }
       const btn = document.getElementById('export-las-submit');
       const noteEl = document.getElementById('export-las-note');
+      if (btn.dataset.exportState === 'success') {
+        const a = document.createElement('a');
+        a.href = btn.dataset.downloadUrl || '';
+        a.download = btn.dataset.downloadName || '';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+      }
       const activeContext = getActiveDatasetContext();
       if (!activeContext) {
         toast(tr('viewer.export.needDataset', {}, 'Load a point cloud or scanner project first.'), 'err');
@@ -14689,9 +14771,11 @@ window.__CLOUDSTUDIO_THREE = THREE;
       }
 
       btn.disabled = true;
+      btn.dataset.exportState = 'exporting';
       noteEl.className = 'modal-msg show info';
       noteEl.style.display = 'block';
-      noteEl.textContent = `Exporting ${getSelectedExportFormat().toUpperCase()}. Large point clouds may take a few minutes...`;
+      const exportFormat = getSelectedExportFormat().toUpperCase();
+      noteEl.textContent = tr('viewer.export.exporting', { format: exportFormat }, `Exporting ${exportFormat}. Large point clouds may take a few minutes...`);
 
       try {
         const payload = {
@@ -14744,6 +14828,11 @@ window.__CLOUDSTUDIO_THREE = THREE;
         a.click();
         a.remove();
 
+        btn.dataset.exportState = 'success';
+        btn.dataset.downloadUrl = data.downloadUrl || '';
+        btn.dataset.downloadName = data.outputFilename || '';
+        btn.textContent = tr('viewer.export.downloadAgain', {}, 'Download again');
+        document.getElementById('export-las-cancel').textContent = tr('common.actions.close', {}, 'Close');
         toast(`${(data.format || getSelectedExportFormat()).toUpperCase()} Export completed: ${data.outputFilename}`, 'ok', 5000);
       } catch (error) {
         const message = String(error.message || error);
@@ -14752,7 +14841,11 @@ window.__CLOUDSTUDIO_THREE = THREE;
         noteEl.textContent = tr('viewer.export.failed', { message: detail || tr('viewer.export.unknownError', {}, 'Unknown error') }, `Export failed: ${detail || 'Unknown error'}`);
         toast(tr('viewer.export.failedShort', { message: detail || tr('viewer.export.unknownError', {}, 'Unknown error') }, `Point cloud export failed: ${detail || 'Unknown error'}`), 'err', 5000);
       } finally {
-        btn.disabled = false;
+        if (btn.dataset.exportState !== 'success') {
+          btn.disabled = false;
+          btn.dataset.exportState = 'idle';
+          btn.textContent = tr('viewer.export.startExport', {}, 'Start Export');
+        }
       }
     }
 
@@ -14855,6 +14948,16 @@ window.__CLOUDSTUDIO_THREE = THREE;
 
     // Viewer-side upload UI has been removed. Datasets are managed from the backend.
 
+    document.getElementById('screenshot-cancel')?.addEventListener('click', () => {
+      document.getElementById('modal-screenshot')?.classList.remove('open');
+    });
+    document.getElementById('screenshot-save')?.addEventListener('click', () => {
+      const modal = document.getElementById('modal-screenshot');
+      const scale = Number(document.getElementById('screenshot-scale')?.value || '2');
+      modal?.classList.remove('open');
+      saveScreenshot(scale);
+    });
+
     if (!exportLasFeature) {
       document.getElementById('export-las-cancel').addEventListener('click', () => document.getElementById('modal-export-las').classList.remove('open'));
       document.getElementById('export-las-submit').addEventListener('click', submitExportLas);
@@ -14879,7 +14982,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
     }
 
     // Close modals on overlay click
-    ['modal-open', 'modal-export-las', 'modal-about', 'modal-disclaimer'].forEach(id => {
+    ['modal-open', 'modal-export-las', 'modal-screenshot', 'modal-about', 'modal-disclaimer'].forEach(id => {
       document.getElementById(id)?.addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
     });
     document.getElementById('about-close').addEventListener('click', () => document.getElementById('modal-about').classList.remove('open'));
@@ -18969,6 +19072,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
       dragStartY: 0,
       dragStartCenterX: 0,
       dragStartCenterY: 0,
+      lastWheelAt: 0,
     };
 
     function toggleMinimapPanel() {
@@ -19159,6 +19263,9 @@ window.__CLOUDSTUDIO_THREE = THREE;
     function onMinimapWheel(event) {
       if (!minimapState.canvas || minimapState.originLat === null) return;
       event.preventDefault();
+      const now = performance.now();
+      if (now - minimapState.lastWheelAt < 140) return;
+      minimapState.lastWheelAt = now;
       const rect = minimapState.canvas.getBoundingClientRect();
       const width = rect.width || 244;
       const height = rect.height || 220;

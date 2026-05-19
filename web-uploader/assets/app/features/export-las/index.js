@@ -36,13 +36,53 @@ export function createExportLasFeature({
       sourceSelect: document.getElementById('sel-export-source'),
       filenameInput: document.getElementById('inp-export-filename'),
       submitButton: document.getElementById('export-las-submit'),
+      cancelButton: document.getElementById('export-las-cancel'),
       note: document.getElementById('export-las-note'),
     };
+  }
+
+  function setExportModalIdle() {
+    const { submitButton, cancelButton } = getModalElements();
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.dataset.exportState = 'idle';
+      submitButton.dataset.downloadUrl = '';
+      submitButton.dataset.downloadName = '';
+      submitButton.textContent = translate('viewer.export.startExport', {}, 'Start Export');
+    }
+    if (cancelButton) {
+      cancelButton.textContent = translate('common.actions.cancel', {}, 'Cancel');
+    }
+  }
+
+  function setExportModalSuccess(data) {
+    const { submitButton, cancelButton } = getModalElements();
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.dataset.exportState = 'success';
+      submitButton.dataset.downloadUrl = data.downloadUrl || '';
+      submitButton.dataset.downloadName = data.outputFilename || '';
+      submitButton.textContent = translate('viewer.export.downloadAgain', {}, 'Download again');
+    }
+    if (cancelButton) {
+      cancelButton.textContent = translate('common.actions.close', {}, 'Close');
+    }
+  }
+
+  function downloadExportResult(downloadUrl, outputFilename) {
+    if (!downloadUrl) return;
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    if (outputFilename) link.download = outputFilename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
 
   async function openExportLasModal() {
     const { modal, datasetSummary, sourceSelect, filenameInput } = getModalElements();
     modal.classList.add('open');
+    setExportModalIdle();
     sourceSelect.innerHTML = '';
     setExportSourceOptions([]);
     filenameInput.value = buildDefaultExportFilename();
@@ -87,6 +127,10 @@ export function createExportLasFeature({
 
   async function submitExportLas() {
     const { submitButton, note } = getModalElements();
+    if (submitButton?.dataset.exportState === 'success') {
+      downloadExportResult(submitButton.dataset.downloadUrl, submitButton.dataset.downloadName);
+      return;
+    }
     const activeDatasetContext = getActiveDatasetContext();
     if (!activeDatasetContext) {
       toast(translate('viewer.export.needDataset', {}, 'Load a point cloud or scanner project first.'), 'err');
@@ -94,10 +138,11 @@ export function createExportLasFeature({
     }
 
     submitButton.disabled = true;
+    submitButton.dataset.exportState = 'exporting';
     note.className = 'modal-msg show info';
     note.style.display = 'block';
-      const format = getSelectedFormat().toUpperCase();
-      note.textContent = translate('viewer.export.exporting', {}, `Exporting ${format}. Large point clouds may take a few minutes...`);
+    const format = getSelectedFormat().toUpperCase();
+    note.textContent = translate('viewer.export.exporting', { format }, `Exporting ${format}. Large point clouds may take a few minutes...`);
 
     try {
       const payload = {
@@ -138,12 +183,8 @@ export function createExportLasFeature({
         : '';
       note.innerHTML = `${translateText('Export completed')}: ${escapeHtml(data.outputFilename)}<br>${translateText('File size')}: ${escapeHtml(data.sizeLabel || translateText('Unknown'))}${data.plyEncoding ? `<br>PLY: ${escapeHtml(data.plyEncoding)}` : ''}${deleteSummary}${data.crsOmitReason ? `<br>${translateText('Note')}: ${escapeHtml(data.crsOmitReason)}` : ''}`;
 
-      const link = document.createElement('a');
-      link.href = data.downloadUrl;
-      link.download = data.outputFilename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      downloadExportResult(data.downloadUrl, data.outputFilename);
+      setExportModalSuccess(data);
 
       toast(`${(data.format || getSelectedFormat()).toUpperCase()} ${translateText('Export completed')}: ${data.outputFilename}`, 'ok', 5000);
     } catch (error) {
@@ -153,7 +194,11 @@ export function createExportLasFeature({
       note.textContent = translate('viewer.export.failed', { message: detail || translate('viewer.export.unknownError', {}, 'Unknown error') }, `Export failed: ${detail || 'Unknown error'}`);
       toast(translate('viewer.export.failedShort', { message: detail || translate('viewer.export.unknownError', {}, 'Unknown error') }, `Point cloud export failed: ${detail || 'Unknown error'}`), 'err', 5000);
     } finally {
-      submitButton.disabled = false;
+      if (submitButton.dataset.exportState !== 'success') {
+        submitButton.disabled = false;
+        submitButton.dataset.exportState = 'idle';
+        submitButton.textContent = translate('viewer.export.startExport', {}, 'Start Export');
+      }
     }
   }
 

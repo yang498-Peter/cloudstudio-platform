@@ -739,9 +739,9 @@
       "serverGridExecutionNote": "These grids are executed in the backend native PROJ export pipeline. For vertical geoid / height grids, browser-side live labels may not fully reflect the final export result.",
       "readingSources": "Reading exportable LAS / LAZ source files...",
       "sourcesFailed": "Failed to read export sources: {{message}}",
-      "exporting": "Exporting LAS. Large point clouds may take a few minutes...",
+      "exporting": "Exporting {{format}}. Large point clouds may take a few minutes...",
       "failed": "Export failed: {{message}}",
-      "failedShort": "LAS export failed: {{message}}",
+      "failedShort": "Point cloud export failed: {{message}}",
       "unknownError": "Unknown error",
       "multiFormatTitle": "📦 Multi-format Export",
       "currentDataset": "Current Data",
@@ -761,7 +761,8 @@
       "extraSettings": "Extra Settings",
       "writeCrsMetadata": "Write standard CRS metadata when the current coordinate definition can be expressed accurately",
       "writeSummaryVlr": "Write an export summary VLR with this transform and unit setup",
-      "startExport": "Start Export"
+      "startExport": "Start Export",
+      "downloadAgain": "Download again"
     },
     "navigationPivot": {
       "centerLabel": "Center Orbit",
@@ -1187,6 +1188,21 @@
     },
     "measure": {
       "clearAll": "Clear All"
+    },
+    "screenshot": {
+      "title": "Export screenshot",
+      "scale": "Resolution",
+      "scale1x": "Current view (1x)",
+      "scale2x": "High resolution (2x)",
+      "scale4x": "Ultra high resolution (4x)",
+      "note": "Exports the current viewport as a PNG. Higher resolutions may take a few seconds.",
+      "save": "Save PNG",
+      "saved": "Screenshot saved",
+      "failed": "Screenshot failed: {{message}}",
+      "tooLarge": "Requested screenshot is too large. Maximum texture size: {{max}}px."
+    },
+    "performance": {
+      "detailLoading": "Ready - high-detail tiles continue loading up to {{budget}} points"
     }
   },
   "phrases": {

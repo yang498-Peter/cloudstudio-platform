@@ -6,6 +6,7 @@ export function createMinimapFeature({
   localToECEF,
 } = {}) {
   let controlsBound = false;
+  let lastWheelAt = 0;
   const state = {
     collapsed: false,
     canvas: null,
@@ -235,6 +236,9 @@ export function createMinimapFeature({
   function onWheel(event) {
     if (!state.canvas || state.originLat === null) return;
     event.preventDefault();
+    const now = performance.now();
+    if (now - lastWheelAt < 140) return;
+    lastWheelAt = now;
     const rect = state.canvas.getBoundingClientRect();
     const width = rect.width || 244;
     const height = rect.height || 220;

@@ -739,9 +739,9 @@
       "serverGridExecutionNote": "这些格网会在后端原生 PROJ 导出链中执行；若属于垂直 geoid / height grid，浏览器端实时标签可能不完全体现，但导出结果会按格网处理。",
       "readingSources": "正在读取可导出的原始 LAS / LAZ 源文件...",
       "sourcesFailed": "读取导出源失败: {{message}}",
-      "exporting": "正在导出 LAS，较大点云可能需要几分钟，请稍候...",
+      "exporting": "正在导出 {{format}}，较大点云可能需要几分钟，请稍候...",
       "failed": "导出失败: {{message}}",
-      "failedShort": "LAS 导出失败: {{message}}",
+      "failedShort": "点云导出失败：{{message}}",
       "unknownError": "未知错误",
       "multiFormatTitle": "📦 多格式导出",
       "currentDataset": "当前数据",
@@ -761,7 +761,8 @@
       "extraSettings": "附加设置",
       "writeCrsMetadata": "如果当前坐标定义可准确表达，则写入标准 CRS metadata",
       "writeSummaryVlr": "写入导出摘要 VLR，记录本次变换与单位设置",
-      "startExport": "开始导出"
+      "startExport": "开始导出",
+      "downloadAgain": "重新下载"
     },
     "navigationPivot": {
       "centerLabel": "中心旋转",
@@ -1187,6 +1188,21 @@
     },
     "measure": {
       "clearAll": "全部清除"
+    },
+    "screenshot": {
+      "title": "导出截图",
+      "scale": "分辨率",
+      "scale1x": "当前视图 (1x)",
+      "scale2x": "高清 (2x)",
+      "scale4x": "超高清 (4x)",
+      "note": "将当前视口导出为 PNG。高分辨率可能需要几秒钟。",
+      "save": "保存 PNG",
+      "saved": "截图已保存",
+      "failed": "截图失败：{{message}}",
+      "tooLarge": "请求的截图尺寸过大。最大纹理尺寸：{{max}}px。"
+    },
+    "performance": {
+      "detailLoading": "已就绪 - 高细节节点会继续加载，点预算最高 {{budget}}"
     }
   },
   "phrases": {

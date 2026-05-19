@@ -740,9 +740,9 @@
       "serverGridExecutionNote": "Estas cuadrículas se ejecutan en la canalización de exportación PROJ nativa del backend. Para geoid/altura verticales, las etiquetas en vivo del navegador pueden no reflejar por completo el resultado final de la exportación.",
       "readingSources": "Leyendo archivos fuente exportables LAS / LAZ...",
       "sourcesFailed": "No se pudieron leer las fuentes de exportación: {{message}}",
-      "exporting": "Exportando LAS. Las nubes de puntos grandes pueden tardar unos minutos...",
+      "exporting": "Exportando {{format}}. Las nubes de puntos grandes pueden tardar unos minutos...",
       "failed": "Exportación fallida: {{message}}",
-      "failedShort": "Error al exportar LAS: {{message}}",
+      "failedShort": "Error al exportar la nube de puntos: {{message}}",
       "unknownError": "Error desconocido",
       "multiFormatTitle": "📦 Exportación multiformato",
       "currentDataset": "Datos actuales",
@@ -762,7 +762,8 @@
       "extraSettings": "Configuraciones adicionales",
       "writeCrsMetadata": "Escriba metadatos estándar CRS cuando la definición de coordenadas actual se pueda expresar con precisión",
       "writeSummaryVlr": "Escriba un resumen de exportación VLR con esta transformación y configuración de unidad",
-      "startExport": "Iniciar exportación"
+      "startExport": "Iniciar exportación",
+      "downloadAgain": "Descargar de nuevo"
     },
     "navigationPivot": {
       "centerLabel": "Órbita central",
@@ -1188,6 +1189,21 @@
     },
     "measure": {
       "clearAll": "Borrar todo"
+    },
+    "screenshot": {
+      "title": "Exportar captura",
+      "scale": "Resolución",
+      "scale1x": "Vista actual (1x)",
+      "scale2x": "Alta resolución (2x)",
+      "scale4x": "Resolución ultra alta (4x)",
+      "note": "Exporta la vista actual como PNG. Las resoluciones altas pueden tardar unos segundos.",
+      "save": "Guardar PNG",
+      "saved": "Captura guardada",
+      "failed": "Error en la captura: {{message}}",
+      "tooLarge": "La captura solicitada es demasiado grande. Tamaño máximo de textura: {{max}} px."
+    },
+    "performance": {
+      "detailLoading": "Listo - los mosaicos de alto detalle siguen cargando hasta {{budget}} puntos"
     }
   },
   "phrases": {

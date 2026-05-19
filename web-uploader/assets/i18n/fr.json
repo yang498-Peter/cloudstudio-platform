@@ -739,9 +739,9 @@
       "serverGridExecutionNote": "Ces grilles sont exécutées dans le pipeline d'export PROJ native du backend. Pour les grilles géoïdes / hauteurs verticales, les libellés en temps réel du navigateur peuvent ne pas refléter parfaitement le résultat final d'export.",
       "readingSources": "Lecture des fichiers source LAS / LAZ exportables...",
       "sourcesFailed": "Échec de lecture des sources d'export : {{message}}",
-      "exporting": "Export LAS en cours. Les gros nuages de points peuvent prendre quelques minutes...",
+      "exporting": "Export {{format}} en cours. Les gros nuages de points peuvent prendre quelques minutes...",
       "failed": "Échec de l'export : {{message}}",
-      "failedShort": "Échec de l'export LAS : {{message}}",
+      "failedShort": "Échec de l’export du nuage de points : {{message}}",
       "unknownError": "Erreur inconnue",
       "multiFormatTitle": "📦 Export multi-format",
       "currentDataset": "Données actuelles",
@@ -761,7 +761,8 @@
       "extraSettings": "Paramètres supplémentaires",
       "writeCrsMetadata": "Écrire les métadonnées CRS standard lorsque la définition actuelle peut être exprimée précisément",
       "writeSummaryVlr": "Écrire un VLR de résumé avec la transformation et les unités de cet export",
-      "startExport": "Démarrer l’export"
+      "startExport": "Démarrer l’export",
+      "downloadAgain": "Télécharger à nouveau"
     },
     "navigationPivot": {
       "centerLabel": "Orbite centre",
@@ -1188,6 +1189,21 @@
     },
     "measure": {
       "clearAll": "Tout effacer"
+    },
+    "screenshot": {
+      "title": "Exporter une capture",
+      "scale": "Résolution",
+      "scale1x": "Vue actuelle (1x)",
+      "scale2x": "Haute résolution (2x)",
+      "scale4x": "Très haute résolution (4x)",
+      "note": "Exporte la vue actuelle en PNG. Les résolutions élevées peuvent prendre quelques secondes.",
+      "save": "Enregistrer PNG",
+      "saved": "Capture enregistrée",
+      "failed": "Échec de la capture : {{message}}",
+      "tooLarge": "La capture demandée est trop grande. Taille maximale de texture : {{max}} px."
+    },
+    "performance": {
+      "detailLoading": "Prêt - les tuiles haute précision continuent de se charger jusqu’à {{budget}} points"
     }
   },
   "phrases": {

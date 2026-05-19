@@ -739,9 +739,9 @@
       "serverGridExecutionNote": "Nämä ruudukot suoritetaan backendin PROJ-viennin natiiviputkessa. Pystysuorien geoid/korkeusrasterien osalta selainpuolen live-etiketit eivät välttämättä täysin vastaa lopullista vientitulosta.",
       "readingSources": "Luetaan vietäviä LAS / LAZ lähdetiedostoja...",
       "sourcesFailed": "Vientilähteiden lukeminen epäonnistui: {{message}}",
-      "exporting": "Vienti LAS. Suuret pistepilvet voivat kestää muutaman minuutin...",
+      "exporting": "Viedään {{format}}. Suurten pistepilvien vienti voi kestää muutaman minuutin...",
       "failed": "Vienti epäonnistui: {{message}}",
-      "failedShort": "LAS-vienti epäonnistui: {{message}}",
+      "failedShort": "Pistepilven vienti epäonnistui: {{message}}",
       "unknownError": "Tuntematon virhe",
       "multiFormatTitle": "📦 Monen muodon vienti",
       "currentDataset": "Nykyiset tiedot",
@@ -761,7 +761,8 @@
       "extraSettings": "Lisäasetukset",
       "writeCrsMetadata": "Kirjoita vakio-CRS-metatiedot, kun nykyinen koordinaattimäärittely voidaan ilmaista tarkasti",
       "writeSummaryVlr": "Kirjoita vientiyhteenveto VLR tällä muunnolla ja yksikköasetuksella",
-      "startExport": "Aloita vienti"
+      "startExport": "Aloita vienti",
+      "downloadAgain": "Lataa uudelleen"
     },
     "navigationPivot": {
       "centerLabel": "Keskirata",
@@ -1187,6 +1188,21 @@
     },
     "measure": {
       "clearAll": "Tyhjennä kaikki"
+    },
+    "screenshot": {
+      "title": "Vie kuvakaappaus",
+      "scale": "Tarkkuus",
+      "scale1x": "Nykyinen näkymä (1x)",
+      "scale2x": "Korkea tarkkuus (2x)",
+      "scale4x": "Erittäin korkea tarkkuus (4x)",
+      "note": "Vie nykyisen näkymän PNG-kuvana. Suuremmat tarkkuudet voivat kestää muutaman sekunnin.",
+      "save": "Tallenna PNG",
+      "saved": "Kuvakaappaus tallennettu",
+      "failed": "Kuvakaappaus epäonnistui: {{message}}",
+      "tooLarge": "Pyydetty kuvakaappaus on liian suuri. Tekstuurin enimmäiskoko: {{max}} px."
+    },
+    "performance": {
+      "detailLoading": "Valmis - suuren tarkkuuden ruudut latautuvat edelleen enintään {{budget}} pisteeseen asti"
     }
   },
   "phrases": {
