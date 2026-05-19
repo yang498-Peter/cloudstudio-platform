@@ -81917,7 +81917,7 @@ ENDSEC
 			let scroll = (e) => {
 				let resolvedRadius = this.scene.view.radius + this.radiusDelta;
 
-				this.radiusDelta += -e.delta * resolvedRadius * 0.1;
+			this.radiusDelta += -e.delta * resolvedRadius * 0.045;
 
 				this.stopTweens();
 			};
@@ -82652,7 +82652,7 @@ ENDSEC
 				if (I) {
 					let resolvedPos = new Vector3().addVectors(view.position, this.zoomDelta);
 					let distance = I.location.distanceTo(resolvedPos);
-					let jumpDistance = distance * 0.2 * this.wheelDelta;
+				let jumpDistance = distance * 0.08 * this.wheelDelta;
 					let targetDir = new Vector3().subVectors(I.location, view.position);
 					targetDir.normalize();
 
@@ -90528,7 +90528,7 @@ ENDSEC
 	let pointBudget = 1 * 1000 * 1000;
 	let framenumber = 0;
 	let numNodesLoading = 0;
-	let maxNodesLoading = 4;
+	let maxNodesLoading = 6;
 
 	const debug = {};
 
