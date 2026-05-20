@@ -7795,37 +7795,12 @@
             This coordinate workflow supports local coordinates, WGS84, Web Mercator, UTM/UPS, and offline authority-code lookup for common CRS definitions. Parameter files can be imported as `.prj / .wkt / .txt / .json / .csv`. Grid resources can be attached from `.gsb / .gtx / .tif / .tiff`, while `.ggf / .grd` may require conversion to a PROJ-compatible grid before they can be used. Horizontal grids can participate in interactive coordinate display when the current transform chain supports them; vertical geoid and more generic grids are applied mainly through the native PROJ/pyproj transform and export pipeline.</div>
         </div>
 
-        <!-- Manual grid adjustment -->
-        <div class="pg" id="scanner-coordinate-adjustment-panel">
-          <div class="pg-label">🧰 Manual Grid Adjustment</div>
-          <div class="pr">
-            <span class="pr-label">Easting offset</span>
-            <div class="pr-val"><input type="number" id="inp-crs-easting-offset" value="0" step="0.001"></div>
-            <span class="pr-num">m</span>
-          </div>
-          <div class="pr">
-            <span class="pr-label">Northing offset</span>
-            <div class="pr-val"><input type="number" id="inp-crs-northing-offset" value="0" step="0.001"></div>
-            <span class="pr-num">m</span>
-          </div>
-          <div class="pr">
-            <span class="pr-label">Height offset</span>
-            <div class="pr-val"><input type="number" id="inp-crs-height-offset" value="0" step="0.001"></div>
-            <span class="pr-num">m</span>
-          </div>
-          <div class="pr">
-            <span class="pr-label">Planar rotation</span>
-            <div class="pr-val"><input type="number" id="inp-crs-rotation-deg" value="0" step="0.0001"></div>
-            <span class="pr-num">deg</span>
-          </div>
-          <div class="pr">
-            <span class="pr-label">Scale correction</span>
-            <div class="pr-val"><input type="number" id="inp-crs-scale-ppm" value="0" step="0.001"></div>
-            <span class="pr-num">ppm</span>
-          </div>
-          <div style="font-size:10px; color:var(--text3); margin-top:4px; line-height:1.5;">
-            These parameters are applied to the target-coordinate result using the project origin as the reference. They are intended for local survey grids, control points, or manual calibration.
-          </div>
+        <div id="scanner-coordinate-adjustment-panel" hidden aria-hidden="true">
+          <input type="number" id="inp-crs-easting-offset" value="0" step="0.001" tabindex="-1">
+          <input type="number" id="inp-crs-northing-offset" value="0" step="0.001" tabindex="-1">
+          <input type="number" id="inp-crs-height-offset" value="0" step="0.001" tabindex="-1">
+          <input type="number" id="inp-crs-rotation-deg" value="0" step="0.0001" tabindex="-1">
+          <input type="number" id="inp-crs-scale-ppm" value="0" step="0.001" tabindex="-1">
         </div>
 
         <!-- Trajectory -->
