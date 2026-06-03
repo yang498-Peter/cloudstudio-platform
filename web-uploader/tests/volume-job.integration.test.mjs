@@ -20,8 +20,22 @@ function assertPythonRuntime() {
   }
 }
 
-test('unified volume job generates result and dual-surface artifacts from synthetic LAS', () => {
+function hasPythonModules(modules) {
+  try {
+    const statement = `import ${modules.join(', ')}`;
+    execFileSync(PYTHON_BIN, ['-c', statement], { cwd: ROOT, stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+test('unified volume job generates result and dual-surface artifacts from synthetic LAS', (t) => {
   assertPythonRuntime();
+  if (!hasPythonModules(['laspy', 'numpy'])) {
+    t.skip('requires Python modules: laspy, numpy');
+    return;
+  }
 
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'volume-job-test-'));
   const lasPath = path.join(tempDir, 'synthetic.las');
@@ -115,7 +129,13 @@ las.write(${JSON.stringify(lasPath)})
   fs.rmSync(tempDir, { recursive: true, force: true });
 });
 
-test('report-only volume rebuild accepts a viewport screenshot artifact', () => {
+test('report-only volume rebuild accepts a viewport screenshot artifact', (t) => {
+  assertPythonRuntime();
+  if (!hasPythonModules(['laspy', 'numpy'])) {
+    t.skip('requires Python modules: laspy, numpy');
+    return;
+  }
+
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'volume-report-refresh-test-'));
   const lasPath = path.join(tempDir, 'synthetic.las');
   const outputDir = path.join(tempDir, 'job');
@@ -204,7 +224,13 @@ las.write(${JSON.stringify(lasPath)})
   fs.rmSync(tempDir, { recursive: true, force: true });
 });
 
-test('ground-fitted volume reports ground support when class-2 terrain is available', () => {
+test('ground-fitted volume reports ground support when class-2 terrain is available', (t) => {
+  assertPythonRuntime();
+  if (!hasPythonModules(['laspy', 'numpy'])) {
+    t.skip('requires Python modules: laspy, numpy');
+    return;
+  }
+
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'volume-ground-fit-test-'));
   const lasPath = path.join(tempDir, 'groundfit.las');
   const outputDir = path.join(tempDir, 'job');
@@ -280,7 +306,13 @@ las.write(${JSON.stringify(lasPath)})
   fs.rmSync(tempDir, { recursive: true, force: true });
 });
 
-test('ground-fitted volume falls back to low-percentile terrain approximation when no class-2 support exists', () => {
+test('ground-fitted volume falls back to low-percentile terrain approximation when no class-2 support exists', (t) => {
+  assertPythonRuntime();
+  if (!hasPythonModules(['laspy', 'numpy'])) {
+    t.skip('requires Python modules: laspy, numpy');
+    return;
+  }
+
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'volume-ground-fallback-test-'));
   const lasPath = path.join(tempDir, 'groundfallback.las');
   const outputDir = path.join(tempDir, 'job');
@@ -355,10 +387,10 @@ las.write(${JSON.stringify(lasPath)})
   fs.rmSync(tempDir, { recursive: true, force: true });
 });
 
-test('ground-fitted volume uses local CSF when class-2 support is missing but enough local ground exists', () => {
-  try {
-    execFileSync(PYTHON_BIN, ['-c', 'import CSF'], { cwd: ROOT, stdio: 'pipe' });
-  } catch {
+test('ground-fitted volume uses local CSF when class-2 support is missing but enough local ground exists', (t) => {
+  assertPythonRuntime();
+  if (!hasPythonModules(['laspy', 'numpy', 'CSF'])) {
+    t.skip('requires Python modules: laspy, numpy, CSF');
     return;
   }
 
