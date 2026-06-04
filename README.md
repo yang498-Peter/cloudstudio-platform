@@ -106,6 +106,7 @@ cloudstudio-platform/
 - [Technical overview](docs/TECHNICAL_OVERVIEW.md)
 - [Deployment guide](DEPLOY.md)
 - [AI agent deployment guide](docs/AGENT_DEPLOYMENT_GUIDE.md)
+- [Roadmap](ROADMAP.md)
 - [Repository and GitHub workflow](docs/repository-management.md)
 - [Web app notes](web-uploader/README.md)
 - [Contributing](CONTRIBUTING.md)
