@@ -17,6 +17,21 @@ goal is simple and ambitious:
 
 > **Make point cloud sharing as easy as sending a web link.**
 
+## Live Demo
+
+Try CloudStudio directly in the browser before cloning or deploying anything:
+
+- [CloudStudio demo homepage](https://cloudstudio.tersus-gnss.com/) - browse
+  published scenes, upload workflow, feature overview, and project sharing UI.
+- [3D Gaussian Splatting demo](https://cloudstudio.tersus-gnss.com/3dgs/PT-3DGS)
+  - open a SuperSplat-powered SOG scene with a share-ready browser link.
+- [LiDAR point cloud demo](https://cloudstudio.tersus-gnss.com/viewer?pointcloud=%2Fpointclouds%2F2026-05-11_4GCP-Sweden%2Fmetadata.json&projectId=2026-05-11_4GCP-Sweden&scanDataUrl=%2Fscan-data%2F2026-05-11_4GCP-Sweden&projectName=2026-05-11_4GCP-Sweden)
+  - inspect a browser-ready Potree scene with viewer and measurement tools.
+
+The public demo is read-only for visitors. Upload and administration workflows
+remain protected on the hosted server; use the deployment guide to run your own
+self-hosted instance.
+
 With CloudStudio, a team can move from "please install this point cloud tool
 first" to "open this link and inspect the site." It brings together the pieces
 that are usually scattered across desktop software, conversion tools, manual

@@ -20,6 +20,8 @@ const blockedPathPatterns = [
   /接入|交接|维护|开发计划|操作手册|项目/,
 ];
 
+const publicDemoDomainPattern = /cloudstudio\.tersus-gnss\.com/i;
+
 const blockedContentPatterns = [
   /PRIVATE_REPOSITORY_URL/i,
   /YOUR_PRIVATE_REPOSITORY_URL/i,
@@ -28,7 +30,6 @@ const blockedContentPatterns = [
   /share access through your organization/i,
   /docs\/staging-deploy-runbook\.md/i,
   /cloudstudio-new/i,
-  /cloudstudio\.tersus-gnss\.com/i,
   /8\.209\.66\.134/,
   /47\.254\.151\.31/,
   /47\.253\.63\.0/,
@@ -106,6 +107,12 @@ function shouldScanContent(relativePath) {
   return fs.statSync(absolutePath).size <= 1024 * 1024;
 }
 
+function allowsPublicDemoDomain(relativePath, content) {
+  return relativePath === 'README.md'
+    && content.includes('## Live Demo')
+    && content.includes('The public demo is read-only for visitors.');
+}
+
 const files = listFiles();
 const problems = [];
 const localDenylistPatterns = readLocalDenylistPatterns();
@@ -126,7 +133,12 @@ for (const relativePath of files) {
   }
 
   const content = fs.readFileSync(absolutePath, 'utf8');
-  for (const pattern of [...blockedContentPatterns, ...localDenylistPatterns]) {
+  const patterns = [...blockedContentPatterns, ...localDenylistPatterns];
+  if (!allowsPublicDemoDomain(relativePath, content)) {
+    patterns.push(publicDemoDomainPattern);
+  }
+
+  for (const pattern of patterns) {
     if (pattern.test(content)) {
       problems.push(`${relativePath}: blocked public-release marker ${pattern}`);
     }
