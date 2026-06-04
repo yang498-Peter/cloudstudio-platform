@@ -4,7 +4,8 @@ $appDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $appDir
 
 $port = if ($env:PORT) { $env:PORT } else { "8090" }
-$viewerUrl = "http://localhost:$port/viewer"
+$localHost = if ($env:LOCAL_HOST) { $env:LOCAL_HOST } else { "127.0.0.1" }
+$viewerUrl = "http://$localHost`:$port/viewer"
 $venvPython = Join-Path $appDir ".venv\Scripts\python.exe"
 
 function Test-PythonModules {

@@ -8,9 +8,21 @@ export function createFeedbackUi({
   statusValueSelector = null,
   statusClassName = '',
 } = {}) {
+  function resolveTranslator() {
+    const translator = typeof getTranslator === 'function' ? getTranslator() : getTranslator;
+    if (typeof translator === 'function') return translator;
+    if (translator && typeof translator.translateText === 'function') {
+      return value => translator.translateText(value);
+    }
+    if (translator && typeof translator.t === 'function') {
+      return value => translator.t(value, {}, value);
+    }
+    return null;
+  }
+
   const translate = (value) => {
     if (typeof value !== 'string') return value;
-    const translator = typeof getTranslator === 'function' ? getTranslator() : null;
+    const translator = resolveTranslator();
     return translator ? translator(value) : value;
   };
 

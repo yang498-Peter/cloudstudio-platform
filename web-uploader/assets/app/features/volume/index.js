@@ -221,6 +221,18 @@ export function createVolumeFeature({
     return typeof translateText === 'function' ? translateText(fallback) : fallback;
   }
 
+  function scenarioLabel(meta) {
+    return t(`viewer.volume.scenarios.${meta?.value || 'stockpile_boundary'}.label`, meta?.label || 'Volume Job');
+  }
+
+  function baseModeLabel(meta) {
+    return t(`viewer.volume.baseModes.${meta?.value || 'boundary'}.label`, meta?.label || 'Base Surface');
+  }
+
+  function statusLabel(status) {
+    return t(`viewer.volume.status.${status?.key || 'idle'}`, status?.label || 'Idle');
+  }
+
   // R-5 (2026-05-07): debounce server-side recomputes that get triggered by
   // every onChange in the form. Without this, the user dragging through a
   // numeric input (or accidentally fat-fingering a select) can queue 5-10
@@ -294,12 +306,13 @@ export function createVolumeFeature({
 
       const treeItem = document.createElement('div');
       treeItem.className = 'tree-item';
-      treeItem.innerHTML = `<span class="ti-icon">⬒</span><span class="ti-name">${escapeHtml(name)}</span><div class="ti-acts"><button class="icon-btn" title="${volume.visible ? 'Hide' : 'Show'}">${volume.visible ? '👁' : '🚫'}</button><button class="icon-btn del" title="Delete">✕</button></div>`;
+      treeItem.innerHTML = `<span class="ti-icon">⬒</span><span class="ti-name">${escapeHtml(name)}</span><div class="ti-acts"><button class="icon-btn" title="${escapeHtml(volume.visible ? t('viewer.clip.hide', 'Hide') : t('viewer.clip.show', 'Show'))}">${volume.visible ? '👁' : '🚫'}</button><button class="icon-btn del" title="${escapeHtml(t('common.actions.delete', 'Delete'))}">✕</button></div>`;
       const [toggleButton, deleteButton] = treeItem.querySelectorAll('.icon-btn');
       toggleButton.addEventListener('click', event => {
         event.stopPropagation();
         volume.visible = !volume.visible;
         toggleButton.textContent = volume.visible ? '👁' : '🚫';
+        toggleButton.setAttribute('title', volume.visible ? t('viewer.clip.hide', 'Hide') : t('viewer.clip.show', 'Show'));
       });
       deleteButton.addEventListener('click', event => {
         event.stopPropagation();
@@ -310,16 +323,20 @@ export function createVolumeFeature({
 
       const card = document.createElement('div');
       card.className = `clip-object-card${isPending ? ' pending' : ''}${clipState?.selectedVolume === volume ? ' active' : ''}`;
-      const modeLabel = clipState?.mode === 'outside' ? 'Clip Outside' : 'Clip Inside';
-      const pendingLabel = isPending ? 'Pending' : 'Saved';
+      const modeLabel = clipState?.mode === 'outside'
+        ? t('viewer.clip.modeOutside', 'Clip Outside')
+        : t('viewer.clip.modeInside', 'Clip Inside');
+      const pendingLabel = isPending
+        ? t('viewer.clipBox.pendingBadge', 'Pending')
+        : t('viewer.clipBox.savedBadge', 'Saved');
       card.innerHTML = `
         <span>⬒</span>
         <span style="flex:1;min-width:0;">
           <span style="display:block;font-size:11px;color:var(--text2);">${escapeHtml(name)}</span>
           <span class="clip-object-badge">${escapeHtml(`${pendingLabel} · ${modeLabel}`)}</span>
         </span>
-        ${isPending ? `<button class="icon-btn" data-action="edit" title="Resume editing this clip box">✎</button>` : ''}
-        <button class="icon-btn del" title="Remove clipping object">✕</button>`;
+        ${isPending ? `<button class="icon-btn" data-action="edit" title="${escapeHtml(t('viewer.clipBox.resumeEdit', 'Resume editing this clip box'))}">✎</button>` : ''}
+        <button class="icon-btn del" title="${escapeHtml(t('viewer.clip.removeObject', 'Remove clipping object'))}">✕</button>`;
       card.addEventListener('click', event => {
         if (event.target.closest('button')) return;
         selectClipVolume?.(volume);
@@ -339,7 +356,7 @@ export function createVolumeFeature({
       const displayName = typeof getDeleteRegionDisplayName === 'function' ? getDeleteRegionDisplayName(region) : region.name;
       const pending = document.createElement('div');
       pending.className = 'clip-object-card pending';
-      pending.innerHTML = `<span>🟥</span><span style="flex:1;font-size:11px;color:var(--text2);">${escapeHtml(`Pending Delete · ${displayName}`)}</span><button class="icon-btn del" title="Remove pending region">✕</button>`;
+      pending.innerHTML = `<span>🟥</span><span style="flex:1;font-size:11px;color:var(--text2);">${escapeHtml(t('viewer.deleteRegion.pendingRegionLabel', `Pending Delete · ${displayName}`, { name: displayName }))}</span><button class="icon-btn del" title="${escapeHtml(t('viewer.deleteRegion.removePending', 'Remove pending region'))}">✕</button>`;
       pending.querySelector('button')?.addEventListener('click', () => clearDeleteSelection?.({ mode: 'remove', regionId: region.id }));
       clipList.appendChild(pending);
     });
@@ -348,7 +365,7 @@ export function createVolumeFeature({
       const displayName = typeof getDeleteRegionDisplayName === 'function' ? getDeleteRegionDisplayName(region) : region.name;
       const card = document.createElement('div');
       card.className = 'clip-object-card applied-delete';
-      card.innerHTML = `<span>🧹</span><span style="flex:1;font-size:11px;color:var(--text2);">${escapeHtml(displayName)}</span><button class="icon-btn del" title="Remove delete region">✕</button>`;
+      card.innerHTML = `<span>🧹</span><span style="flex:1;font-size:11px;color:var(--text2);">${escapeHtml(displayName)}</span><button class="icon-btn del" title="${escapeHtml(t('viewer.deleteRegion.removeApplied', 'Remove delete region'))}">✕</button>`;
       card.querySelector('button')?.addEventListener('click', () => clearDeleteSelection?.({ mode: 'remove', regionId: region.id }));
       clipList.appendChild(card);
     });
@@ -524,12 +541,12 @@ export function createVolumeFeature({
     if (!Number.isFinite(recommended) || !Number.isFinite(min) || !Number.isFinite(max)) return null;
     const current = Math.max(Number(region?.cellSize) || 0, 0.25);
     const isUsingRecommended = Math.abs(current - Math.max(recommended, 0.25)) <= 0.001;
-    if (isUsingRecommended) return `Using recommended ${current.toFixed(3)} m`;
+    if (isUsingRecommended) return t('viewer.volume.recommendation.using', `Using recommended ${current.toFixed(3)} m`, { value: current.toFixed(3) });
     const hints = [
-      `Recommended ${recommended.toFixed(3)} m`,
-      `range ${min.toFixed(3)}–${max.toFixed(3)} m`,
+      t('viewer.volume.recommendation.recommended', `Recommended ${recommended.toFixed(3)} m`, { value: recommended.toFixed(3) }),
+      t('viewer.volume.recommendation.range', `range ${min.toFixed(3)}–${max.toFixed(3)} m`, { min: min.toFixed(3), max: max.toFixed(3) }),
     ];
-    if (Number.isFinite(targetCells) && targetCells > 0) hints.push(`target ~${fmtNum(targetCells)} cells`);
+    if (Number.isFinite(targetCells) && targetCells > 0) hints.push(t('viewer.volume.recommendation.targetCells', `target ~${fmtNum(targetCells)} cells`, { count: fmtNum(targetCells) }));
     return hints.join(' · ');
   }
 
@@ -572,13 +589,13 @@ export function createVolumeFeature({
 
   function getBaseSourceLabel(baseSourceUsed, baseModeMeta) {
     const key = String(baseSourceUsed || '').trim().toLowerCase();
-    if (key === 'ground_class2_fit') return 'Ground fit (class 2)';
-    if (key === 'local_csf_fit') return 'Local CSF ground fit';
-    if (key === 'ground_quantile_fallback') return 'Ground fallback';
-    if (key === 'boundary_fallback') return 'Boundary fallback';
-    if (key === 'fixed_elevation') return 'Fixed elevation';
-    if (key === 'boundary_fit') return 'Boundary fit';
-    return baseModeMeta?.label || 'Pending';
+    if (key === 'ground_class2_fit') return t('viewer.volume.baseSources.groundClass2Fit', 'Ground fit (class 2)');
+    if (key === 'local_csf_fit') return t('viewer.volume.baseSources.localCsfFit', 'Local CSF ground fit');
+    if (key === 'ground_quantile_fallback') return t('viewer.volume.baseSources.groundQuantileFallback', 'Ground fallback');
+    if (key === 'boundary_fallback') return t('viewer.volume.baseSources.boundaryFallback', 'Boundary fallback');
+    if (key === 'fixed_elevation') return t('viewer.volume.baseSources.fixedElevation', 'Fixed elevation');
+    if (key === 'boundary_fit') return t('viewer.volume.baseSources.boundaryFit', 'Boundary fit');
+    return baseModeLabel(baseModeMeta) || t('viewer.volume.status.pending', 'Pending');
   }
 
   function getSurfaceDisplayMode(analysisSurface, baseSurface) {
@@ -596,8 +613,8 @@ export function createVolumeFeature({
     // entire workflow here.
     return `
       <div class="volume-empty-state-v2">
-        <div class="volume-empty-title-v2">No volume regions yet</div>
-        <div class="volume-empty-copy-v2">Click <strong>New</strong> in the toolbar above, outline a boundary in the viewport, then double-click to confirm.</div>
+        <div class="volume-empty-title-v2">${escapeHtml(t('viewer.volume.workspace.emptyTitle', 'No volume regions yet'))}</div>
+        <div class="volume-empty-copy-v2">${t('viewer.volume.workspace.emptyCopyHtml', 'Click <strong>New</strong> in the toolbar above, outline a boundary in the viewport, then double-click to confirm.')}</div>
       </div>
     `;
   }
@@ -606,8 +623,8 @@ export function createVolumeFeature({
     // Live drawing indicator — minimal, just shows vertex count + how to confirm.
     return `
       <div class="volume-drawing-card-v2">
-        <span class="volume-status-badge status-running">Drawing</span>
-        <span class="volume-drawing-meta-v2"><strong>${fmtNum(state.pendingPoints?.length || 0)}</strong> vertices placed · double-click to confirm</span>
+        <span class="volume-status-badge status-running">${escapeHtml(t('viewer.volume.status.drawing', 'Drawing'))}</span>
+        <span class="volume-drawing-meta-v2">${t('viewer.volume.workspace.drawingMetaHtml', '<strong>{{count}}</strong> vertices placed · double-click to confirm', { count: fmtNum(state.pendingPoints?.length || 0) })}</span>
       </div>
     `;
   }
@@ -621,11 +638,11 @@ export function createVolumeFeature({
       <div class="volume-history-row" data-region-id="${escapeHtml(region.id)}">
         <button class="volume-history-main" data-action="reopen-region" data-region-id="${escapeHtml(region.id)}">
           <span class="volume-history-title">${escapeHtml(region.name)}</span>
-          <span class="volume-history-sub">${escapeHtml(scenarioMeta.label)} · ${escapeHtml(status.label)} · ${escapeHtml(net)} · ${escapeHtml(coverage)}</span>
+          <span class="volume-history-sub">${escapeHtml(scenarioLabel(scenarioMeta))} · ${escapeHtml(statusLabel(status))} · ${escapeHtml(net)} · ${escapeHtml(coverage)}</span>
         </button>
         <div class="volume-history-actions">
-          <button class="volume-chip small" data-action="reopen-region" data-region-id="${escapeHtml(region.id)}">Open</button>
-          <button class="icon-btn del" data-action="delete-history-region" data-region-id="${escapeHtml(region.id)}" title="Delete volume region">✕</button>
+          <button class="volume-chip small" data-action="reopen-region" data-region-id="${escapeHtml(region.id)}">${escapeHtml(t('common.actions.open', 'Open'))}</button>
+          <button class="icon-btn del" data-action="delete-history-region" data-region-id="${escapeHtml(region.id)}" title="${escapeHtml(t('viewer.volume.actions.deleteRegion', 'Delete volume region'))}">✕</button>
         </div>
       </div>
     `;
@@ -682,36 +699,44 @@ export function createVolumeFeature({
       // -----------------------------------------------------------------
 
       const primaryValueText = formatVolumeMeasurement(primaryMetric.value, getPointCloudNativeUnitKey());
+      const primaryLabelText = primaryMetric.label === 'Measured Fill'
+        ? t('viewer.volume.metrics.measuredFill', 'Measured Fill')
+        : (primaryMetric.label === 'Measured Cut'
+          ? t('viewer.volume.metrics.measuredCut', 'Measured Cut')
+          : t('viewer.volume.metrics.netVolume', 'Net Volume'));
       const cutText = formatVolumeMeasurement(activeRegion.cutVolume, getPointCloudNativeUnitKey());
       const fillText = formatVolumeMeasurement(activeRegion.fillVolume, getPointCloudNativeUnitKey());
-      const cellsText = `${fmtNum(activeRegion.cellCount)} cells · ${coverageText}`;
+      const cellsText = t('viewer.volume.metrics.cellsCoverage', '{{count}} cells · {{coverage}}', {
+        count: fmtNum(activeRegion.cellCount),
+        coverage: coverageText,
+      });
       const showSurfacesDrawer = analysisSurface.hasResult || baseSurface.hasResult;
       const showContoursDrawer = hasContourData;
       const showApplyRecommended = Number.isFinite(Number(activeRegion.recommendedResolution)) &&
         Math.abs(Math.max(Number(activeRegion.cellSize) || 0, 0.25) - Math.max(Number(activeRegion.recommendedResolution), 0.25)) > 0.001;
 
       const cellSizeMarkup = `
-        <label class="volume-field-label">Cell size (m)</label>
+        <label class="volume-field-label">${escapeHtml(t('viewer.volume.fields.cellSize', 'Cell size (m)'))}</label>
         <input class="volume-field-input" data-field="cellSize" type="number" min="0.25" step="0.05" value="${Math.max(Number(activeRegion.cellSize ?? 0.25), 0.25).toFixed(3)}">
         ${resolutionRecommendationText ? `
           <div class="volume-inline-hint volume-inline-hint-row">
             <span>${escapeHtml(resolutionRecommendationText)}</span>
-            ${showApplyRecommended ? '<button class="volume-chip volume-chip-link" data-action="apply-recommended-resolution">Apply</button>' : ''}
+            ${showApplyRecommended ? `<button class="volume-chip volume-chip-link" data-action="apply-recommended-resolution">${escapeHtml(t('common.actions.apply', 'Apply'))}</button>` : ''}
           </div>
         ` : ''}
       `;
 
       const referenceHeightMarkup = showReferenceHeight ? `
         <div class="volume-method-field">
-          <label class="volume-field-label">Reference height (m)</label>
+          <label class="volume-field-label">${escapeHtml(t('viewer.volume.fields.referenceHeight', 'Reference height (m)'))}</label>
           <div class="volume-field-row">
-            <input class="volume-field-input" data-field="referenceHeight" type="number" step="0.01" value="${Number(activeRegion.referenceHeight ?? 0).toFixed(3)}" placeholder="Elevation">
-            <button class="volume-pick-btn" data-action="pick-height" title="Click a point in the cloud to pick its elevation">Pick</button>
+            <input class="volume-field-input" data-field="referenceHeight" type="number" step="0.01" value="${Number(activeRegion.referenceHeight ?? 0).toFixed(3)}" placeholder="${escapeHtml(t('viewer.volume.fields.elevationPlaceholder', 'Elevation'))}">
+            <button class="volume-pick-btn" data-action="pick-height" title="${escapeHtml(t('viewer.volume.actions.pickHeightTitle', 'Click a point in the cloud to pick its elevation'))}">${escapeHtml(t('viewer.volume.actions.pick', 'Pick'))}</button>
           </div>
           <div class="volume-chip-row volume-chip-row-tight">
-            <button class="volume-chip small" data-preset="min">Min</button>
-            <button class="volume-chip small" data-preset="avg">Avg</button>
-            <button class="volume-chip small" data-preset="max">Max</button>
+            <button class="volume-chip small" data-preset="min">${escapeHtml(t('viewer.volume.actions.min', 'Min'))}</button>
+            <button class="volume-chip small" data-preset="avg">${escapeHtml(t('viewer.volume.actions.avg', 'Avg'))}</button>
+            <button class="volume-chip small" data-preset="max">${escapeHtml(t('viewer.volume.actions.max', 'Max'))}</button>
           </div>
         </div>
       ` : '';
@@ -720,7 +745,7 @@ export function createVolumeFeature({
         <div class="volume-warnings-strip${activeRegion.uiWarningsExpanded ? ' is-expanded' : ''}">
           <button class="volume-warnings-toggle" data-action="toggle-warnings" type="button">
             <span class="volume-warnings-icon" aria-hidden="true">⚠</span>
-            <span class="volume-warnings-summary">${fmtNum(warningList.length)} ${warningList.length === 1 ? 'warning' : 'warnings'} · ${escapeHtml(confidence || 'unknown')} confidence</span>
+            <span class="volume-warnings-summary">${escapeHtml(t('viewer.volume.warnings.summary', '{{count}} warnings · {{confidence}} confidence', { count: fmtNum(warningList.length), confidence: confidence || t('viewer.volume.confidence.unknown', 'unknown') }))}</span>
             <span class="volume-warnings-caret">${activeRegion.uiWarningsExpanded ? '▴' : '▾'}</span>
           </button>
           ${activeRegion.uiWarningsExpanded ? `
@@ -733,32 +758,32 @@ export function createVolumeFeature({
       ` : `
         <div class="volume-confidence-strip confidence-${escapeHtml(confidence)}" title="${escapeHtml(resultInterpretation)}">
           <span class="volume-confidence-dot" aria-hidden="true"></span>
-          <span>Confidence: <strong>${escapeHtml(confidence || 'unknown')}</strong> · ${escapeHtml(baseSourceLabel)}</span>
+          <span>${t('viewer.volume.confidence.lineHtml', 'Confidence: <strong>{{confidence}}</strong> · {{baseSource}}', { confidence: escapeHtml(confidence || t('viewer.volume.confidence.unknown', 'unknown')), baseSource: escapeHtml(baseSourceLabel) })}</span>
         </div>
       `;
 
       const surfacesDrawerBody = showSurfacesDrawer ? `
         <div class="volume-drawer-body">
-          <div class="volume-drawer-row volume-drawer-label">3D display</div>
+          <div class="volume-drawer-row volume-drawer-label">${escapeHtml(t('viewer.volume.sections.display3d', '3D display'))}</div>
           <div class="volume-visual-toggle-grid">
-            <button class="volume-chip${surfaceDisplayMode === 'analysis' ? ' active' : ''}" data-action="show-primary-surface" ${analysisSurface.hasResult ? '' : 'disabled'}>Analysis</button>
-            <button class="volume-chip${surfaceDisplayMode === 'base' ? ' active' : ''}" data-action="show-base-surface" ${baseSurface.hasResult ? '' : 'disabled'}>Base</button>
-            <button class="volume-chip${surfaceDisplayMode === 'both' ? ' active' : ''}" data-action="show-both-surfaces" ${(analysisSurface.hasResult || baseSurface.hasResult) ? '' : 'disabled'}>Both</button>
-            <button class="volume-chip${surfaceDisplayMode === 'none' ? ' active' : ''}" data-action="hide-all-surfaces" ${(analysisSurface.layerName || baseSurface.layerName) ? '' : 'disabled'}>None</button>
+            <button class="volume-chip${surfaceDisplayMode === 'analysis' ? ' active' : ''}" data-action="show-primary-surface" ${analysisSurface.hasResult ? '' : 'disabled'}>${escapeHtml(t('viewer.volume.surfaceModes.analysis', 'Analysis'))}</button>
+            <button class="volume-chip${surfaceDisplayMode === 'base' ? ' active' : ''}" data-action="show-base-surface" ${baseSurface.hasResult ? '' : 'disabled'}>${escapeHtml(t('viewer.volume.surfaceModes.base', 'Base'))}</button>
+            <button class="volume-chip${surfaceDisplayMode === 'both' ? ' active' : ''}" data-action="show-both-surfaces" ${(analysisSurface.hasResult || baseSurface.hasResult) ? '' : 'disabled'}>${escapeHtml(t('viewer.volume.surfaceModes.both', 'Both'))}</button>
+            <button class="volume-chip${surfaceDisplayMode === 'none' ? ' active' : ''}" data-action="hide-all-surfaces" ${(analysisSurface.layerName || baseSurface.layerName) ? '' : 'disabled'}>${escapeHtml(t('viewer.volume.surfaceModes.none', 'None'))}</button>
           </div>
 
-          <div class="volume-drawer-row volume-drawer-label">Edges &amp; overlay</div>
+          <div class="volume-drawer-row volume-drawer-label">${escapeHtml(t('viewer.volume.sections.edgesOverlay', 'Edges & overlay'))}</div>
           <div class="volume-visual-action-grid">
-            <button class="volume-chip${activeRegion.showComputedOverlay ? ' active' : ''}" data-action="toggle-overlay">${activeRegion.showComputedOverlay ? 'Overlay on' : 'Overlay off'}</button>
-            <button class="volume-chip${analysisSurface.layerName && analysisSurface.showEdges ? ' active' : ''}" data-action="toggle-edges" data-role="analysis" ${analysisSurface.layerName ? '' : 'disabled'}>${analysisSurface.showEdges ? 'Analysis edges on' : 'Analysis edges off'}</button>
-            <button class="volume-chip${baseSurface.layerName && baseSurface.showEdges ? ' active' : ''}" data-action="toggle-edges" data-role="base" ${baseSurface.layerName ? '' : 'disabled'}>${baseSurface.showEdges ? 'Base edges on' : 'Base edges off'}</button>
-            <button class="volume-chip" data-action="build-surface">Refresh surfaces</button>
+            <button class="volume-chip${activeRegion.showComputedOverlay ? ' active' : ''}" data-action="toggle-overlay">${escapeHtml(activeRegion.showComputedOverlay ? t('viewer.volume.actions.overlayOn', 'Overlay on') : t('viewer.volume.actions.overlayOff', 'Overlay off'))}</button>
+            <button class="volume-chip${analysisSurface.layerName && analysisSurface.showEdges ? ' active' : ''}" data-action="toggle-edges" data-role="analysis" ${analysisSurface.layerName ? '' : 'disabled'}>${escapeHtml(analysisSurface.showEdges ? t('viewer.volume.actions.analysisEdgesOn', 'Analysis edges on') : t('viewer.volume.actions.analysisEdgesOff', 'Analysis edges off'))}</button>
+            <button class="volume-chip${baseSurface.layerName && baseSurface.showEdges ? ' active' : ''}" data-action="toggle-edges" data-role="base" ${baseSurface.layerName ? '' : 'disabled'}>${escapeHtml(baseSurface.showEdges ? t('viewer.volume.actions.baseEdgesOn', 'Base edges on') : t('viewer.volume.actions.baseEdgesOff', 'Base edges off'))}</button>
+            <button class="volume-chip" data-action="build-surface">${escapeHtml(t('viewer.volume.actions.refreshSurfaces', 'Refresh surfaces'))}</button>
           </div>
 
-          <div class="volume-drawer-row volume-drawer-label">Mesh export</div>
+          <div class="volume-drawer-row volume-drawer-label">${escapeHtml(t('viewer.volume.sections.meshExport', 'Mesh export'))}</div>
           <div class="volume-visual-action-grid">
-            <button class="volume-chip" data-action="export-obj" data-role="analysis" ${analysisSurface.jobId ? '' : 'disabled'}>Analysis OBJ</button>
-            <button class="volume-chip" data-action="export-obj" data-role="base" ${baseSurface.jobId ? '' : 'disabled'}>Base OBJ</button>
+            <button class="volume-chip" data-action="export-obj" data-role="analysis" ${analysisSurface.jobId ? '' : 'disabled'}>${escapeHtml(t('viewer.volume.actions.analysisObj', 'Analysis OBJ'))}</button>
+            <button class="volume-chip" data-action="export-obj" data-role="base" ${baseSurface.jobId ? '' : 'disabled'}>${escapeHtml(t('viewer.volume.actions.baseObj', 'Base OBJ'))}</button>
           </div>
         </div>
       ` : '';
@@ -767,24 +792,24 @@ export function createVolumeFeature({
         <div class="volume-drawer-body">
           <div class="volume-controls compact">
             <div>
-              <label class="volume-field-label">Interval (m)</label>
+              <label class="volume-field-label">${escapeHtml(t('viewer.volume.fields.interval', 'Interval (m)'))}</label>
               <input class="volume-field-input" data-field="contourInterval" type="number" min="0.01" step="0.01" value="${Number(activeRegion.contourInterval ?? 0.5).toFixed(2)}">
             </div>
             <div>
-              <label class="volume-field-label">Label size</label>
+              <label class="volume-field-label">${escapeHtml(t('viewer.volume.fields.labelSize', 'Label size'))}</label>
               <input class="volume-field-input" data-field="contourLabelScale" type="number" min="0.1" max="5" step="0.1" value="${Number(activeRegion.contourLabelScale ?? 1.0).toFixed(1)}">
             </div>
           </div>
-          <div class="volume-drawer-row volume-drawer-label">Source</div>
+          <div class="volume-drawer-row volume-drawer-label">${escapeHtml(t('viewer.volume.fields.source', 'Source'))}</div>
           <div class="volume-contour-source-grid">
-            <button class="volume-chip${contourSourceRole === 'analysis' ? ' active' : ''}" data-action="set-contour-source" data-role="analysis" ${analysisSurface.hasGridData ? '' : 'disabled'}>Analysis</button>
-            <button class="volume-chip${contourSourceRole === 'base' ? ' active' : ''}" data-action="set-contour-source" data-role="base" ${baseSurface.hasGridData ? '' : 'disabled'}>Base</button>
+            <button class="volume-chip${contourSourceRole === 'analysis' ? ' active' : ''}" data-action="set-contour-source" data-role="analysis" ${analysisSurface.hasGridData ? '' : 'disabled'}>${escapeHtml(t('viewer.volume.surfaceModes.analysis', 'Analysis'))}</button>
+            <button class="volume-chip${contourSourceRole === 'base' ? ' active' : ''}" data-action="set-contour-source" data-role="base" ${baseSurface.hasGridData ? '' : 'disabled'}>${escapeHtml(t('viewer.volume.surfaceModes.base', 'Base'))}</button>
           </div>
           <div class="volume-contour-action-grid">
-            <button class="volume-chip primary" data-action="gen-contours" ${contourSurface.hasGridData ? '' : 'disabled'}>Generate</button>
-            <button class="volume-chip${activeRegion.contoursVisible && activeRegion.contourLabelsVisible !== false ? ' active' : ''}" data-action="toggle-labels" ${activeRegion.contoursVisible ? '' : 'disabled'}>${activeRegion.contoursVisible && activeRegion.contourLabelsVisible !== false ? 'Labels on' : 'Labels off'}</button>
-            <button class="volume-chip" data-action="export-dxf" ${activeRegion.contoursVisible ? '' : 'disabled'}>Export DXF</button>
-            <button class="volume-chip" data-action="remove-contours" ${activeRegion.contoursVisible ? '' : 'disabled'}>Clear</button>
+            <button class="volume-chip primary" data-action="gen-contours" ${contourSurface.hasGridData ? '' : 'disabled'}>${escapeHtml(t('viewer.volume.actions.generate', 'Generate'))}</button>
+            <button class="volume-chip${activeRegion.contoursVisible && activeRegion.contourLabelsVisible !== false ? ' active' : ''}" data-action="toggle-labels" ${activeRegion.contoursVisible ? '' : 'disabled'}>${escapeHtml(activeRegion.contoursVisible && activeRegion.contourLabelsVisible !== false ? t('viewer.volume.actions.labelsOn', 'Labels on') : t('viewer.volume.actions.labelsOff', 'Labels off'))}</button>
+            <button class="volume-chip" data-action="export-dxf" ${activeRegion.contoursVisible ? '' : 'disabled'}>${escapeHtml(t('viewer.volume.actions.exportDxf', 'Export DXF'))}</button>
+            <button class="volume-chip" data-action="remove-contours" ${activeRegion.contoursVisible ? '' : 'disabled'}>${escapeHtml(t('common.actions.clear', 'Clear'))}</button>
           </div>
         </div>
       ` : '';
@@ -793,33 +818,33 @@ export function createVolumeFeature({
         <div class="volume-drawer-body">
           <div class="volume-advanced-grid">
             <div>
-              <label class="volume-field-label">Base surface override</label>
+              <label class="volume-field-label">${escapeHtml(t('viewer.volume.fields.baseSurfaceOverride', 'Base surface override'))}</label>
               <select class="volume-field-input" data-field="baseSurfaceMode" style="appearance:auto;">
-                <option value="boundary" ${baseModeMeta.value === 'boundary' ? 'selected' : ''}>Boundary fit</option>
-                <option value="fixed" ${baseModeMeta.value === 'fixed' ? 'selected' : ''}>Fixed elevation</option>
-                <option value="ground" ${baseModeMeta.value === 'ground' ? 'selected' : ''}>Ground fit</option>
+                <option value="boundary" ${baseModeMeta.value === 'boundary' ? 'selected' : ''}>${escapeHtml(t('viewer.volume.baseModes.boundary.label', 'Boundary fit'))}</option>
+                <option value="fixed" ${baseModeMeta.value === 'fixed' ? 'selected' : ''}>${escapeHtml(t('viewer.volume.baseModes.fixed.label', 'Fixed elevation'))}</option>
+                <option value="ground" ${baseModeMeta.value === 'ground' ? 'selected' : ''}>${escapeHtml(t('viewer.volume.baseModes.ground.label', 'Ground fit'))}</option>
               </select>
             </div>
             <div>
-              <label class="volume-field-label">Point filter</label>
+              <label class="volume-field-label">${escapeHtml(t('viewer.volume.fields.pointFilter', 'Point filter'))}</label>
               <select class="volume-field-input" data-field="pointFilterMode" style="appearance:auto;">
-                <option value="all" ${(!activeRegion.pointFilterMode || activeRegion.pointFilterMode === 'all' || activeRegion.pointFilterMode === 'none') ? 'selected' : ''}>All points</option>
-                <option value="exclude_vegetation" ${activeRegion.pointFilterMode === 'exclude_vegetation' ? 'selected' : ''}>Exclude grass / trees</option>
-                <option value="exclude_vegetation_buildings" ${activeRegion.pointFilterMode === 'exclude_vegetation_buildings' ? 'selected' : ''}>Exclude vegetation / buildings</option>
-                <option value="ground_only" ${activeRegion.pointFilterMode === 'ground_only' ? 'selected' : ''}>Ground only (class 2)</option>
+                <option value="all" ${(!activeRegion.pointFilterMode || activeRegion.pointFilterMode === 'all' || activeRegion.pointFilterMode === 'none') ? 'selected' : ''}>${escapeHtml(t('viewer.volume.pointFilters.all', 'All points'))}</option>
+                <option value="exclude_vegetation" ${activeRegion.pointFilterMode === 'exclude_vegetation' ? 'selected' : ''}>${escapeHtml(t('viewer.volume.pointFilters.excludeVegetation', 'Exclude grass / trees'))}</option>
+                <option value="exclude_vegetation_buildings" ${activeRegion.pointFilterMode === 'exclude_vegetation_buildings' ? 'selected' : ''}>${escapeHtml(t('viewer.volume.pointFilters.excludeVegetationBuildings', 'Exclude vegetation / buildings'))}</option>
+                <option value="ground_only" ${activeRegion.pointFilterMode === 'ground_only' ? 'selected' : ''}>${escapeHtml(t('viewer.volume.pointFilters.groundOnly', 'Ground only (class 2)'))}</option>
               </select>
             </div>
             <div>
-              <label class="volume-field-label">Surface mode</label>
+              <label class="volume-field-label">${escapeHtml(t('viewer.volume.fields.surfaceMode', 'Surface mode'))}</label>
               <select class="volume-field-input" data-field="surfaceType" style="appearance:auto;">
-                <option value="stockpile" ${activeRegion.surfaceType === 'stockpile' ? 'selected' : ''}>Stockpile</option>
-                <option value="dsm" ${activeRegion.surfaceType === 'dsm' ? 'selected' : ''}>Full surface (DSM)</option>
-                <option value="dtm" ${activeRegion.surfaceType === 'dtm' ? 'selected' : ''}>Ground level (DTM)</option>
+                <option value="stockpile" ${activeRegion.surfaceType === 'stockpile' ? 'selected' : ''}>${escapeHtml(t('viewer.volume.surfaceTypes.stockpile', 'Stockpile'))}</option>
+                <option value="dsm" ${activeRegion.surfaceType === 'dsm' ? 'selected' : ''}>${escapeHtml(t('viewer.volume.surfaceTypes.dsm', 'Full surface (DSM)'))}</option>
+                <option value="dtm" ${activeRegion.surfaceType === 'dtm' ? 'selected' : ''}>${escapeHtml(t('viewer.volume.surfaceTypes.dtm', 'Ground level (DTM)'))}</option>
               </select>
             </div>
             ${activeRegion.surfaceType === 'stockpile' ? `
               <div>
-                <label class="volume-field-label">Aggregation</label>
+                <label class="volume-field-label">${escapeHtml(t('viewer.volume.fields.aggregation', 'Aggregation'))}</label>
                 <select class="volume-field-input" data-field="surfaceAggregateMode" style="appearance:auto;">
                   <option value="p80" ${activeRegion.surfaceAggregateMode === 'p80' ? 'selected' : ''}>P80</option>
                   <option value="p85" ${activeRegion.surfaceAggregateMode === 'p85' ? 'selected' : ''}>P85</option>
@@ -830,15 +855,15 @@ export function createVolumeFeature({
               </div>
             ` : ''}
             <div>
-              <label class="volume-field-label">Gap fill</label>
+              <label class="volume-field-label">${escapeHtml(t('viewer.volume.fields.gapFill', 'Gap fill'))}</label>
               <select class="volume-field-input" data-field="holeFillMode" style="appearance:auto;">
-                <option value="leave" ${activeRegion.holeFillMode === 'leave' ? 'selected' : ''}>Leave holes</option>
-                <option value="reference" ${activeRegion.holeFillMode === 'reference' ? 'selected' : ''}>Fill with ref. elevation</option>
-                <option value="interpolate" ${activeRegion.holeFillMode === 'interpolate' ? 'selected' : ''}>Interpolate</option>
+                <option value="leave" ${activeRegion.holeFillMode === 'leave' ? 'selected' : ''}>${escapeHtml(t('viewer.volume.gapFill.leave', 'Leave holes'))}</option>
+                <option value="reference" ${activeRegion.holeFillMode === 'reference' ? 'selected' : ''}>${escapeHtml(t('viewer.volume.gapFill.reference', 'Fill with ref. elevation'))}</option>
+                <option value="interpolate" ${activeRegion.holeFillMode === 'interpolate' ? 'selected' : ''}>${escapeHtml(t('viewer.volume.gapFill.interpolate', 'Interpolate'))}</option>
               </select>
             </div>
             <div>
-              <label class="volume-field-label">Display density</label>
+              <label class="volume-field-label">${escapeHtml(t('viewer.volume.fields.displayDensity', 'Display density'))}</label>
               <input class="volume-field-input" data-field="displayDensity" type="number" min="0.2" max="4" step="0.1" value="${Number(activeRegion.displayDensity ?? 1).toFixed(1)}">
             </div>
           </div>
@@ -850,31 +875,31 @@ export function createVolumeFeature({
           <header class="volume-ws-header">
             <div class="volume-ws-title-block">
               <div class="volume-ws-title">${escapeHtml(activeRegion.name)}</div>
-              <div class="volume-ws-meta">${escapeHtml(scenarioMeta.label)} · ${escapeHtml(activeRegion.pointcloudName || 'Point Cloud')} · ${fmtNum(activeRegion.vertexCount)} verts · ${fmtNum(activeRegion.polygonArea)} m²</div>
+              <div class="volume-ws-meta">${escapeHtml(scenarioLabel(scenarioMeta))} · ${escapeHtml(activeRegion.pointcloudName || t('viewer.open.badges.pointCloud', 'Point Cloud'))} · ${t('viewer.volume.workspace.vertexCount', '{{count}} verts', { count: fmtNum(activeRegion.vertexCount) })} · ${fmtNum(activeRegion.polygonArea)} m²</div>
             </div>
             <div class="volume-ws-header-actions">
-              <span class="volume-status-badge status-${escapeHtml(jobStatus.key)}">${escapeHtml(jobStatus.label)}</span>
-              <button class="icon-btn del" data-action="delete-region" data-region-id="${escapeHtml(activeRegion.id)}" title="Delete volume region">✕</button>
+              <span class="volume-status-badge status-${escapeHtml(jobStatus.key)}">${escapeHtml(statusLabel(jobStatus))}</span>
+              <button class="icon-btn del" data-action="delete-region" data-region-id="${escapeHtml(activeRegion.id)}" title="${escapeHtml(t('viewer.volume.actions.deleteRegion', 'Delete volume region'))}">✕</button>
             </div>
           </header>
 
           <section class="volume-primary-block">
             <div class="volume-primary-value">${primaryValueText}</div>
-            <div class="volume-primary-label">${escapeHtml(primaryMetric.label)}</div>
+            <div class="volume-primary-label">${escapeHtml(primaryLabelText)}</div>
             <div class="volume-secondary-stats">
-              <span><span class="volume-stat-key">Cut</span><strong>${cutText}</strong></span>
+              <span><span class="volume-stat-key">${escapeHtml(t('viewer.volume.metrics.cut', 'Cut'))}</span><strong>${cutText}</strong></span>
               <span class="volume-stat-sep" aria-hidden="true">·</span>
-              <span><span class="volume-stat-key">Fill</span><strong>${fillText}</strong></span>
+              <span><span class="volume-stat-key">${escapeHtml(t('viewer.volume.metrics.fill', 'Fill'))}</span><strong>${fillText}</strong></span>
               <span class="volume-stat-sep" aria-hidden="true">·</span>
-              <span><span class="volume-stat-key">Coverage</span><strong>${cellsText}</strong></span>
+              <span><span class="volume-stat-key">${escapeHtml(t('viewer.volume.metrics.coverage', 'Coverage'))}</span><strong>${escapeHtml(cellsText)}</strong></span>
             </div>
           </section>
 
           <section class="volume-method-block">
             <div class="volume-scenario-picker">
-              <button class="volume-mode-chip${scenarioMeta.value === 'stockpile_boundary' ? ' active' : ''}" data-action="set-scenario" data-value="stockpile_boundary">Stockpile</button>
-              <button class="volume-mode-chip${scenarioMeta.value === 'plane_cut_fill' ? ' active' : ''}" data-action="set-scenario" data-value="plane_cut_fill">Plane Cut/Fill</button>
-              <button class="volume-mode-chip${scenarioMeta.value === 'ground_fit_volume' ? ' active' : ''}" data-action="set-scenario" data-value="ground_fit_volume">Ground-Fitted</button>
+              <button class="volume-mode-chip${scenarioMeta.value === 'stockpile_boundary' ? ' active' : ''}" data-action="set-scenario" data-value="stockpile_boundary">${escapeHtml(t('viewer.volume.scenarios.stockpile_boundary.label', 'Stockpile'))}</button>
+              <button class="volume-mode-chip${scenarioMeta.value === 'plane_cut_fill' ? ' active' : ''}" data-action="set-scenario" data-value="plane_cut_fill">${escapeHtml(t('viewer.volume.scenarios.plane_cut_fill.label', 'Plane Cut/Fill'))}</button>
+              <button class="volume-mode-chip${scenarioMeta.value === 'ground_fit_volume' ? ' active' : ''}" data-action="set-scenario" data-value="ground_fit_volume">${escapeHtml(t('viewer.volume.scenarios.ground_fit_volume.shortLabel', 'Ground-Fitted'))}</button>
             </div>
             <div class="volume-method-field">${cellSizeMarkup}</div>
             ${referenceHeightMarkup}
@@ -883,17 +908,17 @@ export function createVolumeFeature({
           ${warningsMarkup}
 
           <section class="volume-actions-row">
-            <button class="volume-action-btn primary" data-action="export-report" ${activeRegion.volumeJobId ? '' : 'disabled'}>Export report</button>
-            <button class="volume-action-btn" data-action="recompute" data-region-id="${escapeHtml(activeRegion.id)}">Re-run</button>
-            <button class="volume-action-btn" data-action="redraw-region" data-region-id="${escapeHtml(activeRegion.id)}">Redraw</button>
+            <button class="volume-action-btn primary" data-action="export-report" ${activeRegion.volumeJobId ? '' : 'disabled'}>${escapeHtml(t('viewer.volume.actions.exportReport', 'Export report'))}</button>
+            <button class="volume-action-btn" data-action="recompute" data-region-id="${escapeHtml(activeRegion.id)}">${escapeHtml(t('viewer.volume.actions.rerun', 'Re-run'))}</button>
+            <button class="volume-action-btn" data-action="redraw-region" data-region-id="${escapeHtml(activeRegion.id)}">${escapeHtml(t('viewer.volume.actions.redraw', 'Redraw'))}</button>
           </section>
 
           ${showSurfacesDrawer ? `
             <details class="volume-drawer" data-drawer="surfaces"${activeRegion.uiSurfacesOpen ? ' open' : ''}>
               <summary class="volume-drawer-header" data-action="toggle-surfaces">
                 <span class="volume-drawer-icon" aria-hidden="true">▾</span>
-                <span class="volume-drawer-title">3D surfaces &amp; display</span>
-                <span class="volume-drawer-meta">${surfaceDisplayMode === 'none' ? 'Hidden' : surfaceDisplayMode.charAt(0).toUpperCase() + surfaceDisplayMode.slice(1)}</span>
+                <span class="volume-drawer-title">${escapeHtml(t('viewer.volume.sections.surfacesDisplay', '3D surfaces & display'))}</span>
+                <span class="volume-drawer-meta">${escapeHtml(t(`viewer.volume.surfaceDisplayMode.${surfaceDisplayMode}`, surfaceDisplayMode === 'none' ? 'Hidden' : surfaceDisplayMode.charAt(0).toUpperCase() + surfaceDisplayMode.slice(1)))}</span>
               </summary>
               ${surfacesDrawerBody}
             </details>
@@ -902,7 +927,7 @@ export function createVolumeFeature({
           <details class="volume-drawer" data-drawer="advanced"${activeRegion.uiAdvancedOpen ? ' open' : ''}>
             <summary class="volume-drawer-header" data-action="toggle-advanced">
               <span class="volume-drawer-icon" aria-hidden="true">▾</span>
-              <span class="volume-drawer-title">Advanced settings</span>
+              <span class="volume-drawer-title">${escapeHtml(t('viewer.volume.sections.advancedSettings', 'Advanced settings'))}</span>
               <span class="volume-drawer-meta">${escapeHtml(baseSourceLabel)}</span>
             </summary>
             ${advancedDrawerBody}
@@ -912,8 +937,8 @@ export function createVolumeFeature({
             <details class="volume-drawer" data-drawer="contours"${activeRegion.uiContoursOpen ? ' open' : ''}>
               <summary class="volume-drawer-header" data-action="toggle-contours">
                 <span class="volume-drawer-icon" aria-hidden="true">▾</span>
-                <span class="volume-drawer-title">Contours</span>
-                <span class="volume-drawer-meta">${activeRegion.contoursVisible ? `Active · ${Number(activeRegion.contourInterval ?? 0.5).toFixed(2)} m` : 'Idle'}</span>
+                <span class="volume-drawer-title">${escapeHtml(t('viewer.volume.sections.contours', 'Contours'))}</span>
+                <span class="volume-drawer-meta">${escapeHtml(activeRegion.contoursVisible ? t('viewer.volume.status.activeWithInterval', 'Active · {{interval}} m', { interval: Number(activeRegion.contourInterval ?? 0.5).toFixed(2) }) : t('viewer.volume.status.idle', 'Idle'))}</span>
               </summary>
               ${contoursDrawerBody}
             </details>
@@ -927,8 +952,8 @@ export function createVolumeFeature({
         <div class="volume-history-card">
           <div class="volume-inspector-head">
             <div>
-              <div class="volume-inspector-title">Recent Jobs</div>
-              <div class="volume-inspector-sub">Older regions stay compact until you reopen them.</div>
+              <div class="volume-inspector-title">${escapeHtml(t('viewer.volume.history.title', 'Recent Jobs'))}</div>
+              <div class="volume-inspector-sub">${escapeHtml(t('viewer.volume.history.subtitle', 'Older regions stay compact until you reopen them.'))}</div>
             </div>
           </div>
           <div class="volume-history-list">
@@ -973,7 +998,7 @@ export function createVolumeFeature({
       clearPendingCompute(region.id);
       removeVolumeRegion(region.id, { notify: false });
       startVolumeMeasurementHandler?.();
-      toast('Draw a new boundary for this volume job.', 'info', 2200);
+      toast(t('viewer.volume.toasts.drawNewBoundary', 'Draw a new boundary for this volume job.'), 'info', 2200, { translate: false });
     });
     card.querySelector('[data-action="recompute"]')?.addEventListener('click', async () => {
       try {
@@ -984,7 +1009,7 @@ export function createVolumeFeature({
         updatePanel();
         refreshSceneTree?.();
         console.error('[Volume] recompute failed:', error);
-        toast(`Volume compute failed: ${region.computeMessage}`, 'err', 4200);
+        toast(t('viewer.volume.toasts.computeFailed', `Volume compute failed: ${region.computeMessage}`, { message: region.computeMessage }), 'err', 4200, { translate: false });
       }
     });
     card.querySelector('[data-action="build-surface"]')?.addEventListener('click', async () => {
@@ -992,7 +1017,7 @@ export function createVolumeFeature({
         await buildLocalSurfaceForVolumeRegion?.(region);
         updatePanel();
       } catch (error) {
-        toast(`Local mesh build failed: ${error.message}`, 'err', 3200);
+        toast(t('viewer.volume.toasts.localMeshBuildFailed', `Local mesh build failed: ${error.message}`, { message: error.message }), 'err', 3200, { translate: false });
       }
     });
     // 2026-05-07 redesign: drawers are native <details>/<summary>. The browser
@@ -1044,7 +1069,7 @@ export function createVolumeFeature({
         }
       } catch (error) {
         console.warn('[Volume] Failed to refresh report with current view:', error);
-        toast(`Could not embed the current view screenshot. Downloading the latest available report instead.`, 'info', 3200);
+        toast(t('viewer.volume.toasts.reportSnapshotFailed', 'Could not embed the current view screenshot. Downloading the latest available report instead.'), 'info', 3200, { translate: false });
       }
       const anchor = document.createElement('a');
       anchor.href = `/api/download-volume-job?jobId=${encodeURIComponent(region.volumeJobId)}&artifact=report-pdf`;
@@ -1084,7 +1109,10 @@ export function createVolumeFeature({
         });
         updatePanel();
       } catch (error) {
-        toast(`Failed to load ${surface.label.toLowerCase()}: ${error.message}`, 'err', 2600);
+        const label = surface.role === 'base'
+          ? t('viewer.volume.surfaces.baseSurface', 'base surface')
+          : t('viewer.volume.surfaces.analysisSurface', 'analysis surface');
+        toast(t('viewer.volume.toasts.loadSurfaceFailed', `Failed to load ${label}: ${error.message}`, { label, message: error.message }), 'err', 2600, { translate: false });
       }
     };
     const hideSurfaceFromViewer = role => {
@@ -1156,7 +1184,7 @@ export function createVolumeFeature({
       const value = parseNumberSafe(event.target.value);
       if (value === null) {
         event.target.value = Number(region.referenceHeight).toFixed(3);
-        toast('Invalid reference elevation input', 'err', 1800);
+        toast(t('viewer.volume.toasts.invalidReferenceElevation', 'Invalid reference elevation input'), 'err', 1800, { translate: false });
         return;
       }
       region.referenceHeight = value;
@@ -1166,7 +1194,7 @@ export function createVolumeFeature({
       const value = parseNumberSafe(event.target.value);
       if (value === null || value < 0.25) {
         event.target.value = Number(region.cellSize).toFixed(3);
-        toast('Cell size must be at least 0.25 m', 'err', 1800);
+        toast(t('viewer.volume.toasts.cellSizeMinimum', 'Cell size must be at least 0.25 m'), 'err', 1800, { translate: false });
         return;
       }
       region.cellSize = value;
@@ -1184,7 +1212,7 @@ export function createVolumeFeature({
       const value = parseNumberSafe(event.target.value);
       if (value === null || value <= 0) {
         event.target.value = Number(region.displayDensity).toFixed(1);
-        toast('Invalid display density input', 'err', 1800);
+        toast(t('viewer.volume.toasts.invalidDisplayDensity', 'Invalid display density input'), 'err', 1800, { translate: false });
         return;
       }
       region.displayDensity = clampVolumeDisplayDensity(value);
@@ -1219,7 +1247,7 @@ export function createVolumeFeature({
         const nextScenario = button.dataset.value || 'stockpile_boundary';
         if (shouldConfirmScenarioSwitch(region, nextScenario)) {
           const ok = window.confirm(
-            'Switching volume method will reset base surface, point filter, and surface mode defaults for this region. Continue?'
+            t('viewer.volume.confirm.switchScenario', 'Switching volume method will reset base surface, point filter, and surface mode defaults for this region. Continue?')
           );
           if (!ok) return;
         }
@@ -1261,7 +1289,7 @@ export function createVolumeFeature({
       pickHeightEscListener = null;
       viewer.renderer.domElement.style.cursor = '';
       setToolMode?.(pickHeightPreviousToolMode || null);
-      setStatus?.(pickHeightPreviousStatus || 'Ready');
+      setStatus?.(pickHeightPreviousStatus || t('viewer.volume.status.ready', 'Ready'));
       pickHeightPreviousStatus = null;
       pickHeightPreviousToolMode = null;
     };
@@ -1279,10 +1307,10 @@ export function createVolumeFeature({
       resetVolumeSelectionState?.({ keepPending: true });
       pickHeightActive = true;
       pickButton.classList.add('picking');
-      toast('Click a point in the cloud to pick elevation. Press ESC to cancel.', 'info', 0);
+      toast(t('viewer.volume.toasts.pickElevationStart', 'Click a point in the cloud to pick elevation. Press ESC to cancel.'), 'info', 0, { translate: false });
       viewer.renderer.domElement.style.cursor = 'crosshair';
       setToolMode?.('volume-pick-height');
-      setStatus?.('Picking volume reference elevation...');
+      setStatus?.(t('viewer.volume.status.pickingReferenceElevation', 'Picking volume reference elevation...'));
 
       pickHeightListener = event => {
         if (event.button !== 0 && event.button !== 2) return;
@@ -1293,13 +1321,13 @@ export function createVolumeFeature({
         const value = pick.local.z;
         region.referenceHeight = value;
         card.querySelector('[data-field="referenceHeight"]').value = value.toFixed(3);
-        toast(`Reference elevation picked: ${value.toFixed(3)}`, 'ok', 2000);
+        toast(t('viewer.volume.toasts.referenceElevationPicked', `Reference elevation picked: ${value.toFixed(3)}`, { value: value.toFixed(3) }), 'ok', 2000, { translate: false });
         endPickHeightMode();
         computeVolumeRegion(region);
       };
       pickHeightEscListener = event => {
         if (event.key !== 'Escape') return;
-        toast('Elevation picking cancelled', 'info', 1500);
+        toast(t('viewer.volume.toasts.elevationPickingCancelled', 'Elevation picking cancelled'), 'info', 1500, { translate: false });
         endPickHeightMode();
       };
       viewer.renderer.domElement.addEventListener('mousedown', pickHeightListener, { once: true, capture: true });
@@ -1330,7 +1358,10 @@ export function createVolumeFeature({
       const sourceSurface = getVolumeSurfaceState(region, role);
       const gridData = sourceSurface.gridData || null;
       if (!gridData) {
-        toast(`Load ${sourceSurface.label.toLowerCase()} first, then generate contours.`, 'info', 2800);
+        const label = sourceSurface.role === 'base'
+          ? t('viewer.volume.surfaces.baseSurface', 'base surface')
+          : t('viewer.volume.surfaces.analysisSurface', 'analysis surface');
+        toast(t('viewer.volume.toasts.loadSurfaceBeforeContours', `Load ${label} first, then generate contours.`, { label }), 'info', 2800, { translate: false });
         return;
       }
       const interval = Number(region.contourInterval ?? 0.5);
@@ -1383,11 +1414,11 @@ export function createVolumeFeature({
     cancelButton.disabled = !hasPendingSelection;
     clearButton.disabled = !(hasRegions || hasPendingSelection);
     meta.textContent = state.active
-      ? `Drawing boundary · ${fmtNum(state.pendingPoints.length)} vertices`
-      : (hasRegions ? `Volume jobs · ${fmtNum(state.regions.length)}` : 'No volume jobs yet');
+      ? t('viewer.volume.panel.metaDrawing', `Drawing boundary · ${fmtNum(state.pendingPoints.length)} vertices`, { count: fmtNum(state.pendingPoints.length) })
+      : (hasRegions ? t('viewer.volume.panel.metaJobs', `Volume jobs · ${fmtNum(state.regions.length)}`, { count: fmtNum(state.regions.length) }) : t('viewer.volume.panel.metaEmpty', 'No volume jobs yet'));
     note.textContent = state.active
-      ? 'Double-click to confirm the boundary. The active workspace will keep method and result steps together.'
-      : (hasRegions ? '' : 'Click "New" to start a guided volume measurement.');
+      ? t('viewer.volume.panel.noteActive', 'Double-click to confirm the boundary. The active workspace will keep method and result steps together.')
+      : (hasRegions ? '' : t('viewer.volume.panel.noteEmpty', 'Click "New" to start a guided volume measurement.'));
 
     setVolumeOverlayVisible(state.active || hasRegions);
     renderPanelList();
@@ -1396,7 +1427,7 @@ export function createVolumeFeature({
 
   function startSelection() {
     activateMeasureTab?.('volume');
-    setStatus?.('Volume measurement ready');
+    setStatus?.(t('viewer.volume.status.measurementReady', 'Volume measurement ready'));
   }
 
   function cancelSelection({ notify = false } = {}) {
@@ -1407,7 +1438,7 @@ export function createVolumeFeature({
     resetVolumeSelectionState?.({ keepPending: false });
     setVolumeOverlayVisible(false);
     updatePanel();
-    if (notify) toast('Current volume region drawing cancelled', 'info');
+    if (notify) toast(t('viewer.volume.toasts.cancelled', 'Current volume region drawing cancelled'), 'info', undefined, { translate: false });
   }
 
   function clearAllVolumeState({ notify = true } = {}) {
@@ -1442,7 +1473,7 @@ export function createVolumeFeature({
     if (volumeToolbarButton) {
       volumeToolbarButton.removeAttribute('disabled');
       volumeToolbarButton.removeAttribute('aria-disabled');
-      volumeToolbarButton.setAttribute('title', 'Start a unified server-side volume measurement');
+      volumeToolbarButton.setAttribute('title', t('viewer.volume.actions.startTitle', 'Start a unified server-side volume measurement'));
       volumeToolbarButton.classList.remove('is-disabled');
       volumeToolbarButton.style.opacity = '';
       volumeToolbarButton.style.pointerEvents = '';
@@ -1450,7 +1481,7 @@ export function createVolumeFeature({
 
     const volumeMenuItem = document.getElementById('mi-t-volume');
     if (volumeMenuItem) {
-      volumeMenuItem.setAttribute('title', 'Start a unified server-side volume measurement');
+      volumeMenuItem.setAttribute('title', t('viewer.volume.actions.startTitle', 'Start a unified server-side volume measurement'));
       volumeMenuItem.removeAttribute('aria-disabled');
       volumeMenuItem.style.opacity = '';
       volumeMenuItem.style.pointerEvents = 'auto';
@@ -1458,8 +1489,8 @@ export function createVolumeFeature({
 
     const volumeStartButton = document.getElementById('btn-volume-start');
     if (volumeStartButton) {
-      volumeStartButton.textContent = 'New';
-      volumeStartButton.setAttribute('title', 'Start a unified server-side volume measurement');
+      volumeStartButton.textContent = t('viewer.volume.new', 'New');
+      volumeStartButton.setAttribute('title', t('viewer.volume.actions.startTitle', 'Start a unified server-side volume measurement'));
     }
   }
 

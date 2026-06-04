@@ -5,7 +5,8 @@ APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$APP_DIR"
 
 PORT="${PORT:-8090}"
-URL="http://localhost:${PORT}/viewer"
+LOCAL_HOST="${LOCAL_HOST:-127.0.0.1}"
+URL="http://${LOCAL_HOST}:${PORT}/viewer"
 VENV_PYTHON="$APP_DIR/.venv/bin/python"
 
 python_runtime_ok() {
@@ -23,6 +24,35 @@ resolve_js_runtime() {
     command -v bun
     return 0
   fi
+  return 1
+}
+
+open_url() {
+  local url="$1"
+
+  if open "$url" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  for browser in "Google Chrome" "Safari" "Microsoft Edge" "Firefox" "Brave Browser"; do
+    if open -Ra "$browser" >/dev/null 2>&1 && open -a "$browser" "$url" >/dev/null 2>&1; then
+      return 0
+    fi
+  done
+
+  for executable in \
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+    "/Applications/Safari.app/Contents/MacOS/Safari" \
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge" \
+    "/Applications/Firefox.app/Contents/MacOS/firefox" \
+    "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"; do
+    if [ -x "$executable" ]; then
+      "$executable" "$url" >/dev/null 2>&1 &
+      return 0
+    fi
+  done
+
+  echo "[warn] could not open a browser automatically. Open this URL manually: $url"
   return 1
 }
 
@@ -44,7 +74,7 @@ fi
 if lsof -tiTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
   echo "[info] port ${PORT} is already in use."
   echo "[info] assuming the local server is already running; opening browser only."
-  open "$URL"
+  open_url "$URL" || true
   echo "[info] if you want this window to own the server process, close the other terminal window first and run this script again."
   exit 0
 fi
@@ -54,9 +84,9 @@ echo "[start] launching local server on port ${PORT} using $(basename "$JS_RUNTI
 (
   echo "[wait] waiting for ${URL} ..."
   for _ in $(seq 1 60); do
-    if curl -sf "http://localhost:${PORT}/viewer" >/dev/null 2>&1; then
+    if curl -sf "$URL" >/dev/null 2>&1; then
       echo "[open] ${URL}"
-      open "$URL"
+      open_url "$URL" || true
       exit 0
     fi
     sleep 0.5
