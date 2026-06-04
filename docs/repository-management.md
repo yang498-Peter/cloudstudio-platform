@@ -24,17 +24,18 @@ Servers may contain:
 
 Servers should not contain uncommitted application code changes. Emergency hotfixes must be copied back into this repository and committed immediately after verification.
 
-## Codex / OpenClaw Handoff
+## Developer Handoff
 
-Before a new agent changes code, it should read:
+Before a new developer or AI coding agent changes code, it should read:
 
 - `README.md`
-- `CloudStudio_3DGS_SuperSplat_接入记录.md`
-- `CloudStudio_优化执行计划与维护记录.md`
-- `DEPLOY_SOP.md`
-- `web-uploader/CODEBASE_MAP.md`
+- `docs/TECHNICAL_OVERVIEW.md`
+- `DEPLOY.md`
+- `docs/AGENT_DEPLOYMENT_GUIDE.md`
+- `web-uploader/README.md`
 
-For operational memory outside this repository, also check the OpenClaw memory files under `/Users/yangqi/.openclaw/workspace/MEMORY.md` and `/Users/yangqi/.openclaw/workspace/memory/`.
+Internal operating notes, development journals, customer files, and local memory
+documents should stay outside the shared repository.
 
 ## Release Checklist
 

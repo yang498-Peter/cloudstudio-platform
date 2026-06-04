@@ -1,173 +1,257 @@
-# CloudStudio 服务器部署指南
+# CloudStudio Deployment Guide
 
-> 适用系统：Ubuntu 22.04 / 24.04 LTS
-> 预计总耗时：30–60 分钟
+This guide explains how to deploy CloudStudio on a clean Ubuntu server. It is
+written for technical partners, dealers, and AI agents that need to bring up a
+working instance from this repository.
 
----
+## Target Environment
 
-## 第一步：在本地打包代码
+Recommended server:
 
-在你的 Mac 上，打开终端，进入 `cloudstudio-server` 所在目录，执行：
+- Ubuntu 22.04 LTS or Ubuntu 24.04 LTS
+- 4 CPU cores or more
+- 8 GB RAM or more
+- 80 GB disk or more for small demos
+- Larger disk or object storage for production point cloud datasets
+- Inbound ports 80 and 443 open
+- Inbound port 22 open for SSH administration
 
-```bash
-# 进入 cloudstudio-server 的上级目录（即 potree-local 目录）
-cd /你的路径/potree-local
+CloudStudio can run on smaller machines for demos, but point cloud conversion
+and analysis workflows are CPU, memory, and disk intensive.
 
-# 打包（排除无需上传的文件）
-tar -czf cloudstudio-server.tar.gz \
-  --exclude='cloudstudio-server/web-uploader/node_modules' \
-  --exclude='cloudstudio-server/web-uploader/.venv' \
-  cloudstudio-server/
+## What the Installer Does
 
-echo "打包完成，文件大小："
-ls -lh cloudstudio-server.tar.gz
-```
+`setup.sh` performs these steps:
 
-预计打包后约 **520 MB**。
+1. Installs system packages: Git, CMake, build tools, TBB, Python, Nginx, and utilities.
+2. Installs Node.js 18 if the server does not already have a compatible Node version.
+3. Builds `PotreeConverter` locally for the target Linux environment.
+4. Creates `web-uploader/.venv` and installs Python script dependencies.
+5. Installs Node dependencies for the Express app.
+6. Creates `web-uploader/.env` from `.env.example` if needed.
+7. Configures Nginx as a reverse proxy to `127.0.0.1:8090`.
+8. Starts the app with PM2 under the process name `cloudstudio`.
 
----
+## Quick Deployment
 
-## 第二步：上传到阿里云服务器
-
-```bash
-# 上传（替换为你的服务器 IP）
-scp cloudstudio-server.tar.gz root@你的服务器IP:/opt/
-
-# 验证上传成功
-ssh root@你的服务器IP "ls -lh /opt/cloudstudio-server.tar.gz"
-```
-
-网络正常的话，上传 520MB 约需 **5–15 分钟**（取决于你的上行带宽）。
-
----
-
-## 第三步：在服务器上解压并安装
+SSH into the server, then run:
 
 ```bash
-# SSH 登录服务器
-ssh root@你的服务器IP
-
-# 解压
 cd /opt
-tar -xzf cloudstudio-server.tar.gz
-mv cloudstudio-server /opt/cloudstudio
-
-# 运行一键安装脚本
+git clone <YOUR_PRIVATE_REPOSITORY_URL> cloudstudio
 cd /opt/cloudstudio
-bash setup.sh
+sudo bash setup.sh
 ```
 
-脚本会自动完成：
-- 安装 Node.js 18、Python3、cmake、nginx
-- 编译 Linux 版 PotreeConverter（约 5–10 分钟）
-- 创建 Python 虚拟环境并安装依赖
-- 安装 npm 依赖
-- 配置 nginx 反向代理
-- 用 PM2 启动应用并设置开机自启
+When the script finishes, open:
 
----
-
-## 第四步：开放阿里云安全组端口
-
-登录阿里云控制台：
-1. 进入 **ECS → 安全组 → 入方向规则**
-2. 添加规则：**端口 80**，授权对象 `0.0.0.0/0`（所有人可访问）
-3. 如需 SSH，确保 **端口 22** 已开放
-
----
-
-## 第五步：验证
-
-```bash
-# 查看应用状态
-pm2 status
-
-# 查看实时日志
-pm2 logs cloudstudio --lines 30
+```text
+http://<server-ip>/
 ```
 
-浏览器访问：`http://你的服务器IP`
+For production use, configure a domain name and HTTPS after the basic HTTP
+deployment is healthy.
 
----
+## Environment Configuration
 
-## 常用运维命令
+The main environment file is:
+
+```text
+/opt/cloudstudio/web-uploader/.env
+```
+
+Common variables:
 
 ```bash
-# 重启应用
-pm2 restart cloudstudio
+PORT=8090
+CONVERTER_PATH=/opt/cloudstudio/PotreeConverter/build-gcc/PotreeConverter
+PYTHON_BIN=/opt/cloudstudio/web-uploader/.venv/bin/python
+PYTHON3_BIN=python3
+```
 
-# 停止应用
-pm2 stop cloudstudio
+The app can auto-detect many paths, but production deployments should set
+explicit paths so future maintenance is predictable.
 
-# 查看日志（最近 100 行）
+## Health Check
+
+Run this on the server:
+
+```bash
+curl -s http://127.0.0.1:8090/health
+```
+
+Expected important fields:
+
+```json
+{
+  "ok": true,
+  "converter": true,
+  "exportPython": true,
+  "systemPython": true,
+  "pathsExposed": false
+}
+```
+
+If `converter:false`, check:
+
+```bash
+ls -lah /opt/cloudstudio/PotreeConverter/build-gcc/PotreeConverter
+ldd /opt/cloudstudio/PotreeConverter/build-gcc/PotreeConverter
+```
+
+If the binary is missing, rebuild it:
+
+```bash
+cd /opt/cloudstudio/PotreeConverter
+mkdir -p build-gcc
+cmake -S . -B build-gcc
+cmake --build build-gcc --parallel "$(nproc)"
+```
+
+## Service Commands
+
+```bash
+pm2 status cloudstudio
 pm2 logs cloudstudio --lines 100
-
-# 查看 nginx 状态
+pm2 restart cloudstudio
+pm2 save
 systemctl status nginx
-
-# 查看 nginx 错误日志
-tail -f /var/log/nginx/error.log
+nginx -t
 ```
 
----
+## Nginx and Large Uploads
 
-## 上传数据文件
+The installer configures Nginx with:
 
-部署完成后，通过软件界面上传 LAS/LAZ 文件，或直接用 scp 传到服务器：
+```nginx
+client_max_body_size 4g;
+client_body_timeout 600s;
+proxy_read_timeout 600s;
+proxy_send_timeout 600s;
+```
+
+Increase `client_max_body_size` if users upload very large LAS/LAZ files.
+
+## HTTPS
+
+After HTTP is working, point your domain to the server and install Certbot:
 
 ```bash
-# 上传 LAS 文件（在本地 Mac 执行）
-scp /你的路径/colorized.las root@你的服务器IP:/opt/cloudstudio/web-uploader/uploads/
-
-# 上传扫描仪项目（整个文件夹）
-scp -r /你的路径/2026-02-27_13-00-27vreman1 root@你的服务器IP:/opt/cloudstudio/scans/
+apt-get update
+apt-get install -y certbot python3-certbot-nginx
+certbot --nginx -d <your-domain>
 ```
 
-扫描仪项目目录建议统一放到 `/opt/cloudstudio/scans/`，然后在软件界面"注册扫描根目录"里添加这个路径。
+Then verify:
 
----
+```bash
+curl -I https://<your-domain>/
+curl -s https://<your-domain>/health
+```
 
-## 故障排查
+## Runtime Data Directories
 
-**问题：访问页面报 502**
-→ 应用未启动。执行 `pm2 restart cloudstudio` 并查看 `pm2 logs cloudstudio`
+Do not delete or overwrite these directories during upgrades:
 
-**问题：上传文件失败，报 413 Entity Too Large**
-→ nginx 限制。执行：
+```text
+web-uploader/uploads/
+web-uploader/projects/
+web-uploader/pointclouds/
+web-uploader/gaussians/
+web-uploader/exports/
+web-uploader/cache/
+web-uploader/dtm_jobs/
+web-uploader/contour_jobs/
+web-uploader/surface_jobs/
+web-uploader/volume_jobs/
+web-uploader/volume_surface_jobs/
+web-uploader/floorplan_jobs/
+web-uploader/.env
+```
+
+These contain user uploads, generated outputs, project state, and server-local
+configuration.
+
+## Upgrade Pattern
+
+Recommended upgrade flow:
+
+```bash
+cd /opt/cloudstudio
+git fetch origin
+git status
+git pull --ff-only
+cd web-uploader
+npm install --production
+../web-uploader/.venv/bin/pip install -r requirements-export.txt
+pm2 restart cloudstudio --update-env
+pm2 save
+curl -s http://127.0.0.1:8090/health
+```
+
+If PotreeConverter source changed, rebuild it:
+
+```bash
+cd /opt/cloudstudio/PotreeConverter
+cmake -S . -B build-gcc
+cmake --build build-gcc --parallel "$(nproc)"
+```
+
+## Troubleshooting
+
+### Browser shows 502
+
+The Node app is not reachable through Nginx.
+
+```bash
+pm2 status cloudstudio
+pm2 logs cloudstudio --lines 100
+curl -s http://127.0.0.1:8090/health
+systemctl status nginx
+```
+
+### Upload fails with 413
+
+Increase Nginx upload size:
+
 ```bash
 sed -i 's/client_max_body_size 4g/client_max_body_size 8g/' /etc/nginx/sites-available/cloudstudio
-nginx -s reload
+nginx -t
+systemctl reload nginx
 ```
 
-**问题：PotreeConverter 编译失败**
-→ 缺少依赖。执行：
+### Conversion fails
+
+Check PotreeConverter:
+
 ```bash
-apt-get install -y libtbb-dev libboost-all-dev
-cd /opt/cloudstudio
-bash setup.sh  # 重新运行
+/opt/cloudstudio/PotreeConverter/build-gcc/PotreeConverter --help
+ldd /opt/cloudstudio/PotreeConverter/build-gcc/PotreeConverter
 ```
 
-**问题：DTM/等高线生成失败，报 numpy 相关错误**
-→ 系统 Python 缺包。执行：
+Rebuild on the target server instead of copying a binary from a different Linux
+distribution.
+
+### Export or CRS scripts fail
+
+Check Python:
+
 ```bash
-pip3 install numpy matplotlib scipy --break-system-packages
+/opt/cloudstudio/web-uploader/.venv/bin/python -m pip list
+/opt/cloudstudio/web-uploader/.venv/bin/python - <<'PY'
+import laspy, pyproj, numpy, scipy, matplotlib
+print("python-ok")
+PY
 ```
 
----
+## Hand-Off Checklist
 
-## 目录结构说明
+Before handing the instance to a partner:
 
-```
-/opt/cloudstudio/
-├── setup.sh              # 一键安装脚本
-├── web-uploader/         # 主应用
-│   ├── server.js         # Express 服务器
-│   ├── viewer.html       # 3D 查看器前端
-│   ├── assets/           # 静态资源（i18n、CRS 数据）
-│   ├── scripts/          # Python 处理脚本
-│   ├── uploads/          # 用户上传的原始文件（运行时生成）
-│   ├── pointclouds/      # 转换后的点云（运行时生成）
-│   └── exports/          # 导出文件（运行时生成）
-├── potree/               # Potree 3D 渲染库
-└── PotreeConverter/      # 点云转换器（setup.sh 编译）
-```
+- `/health` returns `ok:true`.
+- `converter`, `exportPython`, and `systemPython` are true.
+- Nginx is active.
+- PM2 process `cloudstudio` is online.
+- HTTPS is configured if the instance is public.
+- No customer data is committed to Git.
+- The partner has a separate storage plan for large datasets.

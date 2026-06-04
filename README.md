@@ -1,20 +1,90 @@
 # CloudStudio Platform
 
-CloudStudio is Tersus GNSS' web platform for publishing, browsing, and reviewing point cloud and 3D Gaussian Splatting data.
+CloudStudio is a web platform for publishing, converting, viewing, and reviewing
+LiDAR point clouds and 3D Gaussian Splatting datasets. It is designed for teams
+that need a self-hosted browser experience for project review, measurement,
+profile inspection, export workflows, and lightweight data sharing.
 
-This repository is intended to contain source code, scripts, documentation, and lightweight static assets only. Runtime datasets and generated outputs are deliberately excluded from Git.
+This repository is prepared for private sharing with partners, dealers, and
+technical teams. It contains source code, setup scripts, documentation, and
+lightweight static assets. Runtime datasets, customer files, credentials,
+generated point clouds, and internal development notes are intentionally excluded.
 
-## Main Components
+## What You Can Do With It
 
-- `web-uploader/` - Node.js web application, upload flow, point cloud viewer wrapper, 3DGS/SuperSplat integration, i18n resources, frontend modules, and local scripts.
-- `potree/` - Potree viewer source with CloudStudio-specific frontend adjustments.
-- `PotreeConverter/` - PotreeConverter source used for point cloud conversion.
-- `DEPLOY.md`, `DEPLOY_SOP.md`, `MIGRATION_WINDOWS_TO_SERVER.md` - deployment and migration notes.
-- `CloudStudio_3DGS_SuperSplat_接入记录.md` - ongoing 3DGS/SuperSplat implementation record.
+- Run a local CloudStudio viewer for development or demos.
+- Deploy CloudStudio to an Ubuntu server.
+- Upload LAS/LAZ point clouds and convert them to Potree format.
+- Open and inspect point cloud projects in a browser.
+- Review measurements, profiles, clipping, display settings, and export tools.
+- Use 3D Gaussian Splatting viewer assets through the bundled SuperSplat integration.
+- Extend the frontend modules and backend processing scripts for your workflow.
 
-## What Must Not Be Committed
+## Repository Layout
 
-The following paths are runtime data and must stay out of Git:
+```text
+cloudstudio-platform/
+├── web-uploader/          # Main Express app, frontend shell, APIs, scripts, tests
+├── potree/                # Potree viewer source and static runtime assets
+├── PotreeConverter/       # PotreeConverter source, compiled on the target machine
+├── docs/                  # Public technical and deployment documentation
+├── setup.sh               # Ubuntu server installer
+├── DEPLOY.md              # Human-readable deployment guide
+└── README.md              # Repository overview
+```
+
+## Public Documentation
+
+- [Technical overview](docs/TECHNICAL_OVERVIEW.md)
+- [Deployment guide](DEPLOY.md)
+- [AI agent deployment guide](docs/AGENT_DEPLOYMENT_GUIDE.md)
+- [Web app notes](web-uploader/README.md)
+
+## Local Development
+
+Requirements:
+
+- Node.js 18 or newer
+- Python 3.10 or newer
+- npm
+- A local build of PotreeConverter for full point cloud conversion support
+
+Start the local app:
+
+```bash
+cd web-uploader
+npm install
+cp .env.example .env
+npm run setup:local
+npm run start:local
+```
+
+Open:
+
+- `http://localhost:8090/`
+- `http://localhost:8090/viewer`
+- `http://localhost:8090/health`
+
+If `/health` reports `converter:false`, build PotreeConverter locally or set
+`CONVERTER_PATH` in `web-uploader/.env`.
+
+## Server Deployment
+
+For a fresh Ubuntu server, clone this repository and run:
+
+```bash
+sudo bash setup.sh
+```
+
+The setup script installs system dependencies, builds PotreeConverter, creates
+the Python environment, installs Node dependencies, configures Nginx, and starts
+the app with PM2.
+
+Read [DEPLOY.md](DEPLOY.md) before deploying to production.
+
+## Runtime Data Policy
+
+The following paths are runtime data and must not be committed:
 
 - `web-uploader/uploads/`
 - `web-uploader/projects/`
@@ -27,58 +97,30 @@ The following paths are runtime data and must stay out of Git:
 - `web-uploader/node_modules/`
 - `web-uploader/.venv/`
 - `PotreeConverter/build*/`
+- `potree/pointclouds/*`
 
-Large source datasets such as `.las`, `.laz`, `.ply`, `.sog`, `.octree.bin`, and customer archives should be stored in server storage or object storage, not Git.
+Large source datasets such as LAS, LAZ, PLY, SOG, E57, ZIP archives, customer
+projects, and generated Potree outputs should live in server storage or object
+storage, not Git.
 
-## Local Development
+## Suggested Sharing Workflow
 
-```bash
-cd web-uploader
-npm install
-cp .env.example .env
-npm run start:local
-```
+For private sharing with a colleague or dealer:
 
-If local auto-detection is enough, `.env` may be omitted. See `web-uploader/.env.example` for supported variables.
+1. Keep the repository private.
+2. Invite the person as a GitHub collaborator, or share access through your
+   organization.
+3. Ask them to start with `README.md`, `DEPLOY.md`, and
+   `docs/AGENT_DEPLOYMENT_GUIDE.md`.
+4. If they use an AI coding agent, give the agent the repository URL and the
+   deployment guide.
+5. Provide only non-sensitive sample data separately, outside the repository.
 
-## Deployment Policy
+## Current Maturity
 
-Servers should be deployment targets, not the source of truth. The intended workflow is:
+CloudStudio is functional but still evolving. Treat it as a technical platform
+that can be deployed and extended by an engineering team, not yet as a polished
+public open-source product.
 
-```text
-local development -> Git commit -> private GitHub repo -> staging deploy -> health check -> production deploy
-```
-
-The current customer-facing URL is `https://cloudstudio.tersus-gnss.com`, backed
-by the staging/demo host `8.209.66.134`. Use `docs/staging-deploy-runbook.md`
-for the reviewed deployment procedure.
-
-For staging/demo deployments, set `CLOUDSTUDIO_DATA_DIR` so uploads, converted
-point clouds, 3DGS assets, exports, cache, and job artifacts live outside the
-application code directory. The recommended staging value is:
-
-```bash
-CLOUDSTUDIO_DATA_DIR=/srv/cloudstudio-data
-```
-
-When syncing to a server, protect runtime data directories and server-local configuration. Never run a deploy command that deletes:
-
-- `uploads/`
-- `projects/`
-- `pointclouds/`
-- `gaussians/`
-- `exports/`
-- `cache/`
-- `*_jobs/`
-- `.env`
-- `PotreeConverter/build-gcc/`
-
-## GitHub Workflow
-
-Recommended branch model:
-
-- `main` - stable, deployable code
-- `feature/*` - new feature development
-- `fix/*` - targeted bug fixes
-
-Add a heavier `develop` branch only when team collaboration needs it.
+Before broad public release, review licensing, third-party attribution, security
+configuration, sample data policy, and production hardening.
