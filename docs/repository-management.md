@@ -13,34 +13,36 @@ CloudStudio should be developed from this repository, reviewed through Git histo
 
 Servers may contain:
 
-- `.env` and service configuration
-- `web-uploader/uploads/`
-- `web-uploader/projects/`
-- `web-uploader/pointclouds/`
-- `web-uploader/gaussians/`
-- generated exports, cache, and job folders
-- optional CRS grid data files
-- compiled `PotreeConverter` binaries
+- `.env` and service configuration.
+- `web-uploader/uploads/`.
+- `web-uploader/projects/`.
+- `web-uploader/pointclouds/`.
+- `web-uploader/gaussians/`.
+- generated exports, cache, and job folders.
+- optional CRS grid data files.
+- compiled `PotreeConverter` binaries.
 
 Servers should not contain uncommitted application code changes. Emergency hotfixes must be copied back into this repository and committed immediately after verification.
 
-## Codex / OpenClaw Handoff
+## Developer and Agent Handoff
 
-Before a new agent changes code, it should read:
+Before a new developer or automation agent changes code, it should read:
 
 - `README.md`
-- `CloudStudio_3DGS_SuperSplat_接入记录.md`
-- `CloudStudio_优化执行计划与维护记录.md`
+- `DEPLOY.md`
 - `DEPLOY_SOP.md`
+- `web-uploader/README.md`
 - `web-uploader/CODEBASE_MAP.md`
+- `web-uploader/STATE_MAP.md`
 
-For operational memory outside this repository, also check the OpenClaw memory files under `/Users/yangqi/.openclaw/workspace/MEMORY.md` and `/Users/yangqi/.openclaw/workspace/memory/`.
+Operational memory should be summarized into repository documentation before it becomes part of the supported development workflow. Avoid relying on machine-local note paths for onboarding.
 
 ## Release Checklist
 
-1. Run local smoke tests for the homepage, point cloud viewer, upload flow, and 3DGS viewer.
+1. Run local smoke tests for the homepage, point cloud viewer, upload flow, and 3DGS viewer when those areas change.
 2. Run `npm run check:i18n` inside `web-uploader` after UI text changes.
-3. Confirm `git status` is clean except intentional changes.
-4. Push the branch to the private GitHub repository.
-5. Deploy to staging first and verify `/health`, homepage, viewer, and at least one existing point cloud.
-6. Promote to production only after staging passes.
+3. Run `npm run check:deploy-docs` inside `web-uploader` after deployment documentation changes.
+4. Confirm `git status` is clean except intentional local runtime changes on the server.
+5. Push the branch to the private Git repository.
+6. Deploy to staging first and verify `/health`, homepage, viewer, and at least one existing point cloud.
+7. Promote to production only after staging passes.

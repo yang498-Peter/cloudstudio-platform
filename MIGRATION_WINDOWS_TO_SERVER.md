@@ -3,8 +3,8 @@
 ## Status
 
 - Initial comparison completed on `2026-03-28`.
-- Windows reference: `/Users/yangqi/.openclaw/workspace/potree-local/cloudstudio-windows-exe-release-test`
-- Server target: `/Users/yangqi/.openclaw/workspace/potree-local/cloudstudio-server`
+- Windows reference: archived Windows release workspace (machine-local path intentionally omitted).
+- Server target: this repository / server-safe CloudStudio workspace.
 - This file is the in-repo migration ledger for all later server changes.
 
 ## Core Boundary
