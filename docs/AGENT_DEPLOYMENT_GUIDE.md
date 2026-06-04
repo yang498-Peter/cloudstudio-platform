@@ -1,7 +1,7 @@
 # AI Agent Deployment Guide
 
-This guide is written for AI coding agents helping a partner deploy CloudStudio
-from a private GitHub repository.
+This guide is written for AI coding agents helping a human deploy CloudStudio
+from an open-source GitHub repository or fork.
 
 ## Objective
 
@@ -41,7 +41,7 @@ Confirm Ubuntu 22.04 or 24.04 when possible.
 
 ```bash
 cd /opt
-git clone <PRIVATE_REPOSITORY_URL> cloudstudio
+git clone <REPOSITORY_URL> cloudstudio
 cd /opt/cloudstudio
 sudo bash setup.sh
 ```

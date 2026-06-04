@@ -1,8 +1,8 @@
 # CloudStudio Deployment Guide
 
 This guide explains how to deploy CloudStudio on a clean Ubuntu server. It is
-written for technical partners, dealers, and AI agents that need to bring up a
-working instance from this repository.
+written for developers, deployers, and AI agents that need to bring up a working
+instance from this open-source repository.
 
 ## Target Environment
 
@@ -38,7 +38,7 @@ SSH into the server, then run:
 
 ```bash
 cd /opt
-git clone <YOUR_PRIVATE_REPOSITORY_URL> cloudstudio
+git clone <REPOSITORY_URL> cloudstudio
 cd /opt/cloudstudio
 sudo bash setup.sh
 ```
@@ -244,9 +244,9 @@ print("python-ok")
 PY
 ```
 
-## Hand-Off Checklist
+## Handoff Checklist
 
-Before handing the instance to a partner:
+Before sharing the instance with users or another team:
 
 - `/health` returns `ok:true`.
 - `converter`, `exportPython`, and `systemPython` are true.
@@ -254,4 +254,4 @@ Before handing the instance to a partner:
 - PM2 process `cloudstudio` is online.
 - HTTPS is configured if the instance is public.
 - No customer data is committed to Git.
-- The partner has a separate storage plan for large datasets.
+- A separate storage plan exists for large datasets.

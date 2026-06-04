@@ -113,7 +113,7 @@ Recommended production pattern:
 ```text
 local development
   -> Git commit
-  -> private GitHub repository
+  -> public GitHub repository, fork, or controlled release package
   -> server git pull or controlled release package
   -> dependency update
   -> PM2 restart
@@ -125,7 +125,8 @@ runtime directories as source control content.
 
 ## Security Notes
 
-- Keep the repository private unless licensing and data policy are reviewed.
+- Keep deployment credentials, customer data, generated outputs, and server-local
+  configuration outside Git.
 - Never commit `.env`, SSH keys, tokens, certificates, customer files, or generated datasets.
 - Use HTTPS for public deployments.
 - Put large datasets in server storage or object storage.

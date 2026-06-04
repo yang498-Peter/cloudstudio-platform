@@ -18,6 +18,7 @@
     "test:viewer-volume": "node --test tests/viewer-volume-flow.test.mjs",
     "check:i18n": "node scripts/check-i18n.js",
     "check:deploy-docs": "node scripts/check-deploy-docs.js",
+    "check:public-release": "node scripts/check-public-release.js",
     "setup:local": "node ./setup-local-runner.cjs",
     "start:local": "node ./start-local-runner.cjs",
     "setup:local:win": "powershell -ExecutionPolicy Bypass -File .\\setup-local.ps1",

@@ -17,6 +17,11 @@ CloudStudio_*.docx
 DEPLOY_SOP.md
 MIGRATION_WINDOWS_TO_SERVER.md
 internal-notes/
+docs/audit/
+docs/product/
+docs/staging-deploy-runbook.md
+docs/*runbook*.md
+docs/*audit*.html
 *.docx
 *Risk Tracker.md
 *Design Doc.md

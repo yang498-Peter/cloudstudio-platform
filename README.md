@@ -73,15 +73,16 @@ workflows can all build on the same foundation.
 
 ## Current Position
 
-CloudStudio is functional and deployable, but it is still evolving. Treat it as a
-powerful technical platform and product prototype: ready for private evaluation,
-partner testing, internal demos, and engineering extension, not yet as a polished
-public SaaS product.
+CloudStudio is now prepared as an open-source, self-hostable foundation for
+browser-based point cloud workflows. It is functional and deployable today, while
+still evolving as a platform that developers, survey teams, dealers, and 3D
+software builders can adapt for their own field, sales, demo, research, or
+production workflows.
 
-The repository is prepared for private sharing with partners, dealers, and
-technical teams. It contains source code, setup scripts, documentation, and
-lightweight static assets. Runtime datasets, customer files, credentials,
-generated point clouds, and internal development notes are intentionally excluded.
+This repository contains source code, setup scripts, public documentation,
+license information, and lightweight static assets. Runtime datasets, customer
+files, credentials, generated point clouds, deployment secrets, and internal
+development notes are intentionally excluded.
 
 ## Repository Layout
 
@@ -93,6 +94,10 @@ cloudstudio-platform/
 ├── docs/                  # Public technical and deployment documentation
 ├── setup.sh               # Ubuntu server installer
 ├── DEPLOY.md              # Human-readable deployment guide
+├── LICENSE                # Open-source license for CloudStudio-specific work
+├── CONTRIBUTING.md        # Contribution guidelines
+├── SECURITY.md            # Security reporting and deployment notes
+├── THIRD_PARTY_NOTICES.md # Third-party license summary
 └── README.md              # Repository overview
 ```
 
@@ -101,7 +106,11 @@ cloudstudio-platform/
 - [Technical overview](docs/TECHNICAL_OVERVIEW.md)
 - [Deployment guide](DEPLOY.md)
 - [AI agent deployment guide](docs/AGENT_DEPLOYMENT_GUIDE.md)
+- [Repository and GitHub workflow](docs/repository-management.md)
 - [Web app notes](web-uploader/README.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security](SECURITY.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
 
 ## Local Development
 
@@ -187,20 +196,29 @@ Large source datasets such as LAS, LAZ, PLY, SOG, E57, ZIP archives, customer
 projects, and generated Potree outputs should live in server storage or object
 storage, not Git.
 
-## Suggested Sharing Workflow
+## Open Source Usage Workflow
 
-For private sharing with a colleague or dealer:
+For a colleague, dealer, developer, or AI coding agent:
 
-1. Keep the repository private.
-2. Invite the person as a GitHub collaborator, or share access through your
-   organization.
-3. Ask them to start with `README.md`, `DEPLOY.md`, and
+1. Clone or fork this repository.
+2. Start with `README.md`, `DEPLOY.md`, and
    `docs/AGENT_DEPLOYMENT_GUIDE.md`.
-4. If they use an AI coding agent, give the agent the repository URL and the
-   deployment guide.
-5. Provide only non-sensitive sample data separately, outside the repository.
+3. Give your AI agent the repository URL, the deployment guide, and the approved
+   SSH/login method for your own server.
+4. Ask the agent to deploy CloudStudio, validate `/health`, inspect service
+   logs, and fix missing dependencies or configuration issues.
+5. Keep real customer data, generated point clouds, credentials, server logs,
+   and private deployment notes outside Git.
+6. Before pushing changes, run `cd web-uploader && npm run check:public-release`.
+7. Open issues or pull requests for improvements that should benefit the wider
+   project.
 
-## Before Broader Release
+## Open Source Readiness Notes
 
-Before broad public release, review licensing, third-party attribution, security
-configuration, sample data policy, and production hardening.
+CloudStudio-specific code and documentation are released under the BSD 2-Clause
+License. Bundled third-party components keep their own licenses; see
+`THIRD_PARTY_NOTICES.md`.
+
+Before using CloudStudio for a public or customer-facing deployment, review your
+own HTTPS setup, authentication requirements, API exposure, storage plan,
+retention policy, sample data policy, and production hardening needs.

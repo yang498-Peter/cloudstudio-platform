@@ -39,8 +39,8 @@ jobs:
       - name: Check i18n
         run: npm run check:i18n
 
-      - name: Check deploy docs
-        run: npm run check:deploy-docs
+      - name: Check public release safety
+        run: npm run check:public-release
 
       - name: Run unit tests
         run: |
