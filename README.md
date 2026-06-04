@@ -133,7 +133,24 @@ If `/health` reports `converter:false`, build PotreeConverter locally or set
 
 ## Server Deployment
 
-For a fresh Ubuntu server, clone this repository and run:
+CloudStudio is designed for an AI-native deployment workflow.
+
+In the AI era, deployment should not mean manually interpreting every command in
+a long operations guide. Give your AI coding agent this repository, share the
+deployment documents, provide the approved SSH/login method for your server, and
+let the agent walk through the setup, validation, and troubleshooting process
+with you.
+
+The recommended flow is:
+
+1. Share this repository link with your AI agent.
+2. Point it to [DEPLOY.md](DEPLOY.md) and
+   [docs/AGENT_DEPLOYMENT_GUIDE.md](docs/AGENT_DEPLOYMENT_GUIDE.md).
+3. Provide server access in your normal secure way.
+4. Ask the agent to install CloudStudio, run `/health`, inspect PM2/Nginx, and
+   fix any missing dependency or configuration issue it finds.
+
+For a fresh Ubuntu server, the core command is still simple:
 
 ```bash
 sudo bash setup.sh
@@ -143,7 +160,11 @@ The setup script installs system dependencies, builds PotreeConverter, creates
 the Python environment, installs Node dependencies, configures Nginx, and starts
 the app with PM2.
 
-Read [DEPLOY.md](DEPLOY.md) before deploying to production.
+If something fails, do not treat it as a dead end. Ask your AI agent to read the
+error output, check the health endpoint, inspect logs, rebuild PotreeConverter,
+repair Python dependencies, or adjust Nginx. The platform is intentionally
+documented so an agent can reason through the deployment instead of requiring a
+specialist to start from zero.
 
 ## Runtime Data Policy
 
