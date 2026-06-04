@@ -17,6 +17,7 @@ CloudStudio_*.docx
 DEPLOY_SOP.md
 MIGRATION_WINDOWS_TO_SERVER.md
 internal-notes/
+.cloudstudio-public-denylist
 docs/audit/
 docs/product/
 docs/staging-deploy-runbook.md

@@ -69,6 +69,38 @@ function parsePositiveIntegerEnv(name, fallback) {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 }
 
+function normalizeDatasetVisibilityKey(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function parseHiddenDatasetsEnv(name = 'CLOUDSTUDIO_HIDDEN_DATASETS') {
+  return new Set(
+    String(process.env[name] || '')
+      .split(/[\n,;]+/)
+      .map(normalizeDatasetVisibilityKey)
+      .filter(Boolean)
+  );
+}
+
+const HIDDEN_DATASETS = parseHiddenDatasetsEnv();
+
+function isCloudListEntryHidden(entry, hiddenDatasets = HIDDEN_DATASETS) {
+  if (!entry || !hiddenDatasets?.size) return false;
+  const name = normalizeDatasetVisibilityKey(entry.cloudName || entry.name);
+  if (!name) return false;
+  const resourceType = normalizeDatasetVisibilityKey(entry.resourceType || 'pointcloud');
+  const sourceType = normalizeDatasetVisibilityKey(entry.sourceType || '');
+  const projectId = normalizeDatasetVisibilityKey(entry.scannerProjectId || '');
+  const keys = [
+    name,
+    `${resourceType}::${name}`,
+    `${sourceType}::${name}`,
+    projectId,
+    projectId ? `scanner::${projectId}` : '',
+  ].filter(Boolean);
+  return keys.some(key => hiddenDatasets.has(key));
+}
+
 function pathExists(candidate) {
   try {
     return Boolean(candidate) && fs.existsSync(candidate);
@@ -4484,6 +4516,7 @@ app.get('/api/clouds', (_req, res) => {
 
     const seen = new Set();
     const mergedClouds = [...gaussianClouds, ...localClouds, ...scannerClouds, ...diskClouds].filter((entry) => {
+      if (isCloudListEntryHidden(entry)) return false;
       const key = `${entry.resourceType || 'pointcloud'}::${entry.cloudName || entry.name}`;
       if (seen.has(key)) return false;
       seen.add(key);

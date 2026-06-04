@@ -64,6 +64,16 @@ const contentSkipPatterns = [
   /^web-uploader\/scripts\/check-deploy-docs\.js$/,
 ];
 
+function readLocalDenylistPatterns() {
+  const denylistPath = path.join(repoRoot, '.cloudstudio-public-denylist');
+  if (!fs.existsSync(denylistPath)) return [];
+  const lines = fs.readFileSync(denylistPath, 'utf8')
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('#'));
+  return lines.map(line => new RegExp(line.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
+}
+
 function git(args) {
   return execFileSync('git', args, {
     cwd: repoRoot,
@@ -98,6 +108,7 @@ function shouldScanContent(relativePath) {
 
 const files = listFiles();
 const problems = [];
+const localDenylistPatterns = readLocalDenylistPatterns();
 
 for (const relativePath of files) {
   const absolutePath = path.join(repoRoot, relativePath);
@@ -115,7 +126,7 @@ for (const relativePath of files) {
   }
 
   const content = fs.readFileSync(absolutePath, 'utf8');
-  for (const pattern of blockedContentPatterns) {
+  for (const pattern of [...blockedContentPatterns, ...localDenylistPatterns]) {
     if (pattern.test(content)) {
       problems.push(`${relativePath}: blocked public-release marker ${pattern}`);
     }
