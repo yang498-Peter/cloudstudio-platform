@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/potree/libs/openlayers3/ol.css" />
   <link rel="stylesheet" href="/potree/libs/spectrum/spectrum.css" />
   <link rel="stylesheet" href="/potree/libs/jstree/themes/mixed/style.css" />
-  <link rel="stylesheet" href="/assets/app/styles/viewer-design-tokens.css?v=20260609-server-capabilities" />
+  <link rel="stylesheet" href="/assets/app/styles/viewer-design-tokens.css?v=20260609-ui-fixes" />
   <style>
     /* ========== CSS Variables (Apple-style Light Theme) ========== */
     :root {
@@ -10719,12 +10719,20 @@ window.__CLOUDSTUDIO_THREE = THREE;
       return new THREE.Vector3(point.x, point.y, point.z).applyMatrix4(attachObject.matrixWorld);
     }
 
+    function disposeThreeMaterial(material) {
+      if (!material) return;
+      for (const key of ['map', 'lightMap', 'aoMap', 'emissiveMap', 'bumpMap', 'normalMap', 'specularMap', 'alphaMap', 'envMap']) {
+        material[key]?.dispose?.();
+      }
+      material.dispose?.();
+    }
+
     function disposeThreeObject(object) {
       if (!object) return;
       object.traverse?.(child => {
         if (child.geometry) child.geometry.dispose?.();
-        if (Array.isArray(child.material)) child.material.forEach(m => m?.dispose?.());
-        else child.material?.dispose?.();
+        if (Array.isArray(child.material)) child.material.forEach(disposeThreeMaterial);
+        else disposeThreeMaterial(child.material);
       });
       if (object.parent) {
         object.parent.remove(object);
@@ -15622,15 +15630,15 @@ window.__CLOUDSTUDIO_THREE = THREE;
     function removeScannerProjectVisuals(projectId) {
       const state = getScannerProjectState(projectId);
       if (state.trajGroup) {
-        if (state.trajGroup.parent) state.trajGroup.parent.remove(state.trajGroup);
+        disposeThreeObject(state.trajGroup);
         state.trajGroup = null;
       }
       if (state.camGroup) {
-        if (state.camGroup.parent) state.camGroup.parent.remove(state.camGroup);
+        disposeThreeObject(state.camGroup);
         state.camGroup = null;
       }
       if (state.frustumGroup) {
-        if (state.frustumGroup.parent) state.frustumGroup.parent.remove(state.frustumGroup);
+        disposeThreeObject(state.frustumGroup);
         state.frustumGroup = null;
       }
       stopScannerTimeline(projectId);
@@ -18709,11 +18717,11 @@ window.__CLOUDSTUDIO_THREE = THREE;
         if (camera?.photoPlane) camera.photoPlane = null;
       });
       if (state.camGroup) {
-        if (state.camGroup.parent) state.camGroup.parent.remove(state.camGroup);
+        disposeThreeObject(state.camGroup);
         state.camGroup = null;
       }
       if (state.frustumGroup) {
-        if (state.frustumGroup.parent) state.frustumGroup.parent.remove(state.frustumGroup);
+        disposeThreeObject(state.frustumGroup);
         state.frustumGroup = null;
       }
 

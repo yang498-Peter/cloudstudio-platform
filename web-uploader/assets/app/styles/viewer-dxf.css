@@ -1,5 +1,29 @@
 /* DXF workspace visual overrides extracted from viewer-design-tokens.css. */
 
+/* DXF glyphs are emitted as <svg class="dxf-svg-icon" viewBox="0 0 24 24"> with no
+   intrinsic width/height. Without an explicit size they fall back to the replaced-element
+   default (~300x150) and overflow their buttons, so constrain them here. */
+.dxf-svg-icon,
+.dxf-line-type-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  color: inherit;
+}
+
+.dxf-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dxf-card-icon .dxf-svg-icon {
+  width: 18px;
+  height: 18px;
+}
+
 .dxf-file-remove:hover {
   color: var(--cs-error) !important;
   background: var(--cs-error-soft) !important;

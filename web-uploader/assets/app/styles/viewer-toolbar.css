@@ -112,6 +112,7 @@ button:disabled .cs-colored-icon,
 .author-badge,
 .locale-switcher-viewer {
   min-height: 22px;
+  white-space: nowrap;
   border: 1px solid var(--cs-border-subtle) !important;
   border-radius: 999px !important;
   background: var(--cs-surface-panel) !important;
@@ -123,12 +124,28 @@ button:disabled .cs-colored-icon,
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--cs-text-primary) !important;
 }
 
 .author-badge strong,
 .locale-switcher-viewer select {
   color: var(--cs-text-primary) !important;
+}
+
+/* Keep the language switcher within the 28px menubar: the native <select>'s
+   default vertical padding otherwise pushes the pill to ~36px and overflows. */
+.locale-switcher-viewer {
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+}
+
+.locale-switcher-viewer select {
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1.2;
 }
 
 .locale-switcher-viewer select option {

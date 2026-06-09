@@ -1,9 +1,9 @@
-@import './tokens.css';
-@import './viewer-toolbar.css';
-@import './viewer-panels.css';
-@import './viewer-clip.css';
-@import './viewer-dxf.css';
-@import './viewer-volume.css';
+@import './tokens.css?v=20260609-ui-fixes';
+@import './viewer-toolbar.css?v=20260609-ui-fixes';
+@import './viewer-panels.css?v=20260609-ui-fixes';
+@import './viewer-clip.css?v=20260609-ui-fixes';
+@import './viewer-dxf.css?v=20260609-ui-fixes';
+@import './viewer-volume.css?v=20260609-ui-fixes';
 
 /* CloudStudio Viewer visual overrides. */
 
