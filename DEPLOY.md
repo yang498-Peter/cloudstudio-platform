@@ -97,13 +97,15 @@ capability flags in a controlled private environment.
 
 `setup.sh` generates a random upload password when
 `UPLOAD_REVIEW_PASSWORD_SHA256` is missing and writes the one-time plaintext
-password to:
+password to the server checkout:
 
 ```text
-/root/cloudstudio-upload-password.txt
+web-uploader/.cloudstudio-upload-password.txt
 ```
 
-Store that password securely and remove or rotate it when appropriate.
+Set `CLOUDSTUDIO_UPLOAD_PASSWORD_FILE` before running the installer if you want
+that one-time file somewhere else. Store the password securely and remove or
+rotate it when appropriate.
 
 ## Health Check
 

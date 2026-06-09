@@ -100,10 +100,11 @@ if ! grep -q '^UPLOAD_REVIEW_PASSWORD_SHA256=' "$WEB_DIR/.env"; then
   UPLOAD_REVIEW_PASSWORD="$(node -e "console.log(require('crypto').randomBytes(18).toString('base64url'))")"
   UPLOAD_REVIEW_PASSWORD_HASH="$(node -e "console.log(require('crypto').createHash('sha256').update(process.argv[1]).digest('hex'))" "$UPLOAD_REVIEW_PASSWORD")"
   echo "UPLOAD_REVIEW_PASSWORD_SHA256=$UPLOAD_REVIEW_PASSWORD_HASH" >> "$WEB_DIR/.env"
+  PASSWORD_FILE="${CLOUDSTUDIO_UPLOAD_PASSWORD_FILE:-$WEB_DIR/.cloudstudio-upload-password.txt}"
   umask 077
-  printf '%s\n' "$UPLOAD_REVIEW_PASSWORD" > /root/cloudstudio-upload-password.txt
+  printf '%s\n' "$UPLOAD_REVIEW_PASSWORD" > "$PASSWORD_FILE"
   umask 022
-  echo "  Generated upload password: /root/cloudstudio-upload-password.txt"
+  echo "  Generated upload password: $PASSWORD_FILE"
 fi
 
 echo ""
@@ -145,7 +146,19 @@ cd "$WEB_DIR"
 pm2 delete cloudstudio 2>/dev/null || true
 pm2 start server.js --name cloudstudio --interpreter node
 pm2 save
-pm2 startup systemd -u root --hp /root | tail -1 | bash 2>/dev/null || true
+PM2_STARTUP_USER="${CLOUDSTUDIO_PM2_USER:-root}"
+PM2_STARTUP_HOME="${CLOUDSTUDIO_PM2_HOME:-}"
+if [ -z "$PM2_STARTUP_HOME" ]; then
+  PM2_STARTUP_HOME="$(getent passwd "$PM2_STARTUP_USER" | cut -d: -f6 || true)"
+fi
+if [ -z "$PM2_STARTUP_HOME" ]; then
+  PM2_STARTUP_HOME="${HOME:-}"
+fi
+if [ -n "$PM2_STARTUP_HOME" ]; then
+  pm2 startup systemd -u "$PM2_STARTUP_USER" --hp "$PM2_STARTUP_HOME" | tail -1 | bash 2>/dev/null || true
+else
+  pm2 startup systemd -u "$PM2_STARTUP_USER" | tail -1 | bash 2>/dev/null || true
+fi
 
 echo ""
 echo "======================================================"
