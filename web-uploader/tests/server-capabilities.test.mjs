@@ -117,6 +117,12 @@ test('disabled feature routing maps heavy API paths to feature names', () => {
   assert.equal(getDisabledFeatureForPath('/api/clouds', capabilities), null);
   assert.equal(getDisabledFeatureForPath('/api/upload-gaussian', capabilities), null);
 
+  // Express routing is case-insensitive, so case variants must not bypass the gate.
+  assert.equal(getDisabledFeatureForPath('/api/Volume-Results', capabilities), 'volumeJobs');
+  assert.equal(getDisabledFeatureForPath('/api/Volume-Jobs/job-1', capabilities), 'volumeJobs');
+  assert.equal(getDisabledFeatureForPath('/api/Generate-DTM', capabilities), 'terrainProcessing');
+  assert.equal(getDisabledFeatureForPath('/api/FORESTRY/prepare', capabilities), 'forestry');
+
   const scannerRuntimeDisabled = resolveServerCapabilities({ CLOUDSTUDIO_DISABLE_SCANNER_RUNTIME: '1' });
   assert.equal(getDisabledFeatureForPath('/api/scan-projects', scannerRuntimeDisabled), 'scannerRuntime');
   assert.equal(getDisabledFeatureForPath('/api/scan-projects/photos', scannerRuntimeDisabled), 'scannerRuntime');

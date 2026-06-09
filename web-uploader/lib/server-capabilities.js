@@ -114,7 +114,10 @@ export function isFeatureEnabled(capabilities, feature) {
 }
 
 export function getDisabledFeatureForPath(pathname, capabilities) {
-  const pathOnly = String(pathname || '').split('?')[0];
+  // Express routing is case-insensitive by default, so a disabled handler is
+  // reachable as /api/Volume-Results even though the rule prefixes are lowercase.
+  // Lowercase the path before matching so case variants cannot bypass the gate.
+  const pathOnly = String(pathname || '').split('?')[0].toLowerCase();
   for (const rule of FEATURE_ROUTE_RULES) {
     if (rule.pattern.test(pathOnly) && !isFeatureEnabled(capabilities, rule.feature)) {
       return rule.feature;
