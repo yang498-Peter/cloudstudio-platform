@@ -19,7 +19,9 @@ test('server default toolbar keeps lightweight viewer tools and hides heavy work
   assert.equal(actions.has('open'), true);
   assert.equal(actions.has('export'), true);
   assert.equal(actions.has('coordinate-convert'), true);
+  assert.equal(actions.has('dxf-import'), true);
   assert.equal(actions.has('screenshot'), true);
+  assert.equal(actions.has('magnifier'), true);
   assert.equal(actions.has('measure-distance'), true);
   assert.equal(actions.has('clip-box'), true);
   assert.equal(actions.has('delete-region'), true);

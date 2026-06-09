@@ -8,6 +8,7 @@ export const toolbarGroups = [
       { id: 'tb-export-las', labelKey: 'viewer.toolbar.exportLabel', label: 'Export', titleKey: 'viewer.toolbar.exportTitle', title: 'Export Point Cloud', icon: 'export', action: 'export', capability: 'export' },
       { id: 'tb-ortho-image', labelKey: 'viewer.toolbar.orthoLabel', label: 'Ortho', titleKey: 'viewer.toolbar.orthoTitle', title: 'Export Ortho Image', icon: 'orthographic', action: 'ortho-image', capability: 'orthoImage' },
       { id: 'tb-coordinate-convert', labelKey: 'viewer.toolbar.coordinateConvertLabel', label: 'CRS', titleKey: 'viewer.toolbar.coordinateConvertTitle', title: 'Coordinate Convert', icon: 'crs-convert', action: 'coordinate-convert', capability: 'crs' },
+      { id: 'tb-dxf-import', labelKey: 'viewer.toolbar.dxfLabel', label: 'DXF', titleKey: 'viewer.toolbar.dxfTitle', title: 'Import DXF Overlay', icon: 'dxf', action: 'dxf-import' },
       { id: 'tb-metacam-solver', labelKey: 'viewer.toolbar.metacamLabel', label: 'MVP', titleKey: 'viewer.toolbar.metacamTitle', title: 'MVP S1 Raw Data Solve', icon: 'mvp-s1', action: 'mvp-s1', capability: 'mvpSolver' },
       { id: 'tb-screenshot', labelKey: 'viewer.toolbar.screenshotLabel', label: 'Screenshot', titleKey: 'viewer.toolbar.screenshotTitle', title: 'Screenshot', icon: 'screenshot', action: 'screenshot', capability: 'capture' },
     ],
@@ -19,6 +20,7 @@ export const toolbarGroups = [
     items: [
       { id: 'tb-orbit', labelKey: 'viewer.toolbar.orbitLabel', label: 'Pick Orbit', titleKey: 'viewer.toolbar.orbitTitle', title: 'Orbit Navigation', icon: 'orbit-pick', action: 'orbit', active: true },
       { id: 'tb-fly', labelKey: 'viewer.toolbar.flyLabel', label: 'Fly', titleKey: 'viewer.toolbar.flyTitle', title: 'Fly Navigation', icon: 'fly', action: 'fly' },
+      { id: 'tb-magnifier', labelKey: 'viewer.toolbar.magnifierLabel', label: 'Magnifier', titleKey: 'viewer.toolbar.magnifierTitle', title: 'Magnifier', icon: 'magnifier', action: 'magnifier' },
     ],
   },
   {

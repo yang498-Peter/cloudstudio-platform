@@ -8443,6 +8443,12 @@ window.__CLOUDSTUDIO_THREE = THREE;
           if (item.action === 'coordinate-convert') {
             button.addEventListener('click', () => setActiveRightPane('coordinate', { expand: true }));
           }
+          if (item.action === 'dxf-import') {
+            button.addEventListener('click', () => {
+              setActiveRightPane('dxf', { expand: true });
+              document.getElementById('dxf-file-input')?.click();
+            });
+          }
           if (item.titleKey) button.dataset.i18nTitle = item.titleKey;
           button.title = formatToolbarTitle(item.title, item.shortcut);
           button.setAttribute('aria-label', button.title);
