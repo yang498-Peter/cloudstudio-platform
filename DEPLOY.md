@@ -90,6 +90,11 @@ PYTHON3_BIN=python3
 The app can auto-detect many paths, but production deployments should set
 explicit paths so future maintenance is predictable.
 
+Legacy desktop scan-root discovery is disabled by default on public servers.
+Uploaded/runtime projects are still discovered automatically. Only set
+`CLOUDSTUDIO_ENABLE_DESKTOP_SCAN_ROOTS=true` together with the desktop-local
+capability flags in a controlled private environment.
+
 `setup.sh` generates a random upload password when
 `UPLOAD_REVIEW_PASSWORD_SHA256` is missing and writes the one-time plaintext
 password to:

@@ -177,7 +177,7 @@ export function createClipBoxFeature({
 
     setButtonLabel(confirmButton, t('viewer.clipBox.confirm', 'Confirm clip boxes'));
     setButtonLabel(cancelButton, t('viewer.clipBox.cancel', 'Cancel current box'));
-    setButtonLabel(exportButton, t('viewer.clipBox.exportOpen', 'Export clipped LAS and open'));
+    setButtonLabel(exportButton, t('viewer.clipBox.exportOpen', 'Export clipped LAS for download'));
     confirmButton.disabled = !staged.length || exportState.busy;
     cancelButton.disabled = !state.active || exportState.busy;
     exportButton.disabled = !confirmed.length || exportState.busy;
@@ -242,7 +242,7 @@ export function createClipBoxFeature({
 
     if (exportHint) {
       exportHint.textContent = confirmed.length
-        ? t('viewer.clipBox.exportHintReady', 'Exports confirmed clip boxes to a new *_clip folder and opens the result as a new point cloud.')
+        ? t('viewer.clipBox.exportHintReady', 'Exports confirmed clip boxes and starts a LAS download. The current viewer scene is not changed.')
         : t('viewer.clipBox.exportHintNeedSaved', 'Confirm at least one clip box before exporting the clipped result.');
     }
     if (exportProgress) {

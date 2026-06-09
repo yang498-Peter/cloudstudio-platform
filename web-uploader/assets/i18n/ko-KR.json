@@ -675,7 +675,9 @@
       "statusEditing": "클리핑 박스 편집 중... 핸들을 조정한 뒤 이번 클리핑을 확인하세요",
       "resumeEdit": "이 클립 박스 편집 재개",
       "exporting": "다운로드할 클리핑 LAS를 내보내는 중...",
-      "exportComplete": "클리핑 LAS 내보내기가 완료되어 다운로드가 시작되었습니다."
+      "exportComplete": "클리핑 LAS 내보내기가 완료되어 다운로드가 시작되었습니다.",
+      "exportOpen": "잘라낸 LAS 다운로드로 내보내기",
+      "exportHintReady": "확정된 클립 박스를 내보내고 LAS 다운로드를 시작합니다. 현재 뷰어 장면은 변경되지 않습니다."
     },
     "profile": {
       "panelTitle": "✂ 단면 / 프로파일 보기",

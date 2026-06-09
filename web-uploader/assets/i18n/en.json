@@ -674,7 +674,9 @@
       "statusEditing": "Editing clip box... adjust the handles, then confirm this round when ready",
       "resumeEdit": "Resume editing this clip box",
       "exporting": "Exporting clipped LAS for download...",
-      "exportComplete": "Clipped LAS exported. Download started."
+      "exportComplete": "Clipped LAS exported. Download started.",
+      "exportOpen": "Export clipped LAS for download",
+      "exportHintReady": "Exports confirmed clip boxes and starts a LAS download. The current viewer scene is not changed."
     },
     "profile": {
       "panelTitle": "✂ Cross-Section / Profile View",

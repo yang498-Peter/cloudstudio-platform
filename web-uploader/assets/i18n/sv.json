@@ -674,7 +674,9 @@
       "statusEditing": "Redigera klippruta... justera handtagen, bekräfta sedan denna omgång när du är klar",
       "resumeEdit": "Fortsätt redigera den här klippboxen",
       "exporting": "Exporterar beskuren LAS for nedladdning...",
-      "exportComplete": "Beskuren LAS har exporterats. Nedladdningen har startat."
+      "exportComplete": "Beskuren LAS har exporterats. Nedladdningen har startat.",
+      "exportOpen": "Exportera beskuren LAS for nedladdning",
+      "exportHintReady": "Exporterar bekraftade klipprutor och startar en LAS-nedladdning. Den aktuella visarscenen andras inte."
     },
     "profile": {
       "panelTitle": "✂ Tvärsnitt/profilvy",

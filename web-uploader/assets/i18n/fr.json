@@ -674,7 +674,9 @@
       "statusEditing": "Modification de la boîte de découpe... ajustez les poignées, puis confirmez cette découpe",
       "resumeEdit": "Reprendre la modification de cette boîte de découpe",
       "exporting": "Export du LAS decoupe pour telechargement...",
-      "exportComplete": "LAS decoupe exporte. Le telechargement a demarre."
+      "exportComplete": "LAS decoupe exporte. Le telechargement a demarre.",
+      "exportOpen": "Exporter le LAS decoupe pour telechargement",
+      "exportHintReady": "Exporte les boites de decoupe confirmees et lance le telechargement LAS. La scene courante du visualiseur ne change pas."
     },
     "profile": {
       "panelTitle": "✂ Coupe / Vue de profil",

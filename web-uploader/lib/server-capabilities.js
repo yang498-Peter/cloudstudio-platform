@@ -44,7 +44,7 @@ const FEATURE_ENV_NAMES = Object.freeze({
 });
 
 const FEATURE_ROUTE_RULES = Object.freeze([
-  { feature: 'desktopLocalImport', pattern: /^\/api\/(?:upload-by-path|desktop(?:\/|$))/ },
+  { feature: 'desktopLocalImport', pattern: /^\/api\/(?:upload-by-path|desktop(?:\/|$)|scan-projects\/register(?:\/|$)|scan-roots(?:\/|$))/ },
   { feature: 'mvpSolver', pattern: /^\/api\/metacam-solver(?:\/|$)/ },
   { feature: 'export', pattern: /^\/api\/(?:export-pointcloud|export-las|export-sources)(?:\/|$)/ },
   { feature: 'crs', pattern: /^\/api\/(?:crs(?:\/|$)|grids(?:\/|$)|scan-projects\/crs(?:\/|$))/ },

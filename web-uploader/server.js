@@ -78,6 +78,14 @@ function parsePositiveIntegerEnv(name, fallback) {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 }
 
+function parseBooleanEnv(name, fallback = false) {
+  const normalized = String(process.env[name] ?? '').trim().toLowerCase();
+  if (!normalized) return fallback;
+  if (['1', 'true', 'yes', 'on', 'enabled'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off', 'disabled'].includes(normalized)) return false;
+  return fallback;
+}
+
 function normalizeDatasetVisibilityKey(value) {
   return String(value || '').trim().toLowerCase();
 }
@@ -464,6 +472,9 @@ function resolveFirstRunnableCommand(candidates = [], args = ['--version']) {
 }
 
 function getDefaultScanRootCandidates() {
+  if (!parseBooleanEnv('CLOUDSTUDIO_ENABLE_DESKTOP_SCAN_ROOTS', false)) {
+    return [];
+  }
   const homeDir = process.env.USERPROFILE || process.env.HOME || '';
   if (!homeDir) return [];
   return IS_WINDOWS
@@ -857,7 +868,7 @@ function loadScanRoots() {
   const defaults = getDefaultScanRoots();
 
   try {
-    if (fs.existsSync(SCAN_ROOTS_CONFIG)) {
+    if (SERVER_CAPABILITIES.features?.desktopLocalImport && fs.existsSync(SCAN_ROOTS_CONFIG)) {
       const saved = JSON.parse(fs.readFileSync(SCAN_ROOTS_CONFIG, 'utf-8'));
       if (Array.isArray(saved) && saved.length) {
         // Merge saved roots with defaults, deduplicate
@@ -4447,7 +4458,7 @@ app.get('/api/scan-projects/photos', (req, res) => {
 // credential when no explicit password env is required. Production/staging
 // deployments must configure UPLOAD_REVIEW_PASSWORD_SHA256 before this write
 // endpoint can be used.
-app.post('/api/scan-projects/register', uploadCredentialJsonPrecheck, (req, res) => {
+app.post('/api/scan-projects/register', requireCapability('desktopLocalImport'), uploadCredentialJsonPrecheck, (req, res) => {
   try {
     const dirPath = ensureExistingBoundedPath(req.body?.dirPath, {
       fieldName: 'dirPath',
@@ -4476,7 +4487,7 @@ app.post('/api/scan-projects/register', uploadCredentialJsonPrecheck, (req, res)
 });
 
 // ── API: Get scan roots ──
-app.get('/api/scan-roots', (_req, res) => {
+app.get('/api/scan-roots', requireCapability('desktopLocalImport'), (_req, res) => {
   return sendApiSuccess(res, {
     roots: EXPOSE_SERVER_PATHS ? SCAN_PROJECT_ROOTS : [],
     count: SCAN_PROJECT_ROOTS.length,

@@ -674,7 +674,9 @@
       "statusEditing": "正在编辑裁剪框... 调整控制柄，完成后确认本轮裁剪",
       "resumeEdit": "继续编辑此裁剪框",
       "exporting": "正在导出裁剪后的 LAS 下载文件...",
-      "exportComplete": "裁剪后的 LAS 已导出，下载已开始。"
+      "exportComplete": "裁剪后的 LAS 已导出，下载已开始。",
+      "exportOpen": "导出裁剪 LAS 下载",
+      "exportHintReady": "导出已确认的裁剪框并开始下载 LAS。当前查看器场景不会改变。"
     },
     "profile": {
       "panelTitle": "✂ 截面 / 剖面视图",

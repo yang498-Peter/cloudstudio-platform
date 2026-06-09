@@ -77,6 +77,8 @@ test('disabled feature routing maps heavy API paths to feature names', () => {
   const capabilities = resolveServerCapabilities({});
 
   assert.equal(getDisabledFeatureForPath('/api/upload-by-path', capabilities), 'desktopLocalImport');
+  assert.equal(getDisabledFeatureForPath('/api/scan-roots', capabilities), 'desktopLocalImport');
+  assert.equal(getDisabledFeatureForPath('/api/scan-projects/register', capabilities), 'desktopLocalImport');
   assert.equal(getDisabledFeatureForPath('/api/export-pointcloud/jobs', capabilities), null);
   assert.equal(getDisabledFeatureForPath('/api/crs/transform', capabilities), null);
   assert.equal(getDisabledFeatureForPath('/api/volume-jobs', capabilities), 'volumeJobs');
@@ -113,7 +115,7 @@ test('/api/capabilities reports the resolved server capability matrix', async ()
   }
 });
 
-test('disabled heavy API routes return FEATURE_DISABLED before reaching handlers', async () => {
+test('disabled heavy and desktop-local API routes return FEATURE_DISABLED before reaching handlers', async () => {
   const { server, baseUrl } = await listen();
   try {
     const response = await fetch(`${baseUrl}/api/volume-jobs`, {
@@ -126,6 +128,24 @@ test('disabled heavy API routes return FEATURE_DISABLED before reaching handlers
     assert.equal(body.ok, false);
     assert.equal(body.errorCode, 'FEATURE_DISABLED');
     assert.equal(body.feature, 'volumeJobs');
+
+    const scanRootsResponse = await fetch(`${baseUrl}/api/scan-roots`);
+    assert.equal(scanRootsResponse.status, 403);
+    const scanRootsBody = await scanRootsResponse.json();
+    assert.equal(scanRootsBody.ok, false);
+    assert.equal(scanRootsBody.errorCode, 'FEATURE_DISABLED');
+    assert.equal(scanRootsBody.feature, 'desktopLocalImport');
+
+    const registerResponse = await fetch(`${baseUrl}/api/scan-projects/register`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ dirPath: runtimeRoot }),
+    });
+    assert.equal(registerResponse.status, 403);
+    const registerBody = await registerResponse.json();
+    assert.equal(registerBody.ok, false);
+    assert.equal(registerBody.errorCode, 'FEATURE_DISABLED');
+    assert.equal(registerBody.feature, 'desktopLocalImport');
   } finally {
     await new Promise(resolve => server.close(resolve));
   }

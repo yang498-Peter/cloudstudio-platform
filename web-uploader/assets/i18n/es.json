@@ -675,7 +675,9 @@
       "statusEditing": "Editando cuadro de clip... ajuste los controles, luego confirme esta ronda cuando esté listo",
       "resumeEdit": "Reanudar la edición de esta caja de recorte",
       "exporting": "Exportando LAS recortado para descargar...",
-      "exportComplete": "LAS recortado exportado. La descarga ha comenzado."
+      "exportComplete": "LAS recortado exportado. La descarga ha comenzado.",
+      "exportOpen": "Exportar LAS recortado para descarga",
+      "exportHintReady": "Exporta los recortes confirmados e inicia una descarga LAS. La escena actual del visor no cambia."
     },
     "profile": {
       "panelTitle": "✂ Vista de sección transversal/perfil",

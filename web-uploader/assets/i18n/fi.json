@@ -674,7 +674,9 @@
       "statusEditing": "Muokataan leikelaatikkoa... säädä kahvoja ja vahvista sitten tämä kierros, kun olet valmis",
       "resumeEdit": "Jatka tämän leikkauslaatikon muokkausta",
       "exporting": "Viedaan rajattua LAS-tiedostoa latausta varten...",
-      "exportComplete": "Rajattu LAS vietiin. Lataus kaynnistyi."
+      "exportComplete": "Rajattu LAS vietiin. Lataus kaynnistyi.",
+      "exportOpen": "Vie rajattu LAS ladattavaksi",
+      "exportHintReady": "Vie vahvistetut leikkauslaatikot ja kaynnistaa LAS-latauksen. Nykyinen katselunakyma ei muutu."
     },
     "profile": {
       "panelTitle": "✂ Poikkileikkaus/profiilinäkymä",

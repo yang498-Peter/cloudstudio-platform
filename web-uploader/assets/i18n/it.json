@@ -674,7 +674,9 @@
       "statusEditing": "Modifica casella di ritaglio... regola le maniglie, quindi conferma questo giro quando sei pronto",
       "resumeEdit": "Riprendi la modifica di questo box di ritaglio",
       "exporting": "Esportazione del LAS ritagliato per il download...",
-      "exportComplete": "LAS ritagliato esportato. Download avviato."
+      "exportComplete": "LAS ritagliato esportato. Download avviato.",
+      "exportOpen": "Esporta LAS ritagliato per il download",
+      "exportHintReady": "Esporta i riquadri di ritaglio confermati e avvia il download LAS. La scena corrente del viewer non cambia."
     },
     "profile": {
       "panelTitle": "✂ Vista in sezione trasversale/profilo",
