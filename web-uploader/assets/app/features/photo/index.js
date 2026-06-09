@@ -19,6 +19,7 @@ export function createPhotoFeature({
   let flyTravelled = 0;
   let flyLastTime = 0;
   let navigationSnapshot = null;
+  let activePhotoPlane = null;
 
   function getState() {
     return getScannerState?.() || null;
@@ -32,6 +33,41 @@ export function createPhotoFeature({
       return;
     }
     modal.classList.remove('open', 'mini');
+    hideActivePhotoPlane();
+  }
+
+  function hideActivePhotoPlane() {
+    if (activePhotoPlane) {
+      activePhotoPlane.visible = false;
+    }
+    activePhotoPlane = null;
+  }
+
+  function showPhotoPlane(frame, url) {
+    hideActivePhotoPlane();
+    const planeOwner = frame?.camera?.photoPlane ? frame.camera : frame?.leftCamera;
+    const plane = planeOwner?.photoPlane;
+    if (!plane?.material || !url || !THREE?.TextureLoader) return;
+
+    if (plane.material.map && plane.userData?.photoUrl !== url) {
+      plane.material.map.dispose?.();
+      plane.material.map = null;
+    }
+    if (!plane.material.map) {
+      plane.material.map = new THREE.TextureLoader().load(url, () => {
+        if (typeof viewer?.setRepRender === 'function') viewer.setRepRender();
+      });
+      plane.material.needsUpdate = true;
+    }
+    plane.userData = {
+      ...(plane.userData || {}),
+      photoUrl: url,
+      photoSide: frame.side,
+      photoIndex: frame.index,
+    };
+    plane.visible = true;
+    activePhotoPlane = plane;
+    if (typeof viewer?.setRepRender === 'function') viewer.setRepRender();
   }
 
   function showPhoto(index, side) {
@@ -50,6 +86,7 @@ export function createPhotoFeature({
       ? `${basePath}/${cameraPath || frame.filename}`
       : `${basePath}/undistort/${frame.side}/${frame.filename}`);
 
+    showPhotoPlane(frame, url);
     document.getElementById('photo-img').src = url;
     document.getElementById('photo-label').textContent = `${frame.index + 1} / ${frame.total}`;
     document.getElementById('photo-info').textContent = [

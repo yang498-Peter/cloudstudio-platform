@@ -7748,6 +7748,24 @@
           </div>
         </div>
 
+        <!-- Camera markers -->
+        <div class="pg">
+          <div class="pg-label">Scanner Cameras</div>
+          <div class="pr">
+            <span class="pr-label">Show Cameras</span>
+            <div class="pr-val"><input type="checkbox" id="chk-cameras"></div>
+          </div>
+          <div class="pr">
+            <span class="pr-label">Marker Size</span>
+            <div class="pr-val"><input type="range" id="r-cam-size" min="0.05" max="0.8" step="0.05" value="0.15"></div>
+            <span class="pr-num" id="l-cam-size">0.15</span>
+          </div>
+          <div class="pr">
+            <span class="pr-label">Show Frustums</span>
+            <div class="pr-val"><input type="checkbox" id="chk-frustum"></div>
+          </div>
+        </div>
+
       </div>
 
       <div class="tab-pane" id="pane-coordinate" style="overflow-y:auto;" data-i18n-auto-root>
@@ -8975,6 +8993,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
           THREE,
           getScannerState: () => scannerState,
           getBasePath: () => MVPS1_BASE,
+          buildCameraMarkers,
           getPhotoFrameAtIndex: (index, side, projectId = getCurrentScannerProjectId()) => resolveRenderablePhotoFrame(index, side, projectId),
           getVisiblePhotoCameras: (projectId = getCurrentScannerProjectId()) => getRenderableLeftPhotoCameras(projectId),
           getFlyTrajectoryButtonLabel: (active) => active
@@ -9004,8 +9023,14 @@ window.__CLOUDSTUDIO_THREE = THREE;
           getLoadedScannerProjects,
           getCurrentScannerProjectId,
           getScannerProjectState,
+          getVisiblePhotoCameras: (projectId = getCurrentScannerProjectId()) => getRenderableLeftPhotoCameras(projectId),
           escapeHtml,
+          getFlyTrajectoryButtonLabel: (active) => active
+            ? tr('viewer.scanner.flyTrajectoryStop', {}, 'Stop flythrough')
+            : tr('viewer.scanner.flyTrajectoryStart', {}, 'Fly trajectory'),
+          formatTrajectoryFlySpeedLabel: value => `${Number(value || 0).toFixed(1)} m/s`,
           formatTrajectoryArrowDensityLabel,
+          stopScannerTimeline,
           setSelectedScannerProject,
           updateCoordinateFormVisibility,
           refreshCoordinateSystem,
@@ -9029,6 +9054,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
           tr,
           toast,
           buildTrajectory,
+          buildCameraMarkers,
           viewer,
         });
         scannerRuntimeFeature.bindControls?.();
@@ -12410,6 +12436,15 @@ window.__CLOUDSTUDIO_THREE = THREE;
       document.getElementById('r-traj-arrows').value = String(state.trajSettings?.arrowDensity ?? 30);
       document.getElementById('l-traj-arrows').textContent = formatTrajectoryArrowDensityLabel(state.trajSettings?.arrowDensity ?? 30);
 
+      const cameraSettings = state.cameraSettings || createDefaultCameraSettings();
+      const cameraToggle = document.getElementById('chk-cameras');
+      const cameraSizeSlider = document.getElementById('r-cam-size');
+      const cameraSizeLabel = document.getElementById('l-cam-size');
+      const frustumToggle = document.getElementById('chk-frustum');
+      if (cameraToggle) cameraToggle.checked = Boolean(cameraSettings.visible);
+      if (cameraSizeSlider) cameraSizeSlider.value = String(cameraSettings.size ?? 0.15);
+      if (cameraSizeLabel) cameraSizeLabel.textContent = String(cameraSettings.size ?? 0.15);
+      if (frustumToggle) frustumToggle.checked = Boolean(cameraSettings.showFrustum);
     }
 
     function setSelectedScannerProject(projectId, { syncContext = true } = {}) {
@@ -15062,8 +15097,11 @@ window.__CLOUDSTUDIO_THREE = THREE;
       'transformsCentroid',
       'photoManifest',
       'trajGroup',
+      'camGroup',
+      'frustumGroup',
       'photoIndex',
       'photoSide',
+      'timelineAnim',
       'coordConfig',
       'resolvedCoordinateSystem',
       'geoMouseMoveHandler',
@@ -15074,6 +15112,8 @@ window.__CLOUDSTUDIO_THREE = THREE;
       'nativeTransformQueue',
       'nativeTransformTimer',
       'trajSettings',
+      'cameraSettings',
+      'trajectoryFlySettings',
     ]);
 
     function createDefaultTrajectorySettings() {
@@ -15085,6 +15125,20 @@ window.__CLOUDSTUDIO_THREE = THREE;
         solidColor: '#4078ff',
         showArrows: false,
         arrowDensity: 30,
+      };
+    }
+
+    function createDefaultCameraSettings() {
+      return {
+        visible: false,
+        size: 0.15,
+        showFrustum: false,
+      };
+    }
+
+    function createDefaultTrajectoryFlySettings() {
+      return {
+        speed: 2,
       };
     }
 
@@ -15119,8 +15173,11 @@ window.__CLOUDSTUDIO_THREE = THREE;
         transformsCentroid: null,
         photoManifest: null,
         trajGroup: null,
+        camGroup: null,
+        frustumGroup: null,
         photoIndex: 0,
         photoSide: 'left',
+        timelineAnim: null,
         coordConfig: null,
         resolvedCoordinateSystem: null,
         geoMouseMoveHandler: null,
@@ -15131,6 +15188,8 @@ window.__CLOUDSTUDIO_THREE = THREE;
         nativeTransformQueue: new Map(),
         nativeTransformTimer: null,
         trajSettings: createDefaultTrajectorySettings(),
+        cameraSettings: createDefaultCameraSettings(),
+        trajectoryFlySettings: createDefaultTrajectoryFlySettings(),
       };
     }
 
@@ -15341,6 +15400,8 @@ window.__CLOUDSTUDIO_THREE = THREE;
       if (!state.projectName) state.projectName = normalizedId;
       if (!state.trajSettings) state.trajSettings = createDefaultTrajectorySettings();
       if (!state.trajSettings.solidColor) state.trajSettings.solidColor = state.accentColor;
+      if (!state.cameraSettings) state.cameraSettings = createDefaultCameraSettings();
+      if (!state.trajectoryFlySettings) state.trajectoryFlySettings = createDefaultTrajectoryFlySettings();
       if (!(state.nativeTransformCache instanceof Map)) state.nativeTransformCache = new Map();
       if (!(state.nativeTransformInflight instanceof Map)) state.nativeTransformInflight = new Map();
       if (!(state.nativeTransformQueue instanceof Map)) state.nativeTransformQueue = new Map();
@@ -15479,6 +15540,8 @@ window.__CLOUDSTUDIO_THREE = THREE;
         || state.pointcloudContainer
         || state.overlayContainer
         || state.trajGroup
+        || state.camGroup
+        || state.frustumGroup
       );
     }
 
@@ -15522,8 +15585,18 @@ window.__CLOUDSTUDIO_THREE = THREE;
       if (projects.length < 2) return;
       projects.forEach(state => {
         state.trajSettings.visible = true;
+        state.cameraSettings.visible = true;
         if (state.trajGroup) state.trajGroup.visible = true;
+        if (state.camGroup) state.camGroup.visible = true;
+        if (state.frustumGroup) state.frustumGroup.visible = Boolean(state.cameraSettings.showFrustum);
       });
+    }
+
+    function stopScannerTimeline(projectId = getCurrentScannerProjectId()) {
+      const state = projectId ? getScannerProjectState(projectId) : null;
+      if (!state?.timelineAnim) return;
+      clearInterval(state.timelineAnim);
+      state.timelineAnim = null;
     }
 
     function removeScannerProjectVisuals(projectId) {
@@ -15540,6 +15613,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
         if (state.frustumGroup.parent) state.frustumGroup.parent.remove(state.frustumGroup);
         state.frustumGroup = null;
       }
+      stopScannerTimeline(projectId);
       if (!state.pointcloud) {
         removeScannerProjectContainers(projectId);
       }
@@ -15557,7 +15631,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
       const sceneAnchorProjectId = getSceneAnchorProjectId();
       if (sceneAnchorProjectId) {
         const anchor = getScannerProjectState(sceneAnchorProjectId);
-        if (anchor?.geoInfo && (anchor.pointcloud || anchor.pointcloudContainer || anchor.overlayContainer || anchor.trajGroup)) return anchor;
+        if (anchor?.geoInfo && (anchor.pointcloud || anchor.pointcloudContainer || anchor.overlayContainer || anchor.trajGroup || anchor.camGroup || anchor.frustumGroup)) return anchor;
       }
       const firstWithGeo = getLoadedScannerProjects().find(project => project.geoInfo);
       if (!firstWithGeo) return null;
@@ -18485,6 +18559,190 @@ window.__CLOUDSTUDIO_THREE = THREE;
       updateAllScannerSceneTransforms();
     }
 
+    function getCameraBasis(camera, size) {
+      const apex = new THREE.Vector3(Number(camera.x) || 0, Number(camera.y) || 0, Number(camera.z) || 0);
+      const yaw = (Number(camera.yaw) || 0) * Math.PI / 180;
+      const pitch = (Number(camera.pitch) || 0) * Math.PI / 180;
+      const forward = new THREE.Vector3(
+        Math.cos(yaw) * Math.cos(pitch),
+        Math.sin(yaw) * Math.cos(pitch),
+        Math.sin(pitch)
+      );
+      if (forward.lengthSq() < 1e-8) forward.set(1, 0, 0);
+      forward.normalize();
+
+      const worldUp = new THREE.Vector3(0, 0, 1);
+      const right = new THREE.Vector3().crossVectors(forward, worldUp);
+      if (right.lengthSq() < 1e-8) right.set(1, 0, 0);
+      else right.normalize();
+      const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+
+      const len = size * 2;
+      const halfWidth = len * 0.6;
+      const halfHeight = len * 0.4;
+      const tip = apex.clone().add(forward.clone().multiplyScalar(len));
+      const corners = [
+        tip.clone().add(right.clone().multiplyScalar(halfWidth)).add(up.clone().multiplyScalar(halfHeight)),
+        tip.clone().add(right.clone().multiplyScalar(-halfWidth)).add(up.clone().multiplyScalar(halfHeight)),
+        tip.clone().add(right.clone().multiplyScalar(-halfWidth)).add(up.clone().multiplyScalar(-halfHeight)),
+        tip.clone().add(right.clone().multiplyScalar(halfWidth)).add(up.clone().multiplyScalar(-halfHeight)),
+      ];
+      return { apex, corners };
+    }
+
+    function buildCameraFrustum(camera, size, accentColor = '#4078ff') {
+      const { apex, corners } = getCameraBasis(camera, size);
+      const vertices = [];
+      corners.forEach(corner => {
+        vertices.push(apex.x, apex.y, apex.z, corner.x, corner.y, corner.z);
+      });
+      for (let index = 0; index < 4; index += 1) {
+        const start = corners[index];
+        const end = corners[(index + 1) % 4];
+        vertices.push(start.x, start.y, start.z, end.x, end.y, end.z);
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      return new THREE.LineSegments(
+        geometry,
+        new THREE.LineBasicMaterial({
+          color: new THREE.Color(accentColor),
+          transparent: true,
+          opacity: 0.5,
+          depthTest: true,
+        })
+      );
+    }
+
+    function buildCameraPhotoPlane(camera, size) {
+      const { corners } = getCameraBasis(camera, size);
+      const geometry = new THREE.BufferGeometry();
+      const vertices = [
+        corners[1].x, corners[1].y, corners[1].z,
+        corners[2].x, corners[2].y, corners[2].z,
+        corners[0].x, corners[0].y, corners[0].z,
+        corners[2].x, corners[2].y, corners[2].z,
+        corners[3].x, corners[3].y, corners[3].z,
+        corners[0].x, corners[0].y, corners[0].z,
+      ];
+      const uvs = [
+        0, 1, 0, 0, 1, 1,
+        0, 0, 1, 0, 1, 1,
+      ];
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+
+      const material = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.88,
+        side: THREE.DoubleSide,
+        depthTest: true,
+        depthWrite: false,
+      });
+      const plane = new THREE.Mesh(geometry, material);
+      plane.visible = false;
+      plane.renderOrder = 4;
+      plane.raycast = () => {};
+      return plane;
+    }
+
+    function createCameraMarkerTexture(accentColor = '#4078ff') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 64, 64);
+      ctx.fillStyle = accentColor;
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(8, 18, 40, 30, 4);
+      } else {
+        ctx.rect(8, 18, 40, 30);
+      }
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(28, 33, 10, 0, Math.PI * 2);
+      ctx.fillStyle = '#7eb0ff';
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(28, 33, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#111';
+      ctx.fill();
+      ctx.fillStyle = '#ffdd00';
+      ctx.fillRect(40, 8, 12, 10);
+      ctx.strokeRect(40, 8, 12, 10);
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function buildCameraMarkers(projectId = getCurrentScannerProjectId()) {
+      const state = getScannerProjectState(projectId);
+      ensureScannerProjectContainers(projectId);
+      if (!state.cameraSettings) state.cameraSettings = createDefaultCameraSettings();
+
+      state.cameras.forEach(camera => {
+        if (camera?.photoPlane) camera.photoPlane = null;
+      });
+      if (state.camGroup) {
+        if (state.camGroup.parent) state.camGroup.parent.remove(state.camGroup);
+        state.camGroup = null;
+      }
+      if (state.frustumGroup) {
+        if (state.frustumGroup.parent) state.frustumGroup.parent.remove(state.frustumGroup);
+        state.frustumGroup = null;
+      }
+
+      const cameras = getRenderableLeftPhotoCameras(projectId);
+      if (!cameras.length) {
+        if (typeof viewer.setRepRender === 'function') viewer.setRepRender();
+        return;
+      }
+
+      const group = new THREE.Group();
+      group.name = `MVPS1_Cameras_${state.projectId}`;
+      const frustumGroup = new THREE.Group();
+      frustumGroup.name = `MVPS1_Frustums_${state.projectId}`;
+
+      const size = Math.max(0.01, Number(state.cameraSettings.size ?? 0.15) || 0.15);
+      const accentColor = state.accentColor || state.trajSettings?.solidColor || '#4078ff';
+      const spriteMaterial = new THREE.SpriteMaterial({
+        map: createCameraMarkerTexture(accentColor),
+        transparent: true,
+        depthTest: true,
+        sizeAttenuation: true,
+      });
+
+      cameras.forEach((camera, index) => {
+        const sprite = new THREE.Sprite(spriteMaterial.clone());
+        sprite.position.set(Number(camera.x) || 0, Number(camera.y) || 0, Number(camera.z) || 0);
+        sprite.scale.set(size, size, 1);
+        sprite.userData = { type: 'camera', index, camData: camera, projectId: state.projectId };
+        group.add(sprite);
+
+        const photoPlane = buildCameraPhotoPlane(camera, size);
+        photoPlane.userData = { type: 'camera-photo-plane', index, camData: camera, projectId: state.projectId };
+        group.add(photoPlane);
+        camera.photoPlane = photoPlane;
+
+        const frustum = buildCameraFrustum(camera, size, accentColor);
+        if (frustum) frustumGroup.add(frustum);
+      });
+
+      state.camGroup = group;
+      state.frustumGroup = frustumGroup;
+      state.overlayContainer.add(group);
+      state.overlayContainer.add(frustumGroup);
+      group.visible = Boolean(state.cameraSettings.visible);
+      frustumGroup.visible = Boolean(state.cameraSettings.visible && state.cameraSettings.showFrustum);
+      updateAllScannerSceneTransforms();
+      if (typeof viewer.setRepRender === 'function') viewer.setRepRender();
+    }
+
     // ── Scan Info Panel ──
     async function renderLocalizedScanInfoPanel() {
       const container = document.getElementById('scan-info-list');
@@ -18857,6 +19115,22 @@ window.__CLOUDSTUDIO_THREE = THREE;
       scannerState.trajSettings.arrowDensity = parseInt(e.target.value, 10) || 30;
       buildTrajectory();
     });
+    document.getElementById('chk-cameras')?.addEventListener('change', e => {
+      scannerState.cameraSettings.visible = e.target.checked;
+      if (scannerState.camGroup) scannerState.camGroup.visible = e.target.checked;
+      if (scannerState.frustumGroup) scannerState.frustumGroup.visible = e.target.checked && document.getElementById('chk-frustum')?.checked;
+      if (typeof viewer.setRepRender === 'function') viewer.setRepRender();
+    });
+    document.getElementById('r-cam-size')?.addEventListener('input', e => {
+      document.getElementById('l-cam-size').textContent = e.target.value;
+      scannerState.cameraSettings.size = parseFloat(e.target.value);
+      buildCameraMarkers();
+    });
+    document.getElementById('chk-frustum')?.addEventListener('change', e => {
+      scannerState.cameraSettings.showFrustum = e.target.checked;
+      if (scannerState.frustumGroup) scannerState.frustumGroup.visible = e.target.checked && Boolean(scannerState.cameraSettings.visible);
+      if (typeof viewer.setRepRender === 'function') viewer.setRepRender();
+    });
     }
 
     // ── Real-time geo-coordinate display in status bar ──
@@ -18983,6 +19257,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
 
         // Build visuals
         if (projectState.odomData.length) buildTrajectory(projectId);
+        if (projectState.cameras.length) buildCameraMarkers(projectId);
         updateAllScannerSceneTransforms();
 
         // REMOVED: Auto rotation since native Z-up coordinates are used
