@@ -76,6 +76,7 @@ test('server capabilities can be enabled or disabled with explicit env flags', (
 test('disabled feature routing maps heavy API paths to feature names', () => {
   const capabilities = resolveServerCapabilities({});
 
+  assert.equal(getDisabledFeatureForPath('/api/delete-cloud', capabilities), 'datasetManagement');
   assert.equal(getDisabledFeatureForPath('/api/upload-by-path', capabilities), 'desktopLocalImport');
   assert.equal(getDisabledFeatureForPath('/api/scan-roots', capabilities), 'desktopLocalImport');
   assert.equal(getDisabledFeatureForPath('/api/scan-projects/register', capabilities), 'desktopLocalImport');
@@ -135,6 +136,17 @@ test('disabled heavy and desktop-local API routes return FEATURE_DISABLED before
     assert.equal(scanRootsBody.ok, false);
     assert.equal(scanRootsBody.errorCode, 'FEATURE_DISABLED');
     assert.equal(scanRootsBody.feature, 'desktopLocalImport');
+
+    const deleteResponse = await fetch(`${baseUrl}/api/delete-cloud`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ cloudName: 'anything', password: 'anything' }),
+    });
+    assert.equal(deleteResponse.status, 403);
+    const deleteBody = await deleteResponse.json();
+    assert.equal(deleteBody.ok, false);
+    assert.equal(deleteBody.errorCode, 'FEATURE_DISABLED');
+    assert.equal(deleteBody.feature, 'datasetManagement');
 
     const registerResponse = await fetch(`${baseUrl}/api/scan-projects/register`, {
       method: 'POST',
