@@ -4,11 +4,23 @@ export function createCaptureFeature({
   translate,
   escapeHtml,
   convertLocalPointToCurrentSystem,
+  getScenePointDisplayCoordinate,
   formatLinearAxis,
   removeMarker,
   addMarker,
 } = {}) {
   let controlsBound = false;
+
+  function getPointDisplayCoordinate(point) {
+    if (typeof getScenePointDisplayCoordinate === 'function') {
+      const displayed = getScenePointDisplayCoordinate(
+        { x: point.x, y: point.y, z: point.z },
+        point.scannerProjectId || point.projectId || null
+      );
+      if (displayed && !displayed.error) return displayed;
+    }
+    return convertLocalPointToCurrentSystem({ x: point.x, y: point.y, z: point.z }, point.scannerProjectId || point.projectId || null);
+  }
 
   function updatePanelUI() {
     const state = getCaptureState();
@@ -21,15 +33,16 @@ export function createCaptureFeature({
 
     if (state.active) {
       badge.classList.add('active');
-      statusText.textContent = translate('viewer.capture.statusActive', {}, 'Capturing...');
-      toggleButton.textContent = `⏹ ${translate('viewer.capture.stop', {}, 'Stop Capture')}`;
+      statusText.textContent = translate('viewer.capture.statusActive', {}, 'Capturing…');
+      toggleButton.innerHTML = `<span class="btn-icon" data-cs-icon="close"></span><span>${translate('viewer.capture.stop', {}, 'Stop Capture')}</span>`;
       toggleButton.classList.add('active');
     } else {
       badge.classList.remove('active');
       statusText.textContent = translate('viewer.capture.statusIdle', {}, 'Idle');
-      toggleButton.innerHTML = `🎯 <span>${translate('viewer.capture.start', {}, 'Start Capture')}</span>`;
+      toggleButton.innerHTML = `<span class="btn-icon" data-cs-icon="capture"></span><span>${translate('viewer.capture.start', {}, 'Start Capture')}</span>`;
       toggleButton.classList.remove('active');
     }
+    window.renderAppIcons?.(toggleButton);
 
     const hasPoints = state.points.length > 0;
     exportButton.disabled = !hasPoints;
@@ -58,17 +71,15 @@ export function createCaptureFeature({
       const attributeHtml = escapeHtml(point.attribute || '');
 
       let coordsHtml = `<div class="cap-small-coords" style="font-size:12px; font-weight: 500;">XYZ (m): ${point.x.toFixed(3)}  ${point.y.toFixed(3)}  ${point.z.toFixed(3)}</div>`;
-      const converted = convertLocalPointToCurrentSystem({ x: point.x, y: point.y, z: point.z });
+      const converted = getPointDisplayCoordinate(point);
       if (converted && !converted.error && converted.kind !== 'local') {
         if (converted.kind === 'projected') {
           const xyUnit = converted.xyUnitSpec || 'm';
           coordsHtml = `
-            <div class="cap-small-coords" style="font-size:10px; color:var(--text3); margin-bottom: 2px;">XYZ (m): ${point.x.toFixed(3)}  ${point.y.toFixed(3)}  ${point.z.toFixed(3)}</div>
             <div class="cap-small-coords" style="font-size:12px; color:var(--text); font-weight:500;">ENH: E ${formatLinearAxis(converted.x, xyUnit)} / N ${formatLinearAxis(converted.y, xyUnit)} / H ${formatLinearAxis(converted.z, 'm')}</div>
           `;
         } else if (converted.kind === 'geographic') {
           coordsHtml = `
-            <div class="cap-small-coords" style="font-size:10px; color:var(--text3); margin-bottom: 2px;">XYZ (m): ${point.x.toFixed(3)}  ${point.y.toFixed(3)}  ${point.z.toFixed(3)}</div>
             <div class="cap-small-coords" style="font-size:12px; color:var(--text); font-weight:500;">LLH: ${converted.lon.toFixed(8)}  ${converted.lat.toFixed(8)}  H ${formatLinearAxis(converted.alt, 'm')}</div>
           `;
         }
@@ -84,7 +95,7 @@ export function createCaptureFeature({
         <div class="cap-row-head">
           <span class="cap-row-id">#${point.id}</span>
           <span class="cap-row-feat" title="${featureHtml}">${featureHtml}</span>
-          <button class="cap-row-del" title="${deleteTitle}" data-cap-delete="${index}">✕</button>
+          <button class="cap-row-del" title="${deleteTitle}" data-cap-delete="${point.id}"><span data-cs-icon="trash"></span></button>
         </div>
         ${attributeHtml ? `<div class="cap-row-attr" title="${attributeHtml}">${attributeHtml}</div>` : ''}
         <div class="cap-row-coords">${coordsHtml}</div>
@@ -99,7 +110,7 @@ export function createCaptureFeature({
           </div>
           <div class="cap-edit-actions">
             <button class="btn" data-cap-cancel="${point.id}">${cancelLabel}</button>
-            <button class="btn pri" data-cap-save="${index}" data-cap-point-id="${point.id}">${saveLabel}</button>
+            <button class="btn pri" data-cap-save="${point.id}">${saveLabel}</button>
           </div>
         </div>`;
 
@@ -114,9 +125,10 @@ export function createCaptureFeature({
           return;
         }
         if (actionTarget?.hasAttribute('data-cap-save')) {
-          saveEdit(Number(actionTarget.getAttribute('data-cap-save')), Number(actionTarget.getAttribute('data-cap-point-id')));
+          saveEdit(Number(actionTarget.getAttribute('data-cap-save')));
           return;
         }
+        if (event.target.closest('.cap-row-edit-form')) return;
 
         const form = document.getElementById(`cap-edit-${point.id}`);
         if (!form) return;
@@ -126,11 +138,19 @@ export function createCaptureFeature({
       });
 
       list.appendChild(row);
+      window.renderAppIcons?.(row);
     });
   }
 
-  function deletePoint(index) {
+  function findPointIndexById(pointId) {
     const state = getCaptureState();
+    return state.points.findIndex(point => Number(point?.id) === Number(pointId));
+  }
+
+  function deletePoint(pointId) {
+    const state = getCaptureState();
+    const index = findPointIndexById(pointId);
+    if (index < 0) return;
     const point = state.points[index];
     if (point?.marker) removeMarker(point.marker);
     state.points.splice(index, 1);
@@ -143,8 +163,9 @@ export function createCaptureFeature({
     if (form) form.classList.remove('show');
   }
 
-  function saveEdit(index, pointId) {
+  function saveEdit(pointId) {
     const state = getCaptureState();
+    const index = findPointIndexById(pointId);
     if (!state.points[index]) return;
     const feature = document.getElementById(`cap-ef-${pointId}`)?.value.trim() || '';
     const attribute = document.getElementById(`cap-ea-${pointId}`)?.value.trim() || '';

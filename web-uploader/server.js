@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { spawn, spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { readLastJsonLine } from './lib/job-result.js';
@@ -10,6 +10,7 @@ import {
   createLongJobRegistry,
   runCommandWithTimeout,
 } from './lib/long-job-state.js';
+import { createProgressStore } from './lib/progress-store.js';
 import {
   redactServerPath,
   sanitizeManifestForClient,
@@ -26,9 +27,15 @@ import {
   resolveFirstExistingPath as resolveFirstExistingRuntimePath,
   resolveRuntimePath,
 } from './lib/runtime-storage.js';
+import {
+  createFeatureDisabledError,
+  getDisabledFeatureForPath,
+  resolveServerCapabilities,
+} from './lib/server-capabilities.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+loadDotEnvFile(path.join(__dirname, '.env'));
 
 const app = express();
 const PORT = process.env.PORT || 8090;
@@ -50,6 +57,7 @@ const ZIP_MAX_TOTAL_BYTES = parsePositiveIntegerEnv('CLOUDSTUDIO_ZIP_MAX_TOTAL_B
 const ZIP_MAX_FILE_BYTES = parsePositiveIntegerEnv('CLOUDSTUDIO_ZIP_MAX_FILE_BYTES', 10 * GIB);
 const ZIP_MAX_FILES = parsePositiveIntegerEnv('CLOUDSTUDIO_ZIP_MAX_FILES', 100000);
 const GRID_UPLOAD_MAX_BYTES = parsePositiveIntegerEnv('CLOUDSTUDIO_GRID_UPLOAD_MAX_BYTES', 2 * GIB);
+const EXPORT_MAX_CONCURRENT_JOBS = parsePositiveIntegerEnv('CLOUDSTUDIO_EXPORT_MAX_CONCURRENT_JOBS', 1);
 const LONG_JOB_TIMEOUTS = Object.freeze({
   potreeConversionMs: parsePositiveIntegerEnv('CLOUDSTUDIO_POTREE_CONVERSION_TIMEOUT_MS', 60 * 60 * 1000),
   zipExtractionMs: parsePositiveIntegerEnv('CLOUDSTUDIO_ZIP_EXTRACTION_TIMEOUT_MS', 15 * 60 * 1000),
@@ -61,6 +69,7 @@ const POTREE_ROOT = path.join(ROOT, 'potree');
 const PYTHON_VENDOR_SITE = '';
 const RUNTIME_STORAGE = buildRuntimeStorageLayout({ appDir: __dirname, env: process.env });
 const EXPOSE_SERVER_PATHS = shouldExposeServerPaths(process.env);
+const SERVER_CAPABILITIES = resolveServerCapabilities(process.env);
 
 function parsePositiveIntegerEnv(name, fallback) {
   const raw = process.env[name];
@@ -84,6 +93,28 @@ function parseHiddenDatasetsEnv(name = 'CLOUDSTUDIO_HIDDEN_DATASETS') {
 
 const HIDDEN_DATASETS = parseHiddenDatasetsEnv();
 
+function loadDotEnvFile(envPath) {
+  if (!envPath || !fs.existsSync(envPath)) return;
+  try {
+    const content = fs.readFileSync(envPath, 'utf8');
+    for (const rawLine of content.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith('#')) continue;
+      const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+      if (!match) continue;
+      const key = match[1];
+      if (process.env[key] != null) continue;
+      let value = match[2].trim();
+      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      process.env[key] = value;
+    }
+  } catch (error) {
+    console.warn('[Env] Failed to load .env:', error.message);
+  }
+}
+
 function isCloudListEntryHidden(entry, hiddenDatasets = HIDDEN_DATASETS) {
   if (!entry || !hiddenDatasets?.size) return false;
   const name = normalizeDatasetVisibilityKey(entry.cloudName || entry.name);
@@ -99,6 +130,54 @@ function isCloudListEntryHidden(entry, hiddenDatasets = HIDDEN_DATASETS) {
     projectId ? `scanner::${projectId}` : '',
   ].filter(Boolean);
   return keys.some(key => hiddenDatasets.has(key));
+}
+
+const ABSOLUTE_PATH_TEXT_RE = /[a-zA-Z]:[\\/][^\s"'<>|]+|\\\\[^\s"'<>|]+|\/(?:Users|home|mnt|Volumes|tmp|var|opt|workspace|root|srv)\b[^\s"'<>|]*/g;
+const PRIVATE_RESPONSE_KEY_RE = /^(?:absPath|filePath|sourcePath|originalPath|inputPath|outputPath|outputDirectory|projectDir|dirPath|metadataPath|lasPath|meshPath|stack)$/i;
+
+function basenameAny(value = '') {
+  const trimmed = String(value || '').replace(/[\\/]+$/, '');
+  const nativeBase = path.basename(trimmed);
+  if (nativeBase && nativeBase !== trimmed) return nativeBase;
+  return trimmed.split(/[\\/]+/).filter(Boolean).at(-1) || 'path';
+}
+
+function redactPathTextForClient(value) {
+  if (EXPOSE_SERVER_PATHS) return String(value ?? '');
+  return String(value ?? '').replace(ABSOLUTE_PATH_TEXT_RE, match => `<server-path:${basenameAny(match)}>`);
+}
+
+function sanitizeAsyncJobForClient(value) {
+  if (value == null) return value;
+  if (typeof value === 'string') return redactPathTextForClient(value);
+  if (typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map(sanitizeAsyncJobForClient);
+
+  const sanitized = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (key === 'stack') continue;
+    if (!EXPOSE_SERVER_PATHS && PRIVATE_RESPONSE_KEY_RE.test(key)) continue;
+    sanitized[key] = sanitizeAsyncJobForClient(entry);
+  }
+  return sanitized;
+}
+
+const SCAN_DATA_FEATURE_SUBPATH_RULES = Object.freeze([
+  { feature: 'forestry', pattern: /^\/forestry(?:\/|$)/i },
+  { feature: 'terrainProcessing', pattern: /^\/(?:terrain|dtm|floorplan|surface|contour|contours|hag|classification|classified)(?:\/|$)/i },
+  { feature: 'volumeJobs', pattern: /^\/(?:volume|volume_jobs|volume-jobs|volume_surface|volume-surface)(?:\/|$)/i },
+  { feature: 'orthoImage', pattern: /^\/(?:ortho|ortho-image|orthophoto)(?:\/|$)/i },
+]);
+
+function getDisabledFeatureForScanDataPath(requestPath) {
+  const rawPathname = String(requestPath || '').split('?')[0];
+  const pathname = rawPathname.replace(/^\/scan-data\/[^/]+/i, '') || '/';
+  for (const rule of SCAN_DATA_FEATURE_SUBPATH_RULES) {
+    if (rule.pattern.test(pathname) && !SERVER_CAPABILITIES.features?.[rule.feature]) {
+      return rule.feature;
+    }
+  }
+  return null;
 }
 
 function pathExists(candidate) {
@@ -386,14 +465,15 @@ function resolveFirstRunnableCommand(candidates = [], args = ['--version']) {
 
 function getDefaultScanRootCandidates() {
   const homeDir = process.env.USERPROFILE || process.env.HOME || '';
+  if (!homeDir) return [];
   return IS_WINDOWS
     ? [
         path.join(homeDir, 'Desktop', 'AI', 'MVPS1'),
         path.join(homeDir, 'Desktop', 'AI'),
       ]
     : [
-        path.join(homeDir || '/Users/yangqi', 'Desktop', 'AI', 'MVPS1'),
-        path.join(homeDir || '/Users/yangqi', 'Desktop', 'AI'),
+        path.join(homeDir, 'Desktop', 'AI', 'MVPS1'),
+        path.join(homeDir, 'Desktop', 'AI'),
       ];
 }
 
@@ -447,7 +527,6 @@ function resolveConverterPath() {
         path.join(ROOT, 'PotreeConverter', 'build-gcc', 'PotreeConverter'),
         path.resolve(ROOT, '..', 'PotreeConverter', 'build-gcc', 'PotreeConverter'),
         path.resolve(ROOT, '..', '..', 'PotreeConverter', 'build-gcc', 'PotreeConverter'),
-        '/Users/yangqi/.openclaw/workspace/potree-local/PotreeConverter/build-gcc/PotreeConverter',
       ];
 
   return resolveFirstExistingPath(candidates);
@@ -501,6 +580,10 @@ const conversionJobRegistry = createLongJobRegistry({
   dir: CONVERSION_JOB_DIR,
   maxJobs: parsePositiveIntegerEnv('CLOUDSTUDIO_CONVERSION_JOB_HISTORY', 100),
 });
+const EXPORT_PROGRESS_JOBS = createProgressStore({
+  maxEntries: parsePositiveIntegerEnv('CLOUDSTUDIO_EXPORT_JOB_HISTORY', 500),
+});
+let activeExportJobCount = 0;
 
 for (const d of [PYTHON_VENDOR_SITE].filter(Boolean)) {
   fs.mkdirSync(d, { recursive: true });
@@ -720,6 +803,21 @@ const zipStorage = multer.diskStorage({
 const zipUpload = multer({ storage: zipStorage, limits: UPLOAD_LIMITS, fileFilter: zipFileFilter });
 
 app.use(express.json({ limit: '50mb' }));
+
+app.get('/api/capabilities', (_req, res) => {
+  return sendApiSuccess(res, { capabilities: SERVER_CAPABILITIES });
+});
+
+app.use('/api', (req, res, next) => {
+  const disabledFeature = getDisabledFeatureForPath(req.originalUrl || req.url, SERVER_CAPABILITIES);
+  if (!disabledFeature) return next();
+  return sendApiError(res, createFeatureDisabledError(disabledFeature), {
+    fallbackCode: 'FEATURE_DISABLED',
+    fallbackStatus: 403,
+    extra: { feature: disabledFeature },
+  });
+});
+
 function createGuardedStaticFallback(candidates) {
   return createStaticFallbackMiddleware(express, candidates, {
     allowRequest: isSafePublicStaticRequest,
@@ -730,11 +828,22 @@ function createGuardedStaticDirectory(dirPath) {
   return createGuardedStaticFallback([dirPath]);
 }
 
+function requireCapability(feature) {
+  return (_req, res, next) => {
+    if (SERVER_CAPABILITIES.features?.[feature]) return next();
+    return sendApiError(res, createFeatureDisabledError(feature), {
+      fallbackCode: 'FEATURE_DISABLED',
+      fallbackStatus: 403,
+      extra: { feature },
+    });
+  };
+}
+
 app.use('/potree', express.static(POTREE_ROOT));
 app.use('/pointclouds', createGuardedStaticFallback(RUNTIME_STORAGE.pointclouds.candidates));
 app.use('/gaussians', createGuardedStaticFallback(RUNTIME_STORAGE.gaussians.candidates));
 app.use('/projects', createGuardedStaticFallback(RUNTIME_STORAGE.projects.candidates));    // serve uploaded project files (photos etc.)
-app.use('/exports', createGuardedStaticFallback(RUNTIME_STORAGE.exports.candidates));
+app.use('/exports', requireCapability('export'), createGuardedStaticFallback(RUNTIME_STORAGE.exports.candidates));
 app.use('/assets', express.static(ASSETS_DIR));
 
 // ═══════════════════════════════════════════════════════════
@@ -1817,6 +1926,8 @@ const API_ERROR_STATUS = Object.freeze({
   EXTRACT_PARSE_FAILED: 500,
   EXPORT_BAD_REQUEST: 400,
   EXPORT_FAILED: 500,
+  EXPORT_JOB_BUSY: 429,
+  FEATURE_DISABLED: 403,
   FILE_NOT_FOUND: 400,
   GRID_BAD_REQUEST: 400,
   GRID_INTERNAL_ERROR: 500,
@@ -2126,18 +2237,108 @@ function buildExportScriptPayload(body, { outputPath, datasetContext, sourceFile
   };
 }
 
-async function handlePointcloudExport(req, res, { forceFormat = null, legacyLasResponse = false } = {}) {
+function updateExportProgressJob(progressJobId, patch = {}) {
+  if (!progressJobId) return;
+  try {
+    EXPORT_PROGRESS_JOBS.updateJob(progressJobId, patch);
+  } catch (error) {
+    console.warn('[Export] Failed to update progress job:', error?.message || error);
+  }
+}
+
+function completeExportProgressJob(progressJobId, result, message = 'Export ready') {
+  if (!progressJobId) return;
+  try {
+    EXPORT_PROGRESS_JOBS.completeJob(progressJobId, { result, message });
+  } catch (error) {
+    console.warn('[Export] Failed to complete progress job:', error?.message || error);
+  }
+}
+
+function failExportProgressJob(progressJobId, error, message = 'Export failed') {
+  if (!progressJobId) return;
+  try {
+    EXPORT_PROGRESS_JOBS.failJob(progressJobId, { error, message });
+  } catch (progressError) {
+    console.warn('[Export] Failed to fail progress job:', progressError?.message || progressError);
+  }
+}
+
+function createExportApiError(payload, status = 500) {
+  const error = new Error(payload?.summary || payload?.message || payload?.error || 'Point cloud export failed');
+  error.code = payload?.errorCode || 'EXPORT_FAILED';
+  error.apiPayload = payload;
+  error.apiStatus = status;
+  return error;
+}
+
+function createExportJobBusyError() {
+  const error = new Error('Another point cloud export is already running on this server.');
+  error.code = 'EXPORT_JOB_BUSY';
+  return error;
+}
+
+function assertExportJobSlotAvailable() {
+  if (activeExportJobCount >= EXPORT_MAX_CONCURRENT_JOBS) {
+    throw createExportJobBusyError();
+  }
+}
+
+function acquireExportJobSlot() {
+  assertExportJobSlotAvailable();
+  activeExportJobCount += 1;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    activeExportJobCount = Math.max(0, activeExportJobCount - 1);
+  };
+}
+
+function createExportProgressJob(body, { forceFormat = null, legacyLasResponse = false, route = null } = {}) {
+  const exportOptions = body?.exportOptions || {};
+  return EXPORT_PROGRESS_JOBS.createJob({
+    type: 'export-pointcloud',
+    message: 'Export queued',
+    meta: {
+      route: route || (legacyLasResponse ? '/api/export-las' : '/api/export-pointcloud'),
+      workflow: String(exportOptions.workflow || ''),
+      format: String(forceFormat || exportOptions.format || 'las'),
+      importToViewer: Boolean(exportOptions.importToViewer),
+      clipBoxCount: Array.isArray(body?.clipBoxes) ? body.clipBoxes.length : 0,
+      deleteRegionCount: Array.isArray(body?.deleteRegions) ? body.deleteRegions.length : 0,
+    },
+  });
+}
+
+async function runPointcloudExport(body, {
+  forceFormat = null,
+  legacyLasResponse = false,
+  progressJobId = null,
+  progressJob = null,
+  exportSlotRelease = null,
+} = {}) {
+  const releaseExportJobSlot = exportSlotRelease || acquireExportJobSlot();
   if (!fs.existsSync(PYTHON_BIN)) {
-    return sendApiError(res, new Error(`导出环境未安装: ${PYTHON_BIN}`), { fallbackCode: 'EXPORT_ENV_MISSING' });
+    const error = new Error(`导出环境未安装: ${PYTHON_BIN}`);
+    error.code = 'EXPORT_ENV_MISSING';
+    failExportProgressJob(progressJobId, error, 'Export environment missing');
+    releaseExportJobSlot();
+    throw error;
   }
   if (!fs.existsSync(EXPORT_POINTCLOUD_SCRIPT)) {
-    return sendApiError(res, new Error(`导出脚本不存在: ${EXPORT_POINTCLOUD_SCRIPT}`), { fallbackCode: 'EXPORT_SCRIPT_MISSING' });
+    const error = new Error(`导出脚本不存在: ${EXPORT_POINTCLOUD_SCRIPT}`);
+    error.code = 'EXPORT_SCRIPT_MISSING';
+    failExportProgressJob(progressJobId, error, 'Export script missing');
+    releaseExportJobSlot();
+    throw error;
   }
 
   try {
+    updateExportProgressJob(progressJobId, { status: 'running', progress: 5, message: 'Preparing export' });
     cleanupOldExports();
-    const { datasetContext, sourceFile } = resolveExportSource(req.body);
-    const exportOptions = req.body?.exportOptions || {};
+    const { datasetContext, sourceFile } = resolveExportSource(body);
+    const exportOptions = body?.exportOptions || {};
     const format = normalizeExportFormat(forceFormat || exportOptions.format || 'las');
     if (format === 'e57') {
       const error = new Error('E57 导出将在第二阶段实现，当前尚不可用。');
@@ -2147,11 +2348,12 @@ async function handlePointcloudExport(req, res, { forceFormat = null, legacyLasR
 
     const outputBase = sanitizeDownloadName(exportOptions.outputFilename || sourceFile.name);
     const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
-    const outputFilename = `${outputBase}_${stamp}.${format}`;
+    const uniqueSuffix = randomUUID().slice(0, 8);
+    const outputFilename = `${outputBase}_${stamp}_${uniqueSuffix}.${format}`;
     const outputPath = path.join(EXPORTS_DIR, outputFilename);
     const payload = buildExportScriptPayload(
       {
-        ...req.body,
+        ...body,
         exportOptions: {
           ...exportOptions,
           format,
@@ -2160,6 +2362,16 @@ async function handlePointcloudExport(req, res, { forceFormat = null, legacyLasR
       { outputPath, datasetContext, sourceFile }
     );
 
+    updateExportProgressJob(progressJobId, {
+      progress: 35,
+      message: 'Exporting point cloud',
+      meta: {
+        ...(progressJob?.meta || {}),
+        outputFilename,
+        format,
+      },
+    });
+
     const { code, stdout, stderr } = await runPythonConfigJob(EXPORT_POINTCLOUD_SCRIPT, payload, {
       configDir: EXPORTS_DIR,
       configPrefix: outputBase,
@@ -2167,23 +2379,27 @@ async function handlePointcloudExport(req, res, { forceFormat = null, legacyLasR
 
     if (code !== 0 || !fs.existsSync(outputPath)) {
       const detailedError = summarizeExportProcessError(stdout, stderr);
-      return res.status(500).json({
+      const failurePayload = {
         ok: false,
         error: detailedError || '点云导出失败',
+        message: detailedError || '点云导出失败',
         errorCode: 'EXPORT_FAILED',
         summary: detailedError || '点云导出失败',
         stdout: stdout.slice(-4000),
         stderr: stderr.slice(-4000),
-      });
+      };
+      failExportProgressJob(progressJobId, failurePayload, failurePayload.summary);
+      throw createExportApiError(failurePayload, 500);
     }
 
+    updateExportProgressJob(progressJobId, { progress: 75, message: 'Preparing export result' });
     let result = {};
     try {
       result = readLastJsonLine(stdout) || {};
     } catch { }
 
     const stat = safeStat(outputPath);
-    return sendApiSuccess(res, {
+    const successPayload = {
       format,
       outputFilename,
       downloadUrl: `/exports/${encodeURIComponent(outputFilename)}`,
@@ -2198,10 +2414,80 @@ async function handlePointcloudExport(req, res, { forceFormat = null, legacyLasR
       writtenPoints: Number.isFinite(result.writtenPoints) ? result.writtenPoints : null,
       plyEncoding: result.plyEncoding || null,
       legacyType: legacyLasResponse ? 'las' : null,
-    });
+    };
+    completeExportProgressJob(progressJobId, { ok: true, ...successPayload });
+    return successPayload;
   } catch (error) {
-    return sendApiError(res, error, { fallbackCode: 'BAD_REQUEST', fallbackStatus: 400 });
+    if (!error?.apiPayload) failExportProgressJob(progressJobId, error, error?.message || 'Export failed');
+    throw error;
+  } finally {
+    releaseExportJobSlot();
   }
+}
+
+async function handlePointcloudExport(req, res, { forceFormat = null, legacyLasResponse = false } = {}) {
+  try {
+    const successPayload = await runPointcloudExport(req.body, { forceFormat, legacyLasResponse });
+    return sendApiSuccess(res, successPayload);
+  } catch (error) {
+    if (error?.apiPayload) {
+      return res.status(error.apiStatus || 500).json(error.apiPayload);
+    }
+    return sendApiError(res, error, {
+      fallbackCode: error?.code || 'BAD_REQUEST',
+      fallbackStatus: 400,
+    });
+  }
+}
+
+function handlePointcloudExportJob(req, res, { forceFormat = null, legacyLasResponse = false, route = null } = {}) {
+  let progressJob;
+  let releaseExportSlot = null;
+  try {
+    releaseExportSlot = acquireExportJobSlot();
+    progressJob = createExportProgressJob(req.body, { forceFormat, legacyLasResponse, route });
+  } catch (error) {
+    releaseExportSlot?.();
+    return sendApiError(res, error, {
+      fallbackCode: error?.code || 'INTERNAL_ERROR',
+      fallbackStatus: 500,
+    });
+  }
+
+  let body;
+  try {
+    body = typeof structuredClone === 'function'
+      ? structuredClone(req.body || {})
+      : JSON.parse(JSON.stringify(req.body || {}));
+  } catch (error) {
+    releaseExportSlot?.();
+    return sendApiError(res, error, {
+      fallbackCode: 'BAD_REQUEST',
+      fallbackStatus: 400,
+    });
+  }
+
+  Promise.resolve()
+    .then(() => runPointcloudExport(body, {
+      forceFormat,
+      legacyLasResponse,
+      progressJobId: progressJob.id,
+      progressJob,
+      exportSlotRelease: releaseExportSlot,
+    }))
+    .catch((error) => {
+      const expectedClientError = ['BAD_REQUEST', 'MISSING_DATASET_CONTEXT', 'NO_EXPORT_SOURCES', 'PROJECT_NOT_FOUND'].includes(error?.code);
+      if (!error?.apiPayload && !expectedClientError) {
+        console.warn('[Export] Async export job failed:', error?.message || error);
+      }
+    });
+
+  return sendApiSuccess(res, {
+    jobId: progressJob.id,
+    statusUrl: `/api/jobs/${encodeURIComponent(progressJob.id)}`,
+    type: progressJob.type,
+    status: progressJob.status,
+  }, 202);
 }
 
 function cleanupOldExports(maxAgeMs = 7 * 24 * 60 * 60 * 1000) {
@@ -2357,7 +2643,16 @@ function updateForestryAsyncJob(jobId, patch = {}) {
 }
 
 function getAnyAsyncJob(jobId) {
-  return TERRAIN_ASYNC_JOBS.get(jobId) || FORESTRY_ASYNC_JOBS.get(jobId) || null;
+  return EXPORT_PROGRESS_JOBS.getJob(jobId) || TERRAIN_ASYNC_JOBS.get(jobId) || FORESTRY_ASYNC_JOBS.get(jobId) || null;
+}
+
+function getAsyncJobCapabilityFeature(jobId, job = null) {
+  const existingJob = job || getAnyAsyncJob(jobId);
+  if (!existingJob) return null;
+  if (existingJob.type === 'export-pointcloud') return 'export';
+  if (TERRAIN_ASYNC_JOBS.has(jobId)) return 'terrainProcessing';
+  if (FORESTRY_ASYNC_JOBS.has(jobId)) return 'forestry';
+  return null;
 }
 
 function buildForestryRunId() {
@@ -4046,6 +4341,14 @@ app.use('/scan-data/:projectId', (req, res, next) => {
   if (!project) {
     return sendApiError(res, new Error('Scanner project not found'), { fallbackCode: 'PROJECT_NOT_FOUND', fallbackStatus: 404 });
   }
+  const disabledFeature = getDisabledFeatureForScanDataPath(req.path || req.url);
+  if (disabledFeature) {
+    return sendApiError(res, createFeatureDisabledError(disabledFeature), {
+      fallbackCode: 'FEATURE_DISABLED',
+      fallbackStatus: 403,
+      extra: { feature: disabledFeature },
+    });
+  }
   if (!isSafePublicStaticRequest(req)) {
     return res.sendStatus(404);
   }
@@ -4080,11 +4383,9 @@ app.get('/api/conversion-jobs', uploadCredentialJsonPrecheck, (_req, res) => {
 });
 
 // ── API: List scanner projects ──
-app.get('/api/scan-projects', (_req, res) => {
-  try {
-    const projects = discoverScanProjects();
-    return sendApiSuccess(res, {
-      projects: projects.map(p => ({
+function listScannerProjectsForClient() {
+  const projects = discoverScanProjects();
+  return projects.map(p => ({
         projectId: p.projectId,
         name: p.name,
         dirPath: redactServerPath(p.dirPath, { expose: EXPOSE_SERVER_PATHS }),
@@ -4105,7 +4406,13 @@ app.get('/api/scan-projects', (_req, res) => {
           metadataUrl: '',
           projectName: p.name,
         }),
-      }))
+  }));
+}
+
+app.get('/api/scan-projects', (_req, res) => {
+  try {
+    return sendApiSuccess(res, {
+      projects: listScannerProjectsForClient(),
     });
   } catch (error) {
     return sendApiError(res, error, { fallbackCode: 'INTERNAL_ERROR' });
@@ -4281,7 +4588,7 @@ app.get('/api/scan-projects/crs', (req, res) => {
   }
 });
 
-app.post('/api/scan-projects/crs', express.json(), (req, res) => {
+app.post('/api/scan-projects/crs', uploadCredentialJsonPrecheck, (req, res) => {
   try {
     const { config } = req.body || {};
     const { crsFile } = getProjectCrsConfigPath(req.body?.projectId);
@@ -4405,125 +4712,140 @@ app.post('/api/grids/import', uploadCredentialPrecheck, gridUpload.single('gridF
   }
 });
 
+function listCloudsForClient() {
+  const diskClouds = fs.readdirSync(POINTCLOUDS_DIR, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => d.name)
+    .filter(name => fs.existsSync(path.join(POINTCLOUDS_DIR, name, 'metadata.json')))
+    .map(name => {
+      const metaPath = path.join(POINTCLOUDS_DIR, name, 'metadata.json');
+      let points = null;
+      try {
+        const m = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
+        points = m.points ?? null;
+      } catch { }
+      // Include scanner project info from source.json so homepage can show scanner badge
+      let scannerProjectId = null;
+      let scannerProjectName = null;
+      let features = null;
+      let sourceType = null;
+      try {
+        const manifest = readUploadSourceManifest(name);
+        sourceType = manifest?.type || null;
+        if (manifest?.scannerProjectId) {
+          scannerProjectId = manifest.scannerProjectId;
+          scannerProjectName = manifest.scannerProjectName || manifest.projectName || null;
+          features = manifest.features || null;
+        }
+      } catch { }
+      return {
+        name,
+        cloudName: name,
+        points,
+        scannerProjectId,
+        scannerProjectName,
+        features: sanitizeScannerFeaturesForClient(features),
+        sourceType,
+        metadataUrl: `/pointclouds/${encodeURIComponent(name)}/metadata.json`,
+        scanDataUrl: scannerProjectId ? `/scan-data/${encodeURIComponent(scannerProjectId)}` : null,
+        viewerUrl: scannerProjectId
+          ? buildScannerViewerUrl({
+              projectId: scannerProjectId,
+              metadataUrl: `/pointclouds/${encodeURIComponent(name)}/metadata.json`,
+              projectName: scannerProjectName || name,
+            })
+          : `/viewer?pointcloud=${encodeURIComponent(`/pointclouds/${name}/metadata.json`)}`,
+      };
+    });
+
+  const gaussianClouds = fs.readdirSync(GAUSSIANS_DIR, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => d.name)
+    .map(name => {
+      const manifestPath = path.join(GAUSSIANS_DIR, name, 'source.json');
+      if (!fs.existsSync(manifestPath)) return null;
+      try {
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+        return buildGaussianCloudListEntry(name, manifest);
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
+
+  const localClouds = listLocalImportEntries()
+    .filter(entry => entry?.metadataPath && fs.existsSync(entry.metadataPath))
+    .map(entry => ({
+      name: entry.displayName || entry.cloudName,
+      cloudName: entry.cloudName,
+      points: entry.points ?? readMetadataPointCount(entry.metadataPath),
+      scannerProjectId: entry.projectId || null,
+      scannerProjectName: entry.projectName || null,
+      features: sanitizeScannerFeaturesForClient(entry.features),
+      sourceType: entry.sourceType || 'desktop-local-import',
+      metadataUrl: entry.metadataUrl || buildLocalPointcloudMetadataUrl(entry.cloudName),
+      sourcePath: redactServerPath(
+        entry.dirPath || entry.originalPath || path.dirname(entry.metadataPath),
+        { expose: EXPOSE_SERVER_PATHS, basename: true }
+      ),
+      isExternal: true,
+      scanDataUrl: entry.projectId ? `/scan-data/${encodeURIComponent(entry.projectId)}` : null,
+      viewerUrl: entry.projectId
+        ? buildScannerViewerUrl({
+            projectId: entry.projectId,
+            metadataUrl: entry.metadataUrl || buildLocalPointcloudMetadataUrl(entry.cloudName),
+            projectName: entry.projectName || entry.displayName || entry.cloudName,
+          })
+        : `/viewer?pointcloud=${encodeURIComponent(entry.metadataUrl || buildLocalPointcloudMetadataUrl(entry.cloudName))}`,
+    }));
+
+  const scannerClouds = discoverScanProjects()
+    .filter(entry => entry?.pointcloudUrl)
+    .map(entry => ({
+      name: entry.name,
+      cloudName: entry.cloudName || entry.name,
+      points: entry.features?.pointCount ?? null,
+      scannerProjectId: entry.projectId,
+      scannerProjectName: entry.name,
+      features: sanitizeScannerFeaturesForClient(entry.features),
+      sourceType: 'scan-project',
+      metadataUrl: entry.pointcloudUrl,
+      sourcePath: redactServerPath(entry.dirPath, { expose: EXPOSE_SERVER_PATHS, basename: true }),
+      scanDataUrl: `/scan-data/${encodeURIComponent(entry.projectId)}`,
+      viewerUrl: buildScannerViewerUrl({
+        projectId: entry.projectId,
+        metadataUrl: entry.pointcloudUrl,
+        projectName: entry.name,
+      }),
+    }));
+
+  const seen = new Set();
+  return [...gaussianClouds, ...localClouds, ...scannerClouds, ...diskClouds].filter((entry) => {
+    if (isCloudListEntryHidden(entry)) return false;
+    const key = `${entry.resourceType || 'pointcloud'}::${entry.cloudName || entry.name}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 // ── API: List point clouds (enhanced with scanner detection) ──
 app.get('/api/clouds', (_req, res) => {
   try {
-    const diskClouds = fs.readdirSync(POINTCLOUDS_DIR, { withFileTypes: true })
-      .filter(d => d.isDirectory())
-      .map(d => d.name)
-      .filter(name => fs.existsSync(path.join(POINTCLOUDS_DIR, name, 'metadata.json')))
-      .map(name => {
-        const metaPath = path.join(POINTCLOUDS_DIR, name, 'metadata.json');
-        let points = null;
-        try {
-          const m = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
-          points = m.points ?? null;
-        } catch { }
-        // Include scanner project info from source.json so homepage can show scanner badge
-        let scannerProjectId = null;
-        let scannerProjectName = null;
-        let features = null;
-        let sourceType = null;
-        try {
-          const manifest = readUploadSourceManifest(name);
-          sourceType = manifest?.type || null;
-          if (manifest?.scannerProjectId) {
-            scannerProjectId = manifest.scannerProjectId;
-            scannerProjectName = manifest.scannerProjectName || manifest.projectName || null;
-            features = manifest.features || null;
-          }
-        } catch { }
-        return {
-          name,
-          cloudName: name,
-          points,
-          scannerProjectId,
-          scannerProjectName,
-          features: sanitizeScannerFeaturesForClient(features),
-          sourceType,
-          metadataUrl: `/pointclouds/${encodeURIComponent(name)}/metadata.json`,
-          scanDataUrl: scannerProjectId ? `/scan-data/${encodeURIComponent(scannerProjectId)}` : null,
-          viewerUrl: scannerProjectId
-            ? buildScannerViewerUrl({
-                projectId: scannerProjectId,
-                metadataUrl: `/pointclouds/${encodeURIComponent(name)}/metadata.json`,
-                projectName: scannerProjectName || name,
-              })
-            : `/viewer?pointcloud=${encodeURIComponent(`/pointclouds/${name}/metadata.json`)}`,
-        };
-      });
+    return sendApiSuccess(res, { clouds: listCloudsForClient() });
+  } catch (error) {
+    return sendApiError(res, error, { fallbackCode: 'INTERNAL_ERROR' });
+  }
+});
 
-    const gaussianClouds = fs.readdirSync(GAUSSIANS_DIR, { withFileTypes: true })
-      .filter(d => d.isDirectory())
-      .map(d => d.name)
-      .map(name => {
-        const manifestPath = path.join(GAUSSIANS_DIR, name, 'source.json');
-        if (!fs.existsSync(manifestPath)) return null;
-        try {
-          const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
-          return buildGaussianCloudListEntry(name, manifest);
-        } catch {
-          return null;
-        }
-      })
-      .filter(Boolean);
-
-    const localClouds = listLocalImportEntries()
-      .filter(entry => entry?.metadataPath && fs.existsSync(entry.metadataPath))
-      .map(entry => ({
-        name: entry.displayName || entry.cloudName,
-        cloudName: entry.cloudName,
-        points: entry.points ?? readMetadataPointCount(entry.metadataPath),
-        scannerProjectId: entry.projectId || null,
-        scannerProjectName: entry.projectName || null,
-        features: sanitizeScannerFeaturesForClient(entry.features),
-        sourceType: entry.sourceType || 'desktop-local-import',
-        metadataUrl: entry.metadataUrl || buildLocalPointcloudMetadataUrl(entry.cloudName),
-        sourcePath: redactServerPath(
-          entry.dirPath || entry.originalPath || path.dirname(entry.metadataPath),
-          { expose: EXPOSE_SERVER_PATHS, basename: true }
-        ),
-        isExternal: true,
-        scanDataUrl: entry.projectId ? `/scan-data/${encodeURIComponent(entry.projectId)}` : null,
-        viewerUrl: entry.projectId
-          ? buildScannerViewerUrl({
-              projectId: entry.projectId,
-              metadataUrl: entry.metadataUrl || buildLocalPointcloudMetadataUrl(entry.cloudName),
-              projectName: entry.projectName || entry.displayName || entry.cloudName,
-            })
-          : `/viewer?pointcloud=${encodeURIComponent(entry.metadataUrl || buildLocalPointcloudMetadataUrl(entry.cloudName))}`,
-      }));
-
-    const scannerClouds = discoverScanProjects()
-      .filter(entry => entry?.pointcloudUrl)
-      .map(entry => ({
-        name: entry.name,
-        cloudName: entry.cloudName || entry.name,
-        points: entry.features?.pointCount ?? null,
-        scannerProjectId: entry.projectId,
-        scannerProjectName: entry.name,
-        features: sanitizeScannerFeaturesForClient(entry.features),
-        sourceType: 'scan-project',
-        metadataUrl: entry.pointcloudUrl,
-        sourcePath: redactServerPath(entry.dirPath, { expose: EXPOSE_SERVER_PATHS, basename: true }),
-        scanDataUrl: `/scan-data/${encodeURIComponent(entry.projectId)}`,
-        viewerUrl: buildScannerViewerUrl({
-          projectId: entry.projectId,
-          metadataUrl: entry.pointcloudUrl,
-          projectName: entry.name,
-        }),
-      }));
-
-    const seen = new Set();
-    const mergedClouds = [...gaussianClouds, ...localClouds, ...scannerClouds, ...diskClouds].filter((entry) => {
-      if (isCloudListEntryHidden(entry)) return false;
-      const key = `${entry.resourceType || 'pointcloud'}::${entry.cloudName || entry.name}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
+app.get('/api/open-modal/data', (_req, res) => {
+  try {
+    return sendApiSuccess(res, {
+      desktopDialogs: false,
+      capabilities: SERVER_CAPABILITIES,
+      projects: listScannerProjectsForClient(),
+      clouds: listCloudsForClient(),
     });
-
-    return sendApiSuccess(res, { clouds: mergedClouds });
   } catch (error) {
     return sendApiError(res, error, { fallbackCode: 'INTERNAL_ERROR' });
   }
@@ -4546,7 +4868,7 @@ app.get('/api/export-sources', (req, res) => {
           name: context.name,
           geoInfoAvailable: false,
         },
-      sources: context.sourceFiles,
+      sources: (context.sourceFiles || []).map(source => sanitizeSourceFileForClient(source, { expose: EXPOSE_SERVER_PATHS })),
     });
   } catch (error) {
     return sendApiError(res, error, { fallbackCode: 'INTERNAL_ERROR' });
@@ -5605,8 +5927,20 @@ app.post('/api/export-pointcloud', (req, res) => {
   handlePointcloudExport(req, res);
 });
 
+app.post('/api/export-pointcloud/jobs', (req, res) => {
+  handlePointcloudExportJob(req, res, { route: '/api/export-pointcloud/jobs' });
+});
+
 app.post('/api/export-las', (req, res) => {
   handlePointcloudExport(req, res, { forceFormat: 'las', legacyLasResponse: true });
+});
+
+app.post('/api/export-las/jobs', (req, res) => {
+  handlePointcloudExportJob(req, res, {
+    forceFormat: 'las',
+    legacyLasResponse: true,
+    route: '/api/export-las/jobs',
+  });
 });
 
 app.post('/api/crs/transform', (req, res) => {
@@ -6510,6 +6844,7 @@ app.get('/api/mesh-file', (req, res) => {
   try {
     const mesh = parseObjMeshFile(req.query.path);
     if (!EXPOSE_SERVER_PATHS) delete mesh.sourcePath;
+    if (!EXPOSE_SERVER_PATHS && mesh.meta) delete mesh.meta.sourcePath;
     return sendApiSuccess(res, mesh);
   } catch (error) {
     return sendApiError(res, error, {
@@ -6647,8 +6982,8 @@ app.get('/api/download-dtm', (req, res) => {
 });
 
 // Serve DTM job files (preview images)
-app.use('/dtm-jobs', createGuardedStaticDirectory(DTM_DIR));
-app.use('/floorplan-jobs', createGuardedStaticDirectory(FLOORPLAN_DIR));
+app.use('/dtm-jobs', requireCapability('terrainProcessing'), createGuardedStaticDirectory(DTM_DIR));
+app.use('/floorplan-jobs', requireCapability('terrainProcessing'), createGuardedStaticDirectory(FLOORPLAN_DIR));
 
 // POST /api/generate-surface
 app.post('/api/generate-surface', async (_req, res) => {
@@ -6743,7 +7078,7 @@ app.get('/api/surface-grid', (req, res) => {
   }
 });
 
-app.use('/surface-jobs', createGuardedStaticDirectory(SURFACE_DIR));
+app.use('/surface-jobs', requireCapability('terrainProcessing'), createGuardedStaticDirectory(SURFACE_DIR));
 
 app.post('/api/generate-volume-surface', async (req, res) => {
   let payloadPath = null;
@@ -6948,7 +7283,7 @@ app.get('/api/volume-surface-grid', (req, res) => {
   }
 });
 
-app.use('/volume-surface-jobs', createGuardedStaticDirectory(VOLUME_SURFACE_DIR));
+app.use('/volume-surface-jobs', requireCapability('volumeJobs'), createGuardedStaticDirectory(VOLUME_SURFACE_DIR));
 
 app.post('/api/volume-jobs', async (req, res) => {
   let volumeSlotAcquired = false;
@@ -7234,7 +7569,7 @@ app.get('/api/download-volume-job', (req, res) => {
   }
 });
 
-app.use('/volume-jobs', createGuardedStaticDirectory(VOLUME_JOB_DIR));
+app.use('/volume-jobs', requireCapability('volumeJobs'), createGuardedStaticDirectory(VOLUME_JOB_DIR));
 
 // POST /api/generate-contours
 app.post('/api/generate-contours', async (_req, res) => {
@@ -7419,7 +7754,7 @@ app.get('/api/terrain-jobs/:jobId', (req, res) => {
         fallbackStatus: 404,
       });
     }
-    return sendApiSuccess(res, { job });
+    return sendApiSuccess(res, { job: sanitizeAsyncJobForClient(job) });
   } catch (error) {
     return sendApiError(res, error, {
       fallbackCode: 'BAD_REQUEST',
@@ -7440,7 +7775,15 @@ app.get('/api/jobs/:jobId', (req, res) => {
         fallbackStatus: 404,
       });
     }
-    return sendApiSuccess(res, { job });
+    const feature = getAsyncJobCapabilityFeature(jobId, job);
+    if (feature && !SERVER_CAPABILITIES.features?.[feature]) {
+      return sendApiError(res, createFeatureDisabledError(feature), {
+        fallbackCode: 'FEATURE_DISABLED',
+        fallbackStatus: 403,
+        extra: { feature },
+      });
+    }
+    return sendApiSuccess(res, { job: sanitizeAsyncJobForClient(job) });
   } catch (error) {
     return sendApiError(res, error, {
       fallbackCode: 'BAD_REQUEST',
@@ -7772,7 +8115,8 @@ app.post('/api/delete-cloud', (req, res) => {
           deleted.push(movedItem.from);
         }
       } catch (error) {
-        errors.push(`${options?.displayPath || sourcePath}: ${error.message}`);
+        const safeDisplayPath = options?.displayPath || redactServerPath(sourcePath, { expose: EXPOSE_SERVER_PATHS, basename: true });
+        errors.push(`${safeDisplayPath}: ${error.code || 'DELETE_MOVE_FAILED'}`);
       }
     };
     const gaussianDir = path.join(GAUSSIANS_DIR, cloudName);
@@ -7916,8 +8260,10 @@ export {
   assertDatasetNameAvailable,
   ensureExistingBoundedPath,
   getDatasetNameConflicts,
+  getDisabledFeatureForPath,
   getGaussianReadableStatus,
   getPotreeRuntimeHealth,
+  SERVER_CAPABILITIES,
   getUploadPasswordCandidate,
   isPathWithinCloudStudioBounds,
   moveRuntimePathToTrash,

@@ -31,8 +31,14 @@ export function createDeleteRegionFeature({
   setToolMode,
   setStatus,
   activateClipTab,
+  exportFilteredPointCloudAndOpen,
 } = {}) {
   let controlsBound = false;
+  let exportState = {
+    busy: false,
+    progress: 0,
+    message: '',
+  };
 
   function t(key, fallback, vars = {}) {
     if (typeof translate === 'function') {
@@ -61,7 +67,7 @@ export function createDeleteRegionFeature({
     if (!root) return null;
     if (root.dataset.deleteRegionShell === 'ready') return root;
 
-    root.classList.add('clip-delete-shell');
+    root.classList.add('clip-delete-shell', 'polygon-delete-shell');
     root.dataset.deleteRegionShell = 'ready';
     root.innerHTML = `
       <div class="clip-delete-head" data-i18n-auto-root>
@@ -80,6 +86,17 @@ export function createDeleteRegionFeature({
         <button class="btn pri" id="btn-delete-crop-apply"></button>
         <button class="btn" id="btn-delete-crop-cancel"></button>
         <button class="btn" id="btn-delete-crop-clear-all"></button>
+      </div>
+      <div class="clip-export-block" id="delete-region-export-block">
+        <button class="btn pri clip-export-open" id="btn-delete-crop-export-open">
+          <span class="clip-export-icon" aria-hidden="true"></span>
+          <span class="clip-action-label"></span>
+        </button>
+        <div class="clip-export-progress" id="delete-region-export-progress" hidden>
+          <div class="clip-export-progress-bar"><span></span></div>
+          <div class="clip-export-progress-text"></div>
+        </div>
+        <div class="clip-export-hint" id="delete-region-export-hint"></div>
       </div>
       <div id="delete-region-list" class="delete-panel-list"></div>
     `;
@@ -141,10 +158,15 @@ export function createDeleteRegionFeature({
     const applyButton = document.getElementById('btn-delete-crop-apply');
     const cancelButton = document.getElementById('btn-delete-crop-cancel');
     const clearButton = document.getElementById('btn-delete-crop-clear-all');
+    const exportButton = document.getElementById('btn-delete-crop-export-open');
+    const exportProgress = document.getElementById('delete-region-export-progress');
+    const exportProgressFill = exportProgress?.querySelector('.clip-export-progress-bar span');
+    const exportProgressText = exportProgress?.querySelector('.clip-export-progress-text');
+    const exportHint = document.getElementById('delete-region-export-hint');
     const startButton = document.getElementById('btn-delete-region-start');
     const note = document.getElementById('delete-crop-note');
     const state = getDeleteSelectionState();
-    if (!title || !subtitle || !meta || !stateBadge || !applyButton || !cancelButton || !clearButton || !startButton || !note) return;
+    if (!title || !subtitle || !meta || !stateBadge || !applyButton || !cancelButton || !clearButton || !exportButton || !startButton || !note) return;
 
     const stagedCount = state.stagedRegions?.length || 0;
     const appliedCount = state.regions?.length || 0;
@@ -162,15 +184,17 @@ export function createDeleteRegionFeature({
       : (hasPending || hasApplied
         ? t('viewer.deleteRegion.addAnother', 'Add another region')
         : t('viewer.deleteRegion.start', 'Start selection'));
-    startButton.disabled = Boolean(state.active);
+    startButton.disabled = Boolean(state.active || exportState.busy);
 
     applyButton.textContent = t('viewer.deleteRegion.apply', 'Delete selected regions');
     cancelButton.textContent = t('viewer.deleteRegion.cancel', 'Cancel current selection');
     clearButton.textContent = t('viewer.deleteRegion.clearAll', 'Clear all delete regions');
+    exportButton.querySelector('.clip-action-label').textContent = t('viewer.deleteRegion.exportOpen', 'Export remaining LAS and open');
 
-    applyButton.disabled = !hasPending;
-    cancelButton.disabled = !state.active;
-    clearButton.disabled = !hasPending && !hasApplied;
+    applyButton.disabled = !hasPending || exportState.busy;
+    cancelButton.disabled = !state.active || exportState.busy;
+    clearButton.disabled = (!hasPending && !hasApplied) || exportState.busy;
+    exportButton.disabled = !hasApplied || exportState.busy;
 
     meta.textContent = hasPending
       ? t('viewer.deleteRegion.metaPending', 'Pending {{pending}} | Applied {{applied}}', {
@@ -198,9 +222,60 @@ export function createDeleteRegionFeature({
           ? t('viewer.deleteRegion.noteApplied', 'Applied regions are hidden immediately and will also be excluded from later LAS exports.')
           : t('viewer.deleteRegion.noteIdle', 'Start a polygon selection to preview and batch-delete point cloud regions.')));
 
+    if (exportHint) {
+      exportHint.textContent = hasApplied
+        ? t('viewer.deleteRegion.exportHintReady', 'Exports the current point cloud with applied delete regions removed, then opens it as a new point cloud.')
+        : t('viewer.deleteRegion.exportHintNeedApplied', 'Apply at least one delete region before exporting the remaining LAS.');
+    }
+    if (exportProgress) {
+      exportProgress.hidden = !exportState.busy;
+    }
+    if (exportProgressFill) {
+      exportProgressFill.style.width = `${Math.max(0, Math.min(100, exportState.progress))}%`;
+    }
+    if (exportProgressText) {
+      exportProgressText.textContent = exportState.message;
+    }
+
     renderLists();
     refreshVolumes?.();
     applyTranslations?.(root);
+  }
+
+  function setExportProgress(progress, message) {
+    exportState = {
+      busy: true,
+      progress: Math.max(0, Math.min(100, Math.round(Number(progress) || 0))),
+      message: message || t('viewer.deleteRegion.exporting', 'Exporting delete-region result for download...'),
+    };
+    updatePanel();
+  }
+
+  async function exportAndOpen() {
+    if (exportState.busy) return;
+    const state = getDeleteSelectionState();
+    if (!state.regions?.length) {
+      toast?.(t('viewer.deleteRegion.exportNeedApplied', 'Apply at least one delete region before exporting.'), 'err');
+      return;
+    }
+    if (typeof exportFilteredPointCloudAndOpen !== 'function') {
+      toast?.(t('viewer.deleteRegion.exportUnavailable', 'Delete-region export is not available. Refresh the viewer and try again.'), 'err');
+      return;
+    }
+    try {
+      setExportProgress(8, t('viewer.deleteRegion.exporting', 'Exporting delete-region result for download...'));
+      await exportFilteredPointCloudAndOpen?.({
+        reason: 'delete',
+        onProgress: event => setExportProgress(event?.progress, event?.message),
+      });
+      setExportProgress(100, t('viewer.deleteRegion.exportComplete', 'Delete-region LAS exported. Download started.'));
+      toast?.(t('viewer.deleteRegion.exportComplete', 'Delete-region LAS exported. Download started.'), 'ok', 4000);
+    } catch (error) {
+      toast?.(t('viewer.deleteRegion.exportFailed', 'Delete-region export failed: {{message}}', { message: error?.message || error }), 'err', 6000);
+    } finally {
+      exportState = { busy: false, progress: 0, message: '' };
+      updatePanel();
+    }
   }
 
   function startSelection() {
@@ -237,6 +312,7 @@ export function createDeleteRegionFeature({
     document.getElementById('btn-delete-crop-apply')?.addEventListener('click', applyPendingDeleteRegion);
     document.getElementById('btn-delete-crop-cancel')?.addEventListener('click', () => cancelDeletePolygonSelection({ notify: true }));
     document.getElementById('btn-delete-crop-clear-all')?.addEventListener('click', () => clearAllDeleteRegions({ notify: true }));
+    document.getElementById('btn-delete-crop-export-open')?.addEventListener('click', exportAndOpen);
     document.getElementById('tb-delete-poly')?.addEventListener('click', startDeletePolygonSelection || startSelection);
     document.getElementById('mi-t-delete-poly')?.addEventListener('click', startDeletePolygonSelection || startSelection);
     document.getElementById('btn-delete-select')?.addEventListener('click', startDeletePolygonSelection || startSelection);

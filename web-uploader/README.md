@@ -80,6 +80,8 @@ Important fields:
 ## Tests
 
 ```bash
+npm run check:release
+npm run test:server-safe
 npm run test:dxf-draw
 npm run test:floorplan
 npm run test:volume
@@ -88,8 +90,13 @@ npm run test:viewer-volume
 npm run check:i18n
 ```
 
+`check:release` is the recommended pre-release gate. It runs i18n checks,
+public-release checks, deployment-doc checks, server safety tests, capability
+tests, upload/security tests, 3DGS publish-state tests, and viewer smoke tests.
+
 Some workflows still require manual browser validation because the viewer is a
-large mixed legacy and modular frontend.
+large mixed legacy and modular frontend. If Playwright Chromium is not installed
+locally, browser-only smoke subtests are reported as skipped rather than failed.
 
 ## Runtime Directories
 

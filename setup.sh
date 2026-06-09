@@ -92,6 +92,19 @@ if [ ! -f "$WEB_DIR/.env" ]; then
   cp "$WEB_DIR/.env.example" "$WEB_DIR/.env"
   echo "  Created .env from .env.example"
 fi
+if ! grep -q '^CLOUDSTUDIO_ENV=' "$WEB_DIR/.env"; then
+  echo 'CLOUDSTUDIO_ENV=production' >> "$WEB_DIR/.env"
+  echo "  Set CLOUDSTUDIO_ENV=production"
+fi
+if ! grep -q '^UPLOAD_REVIEW_PASSWORD_SHA256=' "$WEB_DIR/.env"; then
+  UPLOAD_REVIEW_PASSWORD="$(node -e "console.log(require('crypto').randomBytes(18).toString('base64url'))")"
+  UPLOAD_REVIEW_PASSWORD_HASH="$(node -e "console.log(require('crypto').createHash('sha256').update(process.argv[1]).digest('hex'))" "$UPLOAD_REVIEW_PASSWORD")"
+  echo "UPLOAD_REVIEW_PASSWORD_SHA256=$UPLOAD_REVIEW_PASSWORD_HASH" >> "$WEB_DIR/.env"
+  umask 077
+  printf '%s\n' "$UPLOAD_REVIEW_PASSWORD" > /root/cloudstudio-upload-password.txt
+  umask 022
+  echo "  Generated upload password: /root/cloudstudio-upload-password.txt"
+fi
 
 echo ""
 echo "Configuring Nginx reverse proxy..."

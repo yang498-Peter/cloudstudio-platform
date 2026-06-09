@@ -5,6 +5,7 @@ export function createDisplaySettingsFeature({
   setEDLEnabledState,
   getDisplayQuickSync,
 } = {}) {
+
   function bindRange(id, labelId, transform, apply) {
     const input = document.getElementById(id);
     const label = document.getElementById(labelId);
@@ -18,7 +19,10 @@ export function createDisplaySettingsFeature({
   }
 
   function bindControls() {
-    bindRange('r-budget', 'l-budget', value => `${(value / 1e6).toFixed(1)}M`, value => viewer.setPointBudget(value));
+    bindRange('r-budget', 'l-budget', value => {
+      const millions = value / 1e6;
+      return `${Number.isInteger(millions) ? millions : millions.toFixed(1)}M`;
+    }, value => viewer.setPointBudget(value));
     bindRange('r-fov', 'l-fov', value => `${value}°`, value => viewer.setFOV(value));
     bindRange('r-edl-r', 'l-edl-r', value => value.toFixed(1), value => viewer.setEDLRadius(value));
     bindRange('r-edl-s', 'l-edl-s', value => value.toFixed(1), value => viewer.setEDLStrength(value));
@@ -70,10 +74,9 @@ export function createDisplaySettingsFeature({
       edl.addEventListener('change', event => setEDLEnabledState(event.target.checked, { silent: true }));
     }
 
-    ['bg-skybox', 'bg-gradient', 'bg-black', 'bg-white'].forEach(id => {
-      const button = document.getElementById(id);
-      if (!button) return;
-      button.addEventListener('click', () => viewer.setBackground(id.replace('bg-', '')));
+    document.querySelectorAll('[data-background]').forEach(button => {
+      // Read backgrounds from data attributes so built-in and panoramic presets share one path.
+      button.addEventListener('click', () => viewer.setBackground(button.dataset.background));
     });
 
     if (typeof getDisplayQuickSync === 'function') {

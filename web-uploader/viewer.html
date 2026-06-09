@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/potree/libs/openlayers3/ol.css" />
   <link rel="stylesheet" href="/potree/libs/spectrum/spectrum.css" />
   <link rel="stylesheet" href="/potree/libs/jstree/themes/mixed/style.css" />
+  <link rel="stylesheet" href="/assets/app/styles/viewer-design-tokens.css?v=20260609-server-capabilities" />
   <style>
     /* ========== CSS Variables (Apple-style Light Theme) ========== */
     :root {
@@ -6603,6 +6604,8 @@
       <symbol id="cs-i-home" viewBox="0 0 24 24"><path d="m4 11 8-6 8 6"/><path d="M7 10.5V19h10v-8.5"/><path d="M10 19v-4h4v4"/></symbol>
       <symbol id="cs-i-orthographic" viewBox="0 0 24 24"><rect x="5" y="6" width="14" height="12" rx="1.8"/><path d="M8 9h8"/><path d="M8 12h8"/><path d="M8 15h8"/></symbol>
       <symbol id="cs-i-perspective" viewBox="0 0 24 24"><path d="M7 7h10l-2 10H9z"/><path d="M9.5 10h5"/><path d="M10 13h4"/></symbol>
+      <symbol id="cs-i-crs-convert" viewBox="0 0 24 24"><circle cx="8" cy="9" r="3.2"/><path d="M8 5.8v6.4"/><path d="M4.8 9h6.4"/><path d="M13 7h5a2 2 0 0 1 2 2v1"/><path d="m17 4 3 3-3 3"/><path d="M11 17H6a2 2 0 0 1-2-2v-1"/><path d="m7 20-3-3 3-3"/><rect x="14" y="14" width="5" height="5" rx="1"/></symbol>
+      <symbol id="cs-i-mvp-s1" viewBox="0 0 24 24"><path d="M5 15.5 12 4l7 11.5z"/><path d="M8 15.5h8"/><path d="M12 8v5"/><circle cx="12" cy="16.5" r="2.5"/></symbol>
       <symbol id="cs-i-top" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m7.5 9.5 4.5-4.5 4.5 4.5"/></symbol>
       <symbol id="cs-i-bottom" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m7.5 14.5 4.5 4.5 4.5-4.5"/></symbol>
       <symbol id="cs-i-left" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m9.5 7.5-4.5 4.5 4.5 4.5"/></symbol>
@@ -6714,108 +6717,7 @@
   </div>
 
   <!-- ===== TOOLBAR ===== -->
-  <div id="toolbar" data-i18n-auto-root>
-    <!-- File -->
-    <div class="tb-group">
-      <button class="tb-btn" id="tb-open" title="Open point cloud" data-i18n-title="viewer.toolbar.openTitle">
-        <span class="tb-icon" data-cs-icon="open"></span><span class="tb-label" data-i18n="viewer.toolbar.openLabel">Open</span>
-      </button>
-      <button class="tb-btn" id="tb-export-las" title="Export point cloud" data-i18n-title="viewer.toolbar.exportTitle">
-        <span class="tb-icon" data-cs-icon="export"></span><span class="tb-label" data-i18n="viewer.toolbar.exportLabel">Export</span>
-      </button>
-    </div>
-    <div class="tb-sep" hidden aria-hidden="true" data-internal-tools="terrain-forestry-separator"></div>
-    <!-- View -->
-    <div class="tb-group">
-      <button class="tb-btn" id="tb-fit" title="Fit to view (F)" data-i18n-title="viewer.toolbar.fitTitle">
-        <span class="tb-icon" data-cs-icon="fit"></span><span class="tb-label" data-i18n="viewer.toolbar.fitLabel">Fit</span>
-      </button>
-      <button class="tb-btn active" id="tb-orbit" title="Orbit navigation" data-i18n-title="viewer.toolbar.orbitTitle">
-        <span class="tb-icon" data-cs-icon="orbit-center"></span><span class="tb-label" data-i18n="viewer.toolbar.orbitLabel">Orbit</span>
-      </button>
-      <button class="tb-btn" id="tb-fly" title="Fly navigation" data-i18n-title="viewer.toolbar.flyTitle">
-        <span class="tb-icon" data-cs-icon="fly"></span><span class="tb-label" data-i18n="viewer.toolbar.flyLabel">Fly</span>
-      </button>
-      <button class="tb-btn active" id="tb-edl" title="Eye-Dome Lighting" data-i18n-title="viewer.toolbar.edlTitle">
-        <span class="tb-icon" data-cs-icon="edl"></span><span class="tb-label" data-i18n="viewer.toolbar.edlLabel">EDL</span>
-      </button>
-    </div>
-    <div class="tb-sep"></div>
-    <!-- Measurement tools -->
-    <div class="tb-group">
-      <button class="tb-btn tool-btn" id="tb-point" data-tool="point" title="Coordinate Point" data-i18n-title="viewer.toolbar.pointTitle">
-        <span class="tb-icon" data-cs-icon="point"></span><span class="tb-label" data-i18n="viewer.toolbar.pointLabel">Point</span>
-      </button>
-      <button class="tb-btn tool-btn" id="tb-dist" data-tool="distance" title="Distance" data-i18n-title="viewer.toolbar.distanceTitle">
-        <span class="tb-icon" data-cs-icon="distance"></span><span class="tb-label" data-i18n="viewer.toolbar.distanceLabel">Distance</span>
-      </button>
-      <button class="tb-btn tool-btn" id="tb-height" data-tool="height" title="Height" data-i18n-title="viewer.toolbar.heightTitle">
-        <span class="tb-icon" data-cs-icon="height"></span><span class="tb-label" data-i18n="viewer.toolbar.heightLabel">Height</span>
-      </button>
-      <button class="tb-btn tool-btn" id="tb-area" data-tool="area" title="Area" data-i18n-title="viewer.toolbar.areaTitle">
-        <span class="tb-icon" data-cs-icon="area"></span><span class="tb-label" data-i18n="viewer.toolbar.areaLabel">Area</span>
-      </button>
-    </div>
-    <div class="tb-sep"></div>
-    <!-- Advanced / less frequent tools -->
-    <div class="tb-overflow" id="tb-more-wrap">
-      <button class="tb-btn" id="tb-more" type="button" title="More tools" aria-haspopup="true" aria-expanded="false" data-i18n-title="viewer.toolbar.moreTitle" data-i18n-aria-label="viewer.toolbar.moreTitle">
-        <span class="tb-icon" data-cs-icon="more"></span><span class="tb-label" data-i18n="viewer.toolbar.moreLabel">More</span>
-      </button>
-      <div class="tb-overflow-menu" id="tb-more-menu" role="menu">
-        <button class="tb-btn" id="tb-screenshot" title="Screenshot" data-i18n-title="viewer.toolbar.screenshotTitle">
-          <span class="tb-icon" data-cs-icon="screenshot"></span><span class="tb-label" data-i18n="viewer.toolbar.screenshotLabel">Screenshot</span>
-        </button>
-        <button class="tb-btn" id="tb-magnifier" title="Magnifier" data-i18n-title="viewer.toolbar.magnifierTitle">
-          <span class="tb-icon" data-cs-icon="magnifier"></span><span class="tb-label" data-i18n="viewer.toolbar.magnifierLabel">Magnifier</span>
-        </button>
-        <button class="tb-btn tool-btn" id="tb-angle" data-tool="angle" title="Angle" data-i18n-title="viewer.toolbar.angleTitle">
-          <span class="tb-icon" data-cs-icon="angle"></span><span class="tb-label" data-i18n="viewer.toolbar.angleLabel">Angle</span>
-        </button>
-        <button class="tb-btn tool-btn" id="tb-volume" data-tool="volume" title="Volume" data-i18n-title="viewer.toolbar.volumeTitle">
-          <span class="tb-icon" data-cs-icon="volume"></span><span class="tb-label" data-i18n="viewer.toolbar.volumeLabel">Volume</span>
-        </button>
-        <button class="tb-btn tool-btn" id="tb-capture" data-tool="capture" title="Point Capture" data-i18n-title="viewer.toolbar.captureTitle">
-          <span class="tb-icon" data-cs-icon="capture"></span><span class="tb-label" data-i18n="viewer.capture.toolLabel">Capture</span>
-        </button>
-        <button class="tb-btn" id="tb-dxf-import" title="Import DXF overlay" data-i18n-title="viewer.toolbar.dxfTitle"
-          onclick="document.getElementById('dxf-file-input').click()">
-          <span class="tb-icon" data-cs-icon="dxf"></span><span class="tb-label" data-i18n="viewer.toolbar.dxfLabel">DXF</span>
-        </button>
-        <button class="tb-btn tool-btn" id="tb-clipbox" data-tool="clipbox" title="Clip Box" data-i18n-title="viewer.toolbar.clipBoxTitle">
-          <span class="tb-icon" data-cs-icon="clip-box"></span><span class="tb-label" data-i18n="viewer.toolbar.clipBoxLabel">Clip Box</span>
-        </button>
-        <button class="tb-btn tool-btn" id="tb-delete-poly" data-tool="polygon-delete" title="Polygon delete" data-i18n-title="viewer.toolbar.deleteRegionTitle">
-          <span class="tb-icon" data-cs-icon="delete-region"></span><span class="tb-label" data-i18n="viewer.toolbar.deleteRegionLabel">Delete</span>
-        </button>
-        <button class="tb-btn tool-btn" id="tb-profile" data-tool="profile" title="Profile" data-i18n-title="viewer.toolbar.profileTitle">
-          <span class="tb-icon" data-cs-icon="profile"></span><span class="tb-label" data-i18n="viewer.toolbar.profileLabel">Profile</span>
-        </button>
-        <button class="tb-btn" id="tb-clearclip" title="Clear Clip" data-i18n-title="viewer.toolbar.clearClipTitle">
-          <span class="tb-icon" data-cs-icon="clear"></span><span class="tb-label" data-i18n="viewer.toolbar.clearClipLabel">Clear Clip</span>
-        </button>
-      </div>
-    </div>
-    <div class="tb-sep"></div>
-    <!-- Terrain / forestry tools are kept in code for internal builds, but hidden from the customer viewer. -->
-    <div class="tb-group" hidden aria-hidden="true" data-internal-tools="terrain-forestry">
-      <button class="tb-btn" id="tb-terrain-gc" title="Ground Classification" data-i18n-title="viewer.terrainToolbar.gcTitle" onclick="openTerrainModal('gc')">
-        <span class="tb-icon" data-cs-icon="ground"></span><span class="tb-label" data-i18n="viewer.terrainToolbar.gcLabel">Ground Classification</span>
-      </button>
-      <button class="tb-btn" id="tb-terrain-dtm" title="Elevation Model" data-i18n-title="viewer.terrainToolbar.dtmTitle" onclick="openTerrainModal('dtm')">
-        <span class="tb-icon" data-cs-icon="model"></span><span class="tb-label" data-i18n="viewer.terrainToolbar.dtmLabel">Elevation Model</span>
-      </button>
-      <button class="tb-btn" id="tb-terrain-contour" title="Contours" data-i18n-title="viewer.terrainToolbar.contourTitle" onclick="openTerrainModal('contour')">
-        <span class="tb-icon" data-cs-icon="contour"></span><span class="tb-label" data-i18n="viewer.terrainToolbar.contourLabel">Contours</span>
-      </button>
-      <button class="tb-btn" id="tb-terrain-semantic" title="Semantic Classification" data-i18n-title="viewer.terrainToolbar.semanticTitle" onclick="openTerrainModal('semantic')">
-        <span class="tb-icon" data-cs-icon="semantic"></span><span class="tb-label" data-i18n="viewer.terrainToolbar.semanticLabel">Semantic Classification</span>
-      </button>
-      <button class="tb-btn" id="tb-terrain-trees" title="Individual Tree Segmentation" data-i18n-title="viewer.terrainToolbar.treesTitle" onclick="openTerrainModal('trees')">
-        <span class="tb-icon" data-cs-icon="tree"></span><span class="tb-label" data-i18n="viewer.terrainToolbar.treesLabel">Individual Tree Segmentation</span>
-      </button>
-    </div>
-  </div>
+  <div id="toolbar" class="cs-ribbon" data-i18n-auto-root aria-label="CloudStudio tools"></div>
 
   <!-- ===== MAIN LAYOUT ===== -->
   <div id="layout">
@@ -7039,7 +6941,7 @@
         <div class="tab" data-pane="coordinate"><span data-i18n="viewer.inspector.tabs.coordinate">Coordinate</span></div>
         <div class="tab" data-pane="capture"><span data-i18n="viewer.capture.tabLabel">Capture</span></div>
         <div class="tab" data-pane="dxf"><span data-i18n="viewer.inspector.tabs.dxf">DXF</span></div>
-        <div class="tab" data-pane="classify"><span data-i18n="viewer.inspector.tabs.classification">Classification</span></div>
+        <div class="tab" data-pane="classify" hidden aria-hidden="true" style="display:none;"><span data-i18n="viewer.inspector.tabs.classification">Classification</span></div>
       </div>
 
       <!-- Appearance -->
@@ -7382,7 +7284,7 @@
       </div>
 
       <!-- Classification -->
-      <div class="tab-pane" id="pane-classify">
+      <div class="tab-pane" id="pane-classify" hidden aria-hidden="true" style="display:none;">
         <div class="pg">
           <div class="pg-label">Classification Layers</div>
           <div class="btn-row">
@@ -8199,12 +8101,14 @@ import {
   resolveVolumeRegionPointCloud as selectVolumeRegionPointCloud,
   resolveVolumeRegionAttachObject as selectVolumeRegionAttachObject,
 } from '/assets/app/features/volume/compute.js';
+import { toolbarGroups } from '/assets/app/ui/toolbar-groups.js';
 window.__CLOUDSTUDIO_THREE = THREE;
 
     const APP_SHELL = window.__APP_SHELL;
     const APP_SERVICES = window.__APP_SERVICES;
     const APP_UI = window.__APP_UI;
     const VIEWER_FEATURES = window.__APP_VIEWER_FEATURES || {};
+    const APP_CAPABILITIES = window.__APP_CAPABILITIES || APP_SERVICES.capabilities || { features: {} };
     const APP_I18N = APP_SERVICES.i18n;
     const apiClient = APP_SERVICES.apiClient;
     const initialLocale = window.__APP_ACTIVE_LOCALE || await APP_I18N.init();
@@ -8448,10 +8352,136 @@ window.__CLOUDSTUDIO_THREE = THREE;
       });
     }
 
-    // Render static toolbar/sidebar icons before Potree starts. Viewer
-    // initialization can fail independently (for example, no WebGL context),
-    // but the surrounding UI should still keep its iconography.
+    const TOOLBAR_ACTION_CAPABILITIES = Object.freeze({
+      export: 'export',
+      'ortho-image': 'orthoImage',
+      'coordinate-convert': 'crs',
+      'mvp-s1': 'mvpSolver',
+      'measure-point': 'measurement',
+      'measure-distance': 'measurement',
+      'measure-height': 'measurement',
+      'measure-area': 'measurement',
+      'measure-angle': 'measurement',
+      volume: 'volumeJobs',
+      capture: 'capture',
+      'clip-box': 'clipBox',
+      'delete-region': 'deleteRegion',
+      profile: 'profile',
+      'clear-clip': 'clipBox',
+      'terrain-gc': 'terrainProcessing',
+      'terrain-dtm': 'terrainProcessing',
+      'terrain-contour': 'terrainProcessing',
+    });
+
+    function isCapabilityEnabled(feature) {
+      if (!feature) return true;
+      return Boolean(APP_CAPABILITIES?.features?.[feature]);
+    }
+
+    function setCapabilityHidden(selector, feature) {
+      const disabled = !isCapabilityEnabled(feature);
+      document.querySelectorAll(selector).forEach((el) => {
+        el.hidden = disabled;
+        el.setAttribute('aria-hidden', disabled ? 'true' : 'false');
+        if (disabled) {
+          el.style.setProperty('display', 'none', 'important');
+          el.style.setProperty('visibility', 'hidden', 'important');
+          el.style.setProperty('pointer-events', 'none', 'important');
+        } else {
+          el.style.removeProperty('display');
+          el.style.removeProperty('visibility');
+          el.style.removeProperty('pointer-events');
+        }
+      });
+    }
+
+    function applyCapabilityUiGates() {
+      setCapabilityHidden('#mi-t-volume, #volume-workflow-details', 'volumeJobs');
+      setCapabilityHidden('#right-panel .tab[data-pane="classify"], #pane-classify', 'terrainProcessing');
+      if (!isCapabilityEnabled('terrainProcessing') && getActiveRightPane() === 'classify') {
+        setActiveRightPane('appearance', { expand: false });
+      }
+    }
+
+    function isToolbarItemEnabled(item) {
+      return isCapabilityEnabled(TOOLBAR_ACTION_CAPABILITIES[item?.action]);
+    }
+
+    function formatToolbarTitle(title, shortcut) {
+      return shortcut ? `${title} (${shortcut})` : title;
+    }
+
+    function renderTopToolbar() {
+      const toolbar = document.getElementById('toolbar');
+      if (!toolbar) return;
+      toolbar.replaceChildren();
+
+      toolbarGroups.forEach((group) => {
+        const items = (group.items || []).filter(isToolbarItemEnabled);
+        if (!items.length) return;
+
+        const groupEl = document.createElement('section');
+        groupEl.className = `tb-group ribbon-group${group.hidden ? ' tb-hidden-tool' : ''}`;
+        groupEl.dataset.group = group.title;
+        groupEl.dataset.tone = group.tone || 'default';
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'tb-group-title';
+        if (group.titleKey) titleEl.dataset.i18n = group.titleKey;
+        titleEl.textContent = group.title;
+        groupEl.append(titleEl);
+
+        const itemsEl = document.createElement('div');
+        itemsEl.className = 'tb-group-items';
+
+        items.forEach((item) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = `tb-btn${item.tool ? ' tool-btn' : ''}${item.active ? ' active' : ''}${item.className ? ` ${item.className}` : ''}`;
+          button.id = item.id;
+          button.dataset.action = item.action || item.id;
+          button.dataset.icon = item.icon;
+          if (item.tool) button.dataset.tool = item.tool;
+          if (item.attr) button.dataset.attr = item.attr;
+          if (item.shortcut) button.dataset.shortcut = item.shortcut;
+          if (item.terrainTab) {
+            button.dataset.terrainTab = item.terrainTab;
+            button.addEventListener('click', () => openTerrainModal(item.terrainTab));
+          }
+          if (item.action === 'coordinate-convert') {
+            button.addEventListener('click', () => setActiveRightPane('coordinate', { expand: true }));
+          }
+          if (item.titleKey) button.dataset.i18nTitle = item.titleKey;
+          button.title = formatToolbarTitle(item.title, item.shortcut);
+          button.setAttribute('aria-label', button.title);
+          if (item.disabled) button.disabled = true;
+
+          const iconEl = document.createElement('span');
+          iconEl.className = 'tb-icon';
+          iconEl.dataset.csIcon = item.icon;
+
+          const labelEl = document.createElement('span');
+          labelEl.className = 'tb-label';
+          if (item.labelKey) labelEl.dataset.i18n = item.labelKey;
+          labelEl.textContent = item.label;
+
+          button.append(iconEl, labelEl);
+          itemsEl.append(button);
+        });
+
+        groupEl.append(itemsEl);
+        toolbar.append(groupEl);
+      });
+
+      renderAppIcons(toolbar);
+    }
+
+    // Render toolbar/sidebar icons before Potree starts. Viewer initialization
+    // can fail independently, but the surrounding UI should still keep its
+    // iconography and capability-gated tool layout.
+    renderTopToolbar();
     renderAppIcons(document);
+    applyCapabilityUiGates();
 
     function captureLooseLocaleRootOriginals(root) {
       if (!root) return;
@@ -8791,6 +8821,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
       if (!openModalFeature && VIEWER_FEATURES.createOpenModalFeature) {
         openModalFeature = VIEWER_FEATURES.createOpenModalFeature({
           apiClient,
+          capabilities: APP_CAPABILITIES,
           translate: tr,
           translateText: trText,
           applyTranslations: target => APP_I18N.applyTranslations(target),
@@ -8931,9 +8962,17 @@ window.__CLOUDSTUDIO_THREE = THREE;
 
       if (!photoFeature && viewer && VIEWER_FEATURES.createPhotoFeature) {
         photoFeature = VIEWER_FEATURES.createPhotoFeature({
+          viewer,
+          THREE,
           getScannerState: () => scannerState,
           getBasePath: () => MVPS1_BASE,
           getPhotoFrameAtIndex: (index, side, projectId = getCurrentScannerProjectId()) => resolveRenderablePhotoFrame(index, side, projectId),
+          getVisiblePhotoCameras: (projectId = getCurrentScannerProjectId()) => getRenderableLeftPhotoCameras(projectId),
+          getFlyTrajectoryButtonLabel: (active) => active
+            ? tr('viewer.scanner.flyTrajectoryStop', {}, 'Stop flythrough')
+            : tr('viewer.scanner.flyTrajectoryStart', {}, 'Fly trajectory'),
+          formatTrajectoryFlySpeedLabel: value => `${Number(value || 0).toFixed(1)} m/s`,
+          translate: tr,
           translateText: trText,
           toast,
         });
@@ -9487,6 +9526,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
 
       setButtonLocale('tb-open', 'viewer.toolbar.openLabel', 'Open', 'viewer.toolbar.openTitle', 'Open Point Cloud');
       setButtonLocale('tb-export-las', 'viewer.toolbar.exportLabel', 'Export', 'viewer.toolbar.exportTitle', 'Export Point Cloud');
+      setButtonLocale('tb-coordinate-convert', 'viewer.toolbar.coordinateConvertLabel', 'CRS', 'viewer.toolbar.coordinateConvertTitle', 'Coordinate Convert');
       setButtonLocale('tb-screenshot', 'viewer.toolbar.screenshotLabel', 'Screenshot', 'viewer.toolbar.screenshotTitle', 'Screenshot');
       setButtonLocale('tb-fit', 'viewer.toolbar.fitLabel', 'Fit', 'viewer.toolbar.fitTitle', 'Fit View');
       setButtonLocale('tb-orbit', 'viewer.toolbar.orbitLabel', 'Orbit', 'viewer.toolbar.orbitTitle', 'Orbit Navigation');

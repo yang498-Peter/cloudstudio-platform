@@ -79,6 +79,7 @@ test('home page does not expose customer delete controls', async t => {
 
 test('export modal reflects selected format and success state', async () => {
   const originalDocument = globalThis.document;
+  const originalWindow = globalThis.window;
   const elements = new Map();
   const makeElement = (id, props = {}) => {
     const classes = new Set();
@@ -95,9 +96,16 @@ test('export modal reflects selected format and success state', async () => {
       classList: {
         add: cls => classes.add(cls),
         remove: cls => classes.delete(cls),
+        toggle: (cls, force) => {
+          const next = force === undefined ? !classes.has(cls) : Boolean(force);
+          if (next) classes.add(cls);
+          else classes.delete(cls);
+          return next;
+        },
         contains: cls => classes.has(cls),
       },
       addEventListener: () => {},
+      querySelectorAll: () => [],
       setAttribute: () => {},
       ...props,
     };
@@ -129,20 +137,46 @@ test('export modal reflects selected format and success state', async () => {
     }),
     body: { appendChild: () => {} },
   };
+  globalThis.window = {
+    setInterval: globalThis.setInterval.bind(globalThis),
+    clearInterval: globalThis.clearInterval.bind(globalThis),
+    setTimeout: globalThis.setTimeout.bind(globalThis),
+    clearTimeout: globalThis.clearTimeout.bind(globalThis),
+  };
 
   try {
     let statusDuringFetch = '';
+    let exportJobStarted = false;
     const feature = createExportLasFeature({
-      fetchImpl: async () => {
+      fetchImpl: async (url) => {
         statusDuringFetch = elements.get('export-las-note').textContent;
+        if (url === '/api/export-pointcloud/jobs') {
+          exportJobStarted = true;
+          return {
+            ok: true,
+            json: async () => ({
+              ok: true,
+              jobId: 'export-job-1',
+              statusUrl: '/api/jobs/export-job-1',
+            }),
+          };
+        }
+        assert.equal(url, '/api/jobs/export-job-1');
         return {
           ok: true,
           json: async () => ({
             ok: true,
-            format: 'laz',
-            downloadUrl: '/exports/result.laz',
-            outputFilename: 'result.laz',
-            sizeLabel: '1 MB',
+            job: {
+              status: 'completed',
+              progress: 100,
+              result: {
+                ok: true,
+                format: 'laz',
+                downloadUrl: '/exports/result.laz',
+                outputFilename: 'result.laz',
+                sizeLabel: '1 MB',
+              },
+            },
           }),
         };
       },
@@ -169,11 +203,13 @@ test('export modal reflects selected format and success state', async () => {
     await feature.submitExportLas();
 
     assert.match(statusDuringFetch, /Exporting LAZ/);
+    assert.equal(exportJobStarted, true);
     assert.equal(clickedDownload, true);
-    assert.equal(elements.get('export-las-submit').dataset.exportState, 'success');
-    assert.equal(elements.get('export-las-submit').textContent, 'Download again');
-    assert.equal(elements.get('export-las-cancel').textContent, 'Close');
+    assert.match(elements.get('export-las-note').className, /ok/);
+    assert.match(elements.get('export-las-note').innerHTML, /result\.laz/);
+    assert.match(elements.get('export-las-note').innerHTML, /1 MB/);
   } finally {
     globalThis.document = originalDocument;
+    globalThis.window = originalWindow;
   }
 });

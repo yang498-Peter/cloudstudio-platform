@@ -33,7 +33,8 @@
       "save": "저장"
     },
     "status": {
-      "ready": "준비됨"
+      "ready": "준비됨",
+      "failed": "실패"
     },
     "author": {
       "createdBy": "제작",
@@ -605,7 +606,9 @@
       "removePending": "대기 중인 지역 삭제",
       "removeApplied": "삭제 지역 제거",
       "regionLabel": "지역 {{index}} 삭제",
-      "toolHint": "🧹 다각형 삭제 - 정점을 추가하려면 클릭하고, 확인하려면 두 번 클릭하고, 여러 영역을 미리 본 다음 한 번 적용 | ESC 취소"
+      "toolHint": "🧹 다각형 삭제 - 정점을 추가하려면 클릭하고, 확인하려면 두 번 클릭하고, 여러 영역을 미리 본 다음 한 번 적용 | ESC 취소",
+      "exporting": "삭제 영역 결과 LAS를 다운로드용으로 내보내는 중...",
+      "exportComplete": "삭제 영역 LAS 내보내기가 완료되어 다운로드가 시작되었습니다."
     },
     "clip": {
       "toolsTitle": "클리핑 도구",
@@ -670,7 +673,9 @@
       "exportFiltered": "클립 상자 필터링된 포인트: {{count}}",
       "toolHint": "⬜ 클리핑 박스 — 상자를 배치하고 크기를 조정한 뒤 클리핑 패널에서 확인하고 현재 클립 모드로 내보냅니다 | ESC 취소",
       "statusEditing": "클리핑 박스 편집 중... 핸들을 조정한 뒤 이번 클리핑을 확인하세요",
-      "resumeEdit": "이 클립 박스 편집 재개"
+      "resumeEdit": "이 클립 박스 편집 재개",
+      "exporting": "다운로드할 클리핑 LAS를 내보내는 중...",
+      "exportComplete": "클리핑 LAS 내보내기가 완료되어 다운로드가 시작되었습니다."
     },
     "profile": {
       "panelTitle": "✂ 단면 / 프로파일 보기",
@@ -691,7 +696,10 @@
       "minimapPlaceholder": "지도를 표시하려면 지리 정보가 필요합니다",
       "minimapPlaceholderHint": "geo_info.csv가 포함된 스캐너 프로젝트를 로드하세요",
       "crsBrowserSupportNote": "이 좌표 워크플로우는 로컬 좌표, WGS84, Web Mercator, UTM/UPS, 그리고 일반적인 CRS 정의를 위한 오프라인 authority-code 조회를 지원합니다. 파라미터 파일은 `.prj / .wkt / .txt / .json / .csv` 형식으로 가져올 수 있습니다. 그리드 리소스는 `.gsb / .gtx / .tif / .tiff`에서 직접 첨부할 수 있으며, `.ggf / .grd`는 PROJ 호환 그리드로 변환된 경우에만 사용할 수 있습니다. 수평 그리드는 현재 변환 체인이 지원할 때 대화형 좌표 표시에서 참여할 수 있으며, 수직 지오이드 및 더 일반적인 그리드는 기본 PROJ/pyproj 변환 및 내보내기 파이프라인을 통해 적용됩니다.",
-      "trajectoryTitle": "궤적"
+      "trajectoryTitle": "궤적",
+      "expandMap": "지도 확대",
+      "flyTrajectoryStart": "🎬 궤적 따라 비행",
+      "flyTrajectoryStop": "⏹ 궤적 비행 중지"
     },
     "open": {
       "loading": "로딩 중...",
@@ -725,7 +733,25 @@
         "photos": "사진"
       },
       "importMeshReady": "메시 가져옴: {{name}}",
-      "openObjFile": "OBJ 메쉬 열기"
+      "openObjFile": "OBJ 메쉬 열기",
+      "importCancelling": "취소하는 중...",
+      "cancelFailed": "취소 실패: {{message}}",
+      "importTitle": "포인트 클라우드 여는 중",
+      "importStarting": "로컬 가져오기를 준비하는 중...",
+      "removeAction": "제거",
+      "removeConfirm": "이 목록에서 \"{{name}}\" 항목을 제거할까요?",
+      "removeConfirmTitle": "스캐너 프로젝트를 제거할까요?",
+      "removing": "제거 중...",
+      "removeSuccess": "\"{{name}}\" 항목을 목록에서 제거했습니다.",
+      "removeFailed": "제거 실패: {{message}}",
+      "removeCloudConfirm": "이 목록에서 \"{{name}}\" 항목을 제거할까요? 원본 데이터는 삭제되지 않습니다.",
+      "removeCloudConfirmTitle": "포인트 클라우드를 제거할까요?",
+      "removeCloudSuccess": "\"{{name}}\" 항목을 목록에서 제거했습니다.",
+      "removeCloudFailed": "제거 실패: {{message}}",
+      "loadingProjects": "최근 프로젝트 캐시를 읽는 중입니다. 지금 로컬 폴더 또는 LAS/LAZ를 열 수 있습니다.",
+      "selectingPath": "파일 선택을 기다리는 중...",
+      "importCancelled": "가져오기가 취소되었습니다.",
+      "emptyServerHint": "CloudStudio 홈 페이지 또는 서버 백엔드에서 데이터셋을 업로드하세요."
     },
     "export": {
       "needDataset": "포인트 클라우드나 스캐너 프로젝트를 먼저 로드하세요.",
@@ -1205,6 +1231,17 @@
     },
     "performance": {
       "detailLoading": "준비됨 - 고해상도 타일이 {{budget}} 포인트까지 계속 로드됩니다"
+    },
+    "minimap": {
+      "projectCount": "{{count}}개 프로젝트"
+    },
+    "photo": {
+      "info": {
+        "position": "위치: ({{x}}, {{y}}, {{z}})",
+        "orientation": "자세: Yaw {{yaw}}° Pitch {{pitch}}°",
+        "camera": "카메라: {{side}}",
+        "timestamp": "타임스탬프: {{timestamp}}"
+      }
     }
   },
   "phrases": {

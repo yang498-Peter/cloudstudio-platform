@@ -33,7 +33,8 @@
       "save": "Enregistrer"
     },
     "status": {
-      "ready": "Prêt"
+      "ready": "Prêt",
+      "failed": "Échec"
     },
     "author": {
       "createdBy": "Créé par",
@@ -604,7 +605,9 @@
       "removePending": "Retirer la région en attente",
       "removeApplied": "Retirer la région de suppression",
       "regionLabel": "Région de suppression {{index}}",
-      "toolHint": "🧹 Suppression polygonale — cliquez pour ajouter des sommets, double-cliquez pour confirmer, prévisualisez plusieurs régions puis appliquez une seule fois | ESC annuler"
+      "toolHint": "🧹 Suppression polygonale — cliquez pour ajouter des sommets, double-cliquez pour confirmer, prévisualisez plusieurs régions puis appliquez une seule fois | ESC annuler",
+      "exporting": "Export du resultat avec zones supprimees pour telechargement...",
+      "exportComplete": "LAS avec zones supprimees exporte. Le telechargement a demarre."
     },
     "clip": {
       "toolsTitle": "Outils de découpe",
@@ -669,7 +672,9 @@
       "exportFiltered": "Points filtrés par les boîtes : {{count}}",
       "toolHint": "⬜ Boîte de découpe — placez la boîte, ajustez sa taille, confirmez dans le panneau Clip puis exportez avec le mode Clip actuel | Échap pour annuler",
       "statusEditing": "Modification de la boîte de découpe... ajustez les poignées, puis confirmez cette découpe",
-      "resumeEdit": "Reprendre la modification de cette boîte de découpe"
+      "resumeEdit": "Reprendre la modification de cette boîte de découpe",
+      "exporting": "Export du LAS decoupe pour telechargement...",
+      "exportComplete": "LAS decoupe exporte. Le telechargement a demarre."
     },
     "profile": {
       "panelTitle": "✂ Coupe / Vue de profil",
@@ -690,7 +695,10 @@
       "minimapPlaceholder": "Des informations géographiques sont nécessaires pour afficher la carte",
       "minimapPlaceholderHint": "Chargez un projet scanner contenant geo_info.csv",
       "crsBrowserSupportNote": "Ce flux de coordonnées prend en charge les coordonnées locales, WGS84, Web Mercator, UTM/UPS et la recherche hors ligne de codes d'autorité pour les définitions CRS courantes. Les fichiers paramètres peuvent être importés en `.prj / .wkt / .txt / .json / .csv`. Les ressources de grilles peuvent être prises depuis `.gsb / .gtx / .tif / .tiff`, tandis que `.ggf / .grd` peut nécessiter une conversion vers une grille compatible PROJ. Les grilles horizontales peuvent participer à l'affichage interactif des coordonnées quand la chaîne de transformation courante les autorise; les grilles géoïde verticale et plus générales sont appliquées via la chaîne native PROJ/pyproj d'exportation.",
-      "trajectoryTitle": "Trajectoire"
+      "trajectoryTitle": "Trajectoire",
+      "expandMap": "Agrandir la carte",
+      "flyTrajectoryStart": "🎬 Survoler la trajectoire",
+      "flyTrajectoryStop": "⏹ Arrêter le survol de trajectoire"
     },
     "open": {
       "loading": "Chargement...",
@@ -724,7 +732,25 @@
         "photos": "Photos"
       },
       "importMeshReady": "Maillage importé : {{name}}",
-      "openObjFile": "Ouvrir le maillage OBJ"
+      "openObjFile": "Ouvrir le maillage OBJ",
+      "importCancelling": "Annulation...",
+      "cancelFailed": "Échec de l'annulation : {{message}}",
+      "importTitle": "Ouverture du nuage de points",
+      "importStarting": "Préparation de l'import local...",
+      "removeAction": "Retirer",
+      "removeConfirm": "Retirer \"{{name}}\" de cette liste ?",
+      "removeConfirmTitle": "Retirer le projet scanner ?",
+      "removing": "Suppression...",
+      "removeSuccess": "« {{name}} » a été retiré de la liste.",
+      "removeFailed": "Échec du retrait : {{message}}",
+      "removeCloudConfirm": "Retirer \"{{name}}\" de cette liste ? Les données d'origine ne seront pas supprimées.",
+      "removeCloudConfirmTitle": "Retirer le nuage de points ?",
+      "removeCloudSuccess": "« {{name}} » a été retiré de la liste.",
+      "removeCloudFailed": "Échec du retrait : {{message}}",
+      "loadingProjects": "Lecture du cache des projets récents. Vous pouvez déjà ouvrir un dossier local ou un fichier LAS/LAZ.",
+      "selectingPath": "En attente de la sélection du fichier...",
+      "importCancelled": "Import annulé.",
+      "emptyServerHint": "Importez des jeux de données depuis la page d’accueil CloudStudio ou le backend serveur."
     },
     "export": {
       "needDataset": "Chargez d'abord un nuage de points ou un projet scanner.",
@@ -1204,6 +1230,17 @@
     },
     "performance": {
       "detailLoading": "Prêt - les tuiles haute précision continuent de se charger jusqu’à {{budget}} points"
+    },
+    "minimap": {
+      "projectCount": "{{count}} projets"
+    },
+    "photo": {
+      "info": {
+        "position": "Position : ({{x}}, {{y}}, {{z}})",
+        "orientation": "Orientation : yaw {{yaw}}° / pitch {{pitch}}°",
+        "camera": "Caméra : {{side}}",
+        "timestamp": "Horodatage : {{timestamp}}"
+      }
     }
   },
   "phrases": {
