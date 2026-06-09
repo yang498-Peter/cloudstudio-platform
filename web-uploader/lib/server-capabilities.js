@@ -44,8 +44,8 @@ const FEATURE_ENV_NAMES = Object.freeze({
 });
 
 const FEATURE_ROUTE_RULES = Object.freeze([
-  { feature: 'datasetManagement', pattern: /^\/api\/delete-cloud(?:\/|$)/ },
-  { feature: 'desktopLocalImport', pattern: /^\/api\/(?:upload-by-path|desktop(?:\/|$)|import\/local\/jobs(?:\/|$)|scan-projects\/register(?:\/|$)|scan-roots(?:\/|$))/ },
+  { feature: 'datasetManagement', pattern: /^\/api\/(?:delete-cloud|clouds\/remove|scan-projects\/remove)(?:\/|$)/ },
+  { feature: 'desktopLocalImport', pattern: /^\/api\/(?:upload-by-path|desktop(?:\/|$)|grids\/import-dialog(?:\/|$)|import\/local\/jobs(?:\/|$)|scan-projects\/register(?:\/|$)|scan-roots(?:\/|$))/ },
   { feature: 'mvpSolver', pattern: /^\/api\/metacam-solver(?:\/|$)/ },
   { feature: 'export', pattern: /^\/api\/(?:export-pointcloud|export-las|export-sources)(?:\/|$)/ },
   { feature: 'crs', pattern: /^\/api\/(?:crs(?:\/|$)|grids(?:\/|$)|scan-projects\/crs(?:\/|$))/ },
@@ -54,11 +54,11 @@ const FEATURE_ROUTE_RULES = Object.freeze([
   { feature: 'orthoImage', pattern: /^\/api\/ortho-image(?:\/|$)/ },
   {
     feature: 'terrainProcessing',
-    pattern: /^\/api\/(?:find-las|mesh-file|project-dir|floorplan\/extract|generate-dtm|download-dtm|generate-surface|download-surface|surface-mesh|surface-grid|generate-contours|download-contours|contour-geojson|classify-ground|generate-hag|compute-geometric-features|classify-rule-based|segment-individual-trees|terrain-jobs(?:\/|$)|run-semantic-pipeline)(?:\/|$|\?)/,
+    pattern: /^\/api\/(?:find-las|mesh-file|project-dir|floorplan\/extract|generate-dtm|download-dtm|generate-surface|download-surface|surface-mesh|surface-grid|generate-contours|download-contours|contour-geojson|classify-ground|generate-hag|compute-geometric-features|classify-rule-based|segment-individual-trees|terrain-jobs|run-semantic-pipeline)(?:\/|$|\?)/,
   },
   {
     feature: 'volumeJobs',
-    pattern: /^\/api\/(?:generate-volume-surface|download-volume-surface|volume-surface-mesh|volume-surface-grid|volume-jobs(?:\/|$)|volume-results|volume-mesh|volume-grid|volume-report-view-snapshot|download-volume-job)(?:\/|$|\?)/,
+    pattern: /^\/api\/(?:generate-volume-surface|download-volume-surface|volume-surface-mesh|volume-surface-grid|volume-jobs|volume-results|volume-mesh|volume-grid|volume-report-view-snapshot|download-volume-job)(?:\/|$|\?)/,
   },
 ]);
 

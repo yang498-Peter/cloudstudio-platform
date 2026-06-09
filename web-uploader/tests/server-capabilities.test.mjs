@@ -78,7 +78,10 @@ test('disabled feature routing maps heavy API paths to feature names', () => {
   const capabilities = resolveServerCapabilities({});
 
   assert.equal(getDisabledFeatureForPath('/api/delete-cloud', capabilities), 'datasetManagement');
+  assert.equal(getDisabledFeatureForPath('/api/clouds/remove', capabilities), 'datasetManagement');
+  assert.equal(getDisabledFeatureForPath('/api/scan-projects/remove', capabilities), 'datasetManagement');
   assert.equal(getDisabledFeatureForPath('/api/upload-by-path', capabilities), 'desktopLocalImport');
+  assert.equal(getDisabledFeatureForPath('/api/grids/import-dialog', capabilities), 'desktopLocalImport');
   assert.equal(getDisabledFeatureForPath('/api/import/local/jobs', capabilities), 'desktopLocalImport');
   assert.equal(getDisabledFeatureForPath('/api/import/local/jobs/job-1/cancel', capabilities), 'desktopLocalImport');
   assert.equal(getDisabledFeatureForPath('/api/scan-roots', capabilities), 'desktopLocalImport');
@@ -88,9 +91,11 @@ test('disabled feature routing maps heavy API paths to feature names', () => {
   assert.equal(getDisabledFeatureForPath('/api/export-pointcloud/jobs', capabilities), null);
   assert.equal(getDisabledFeatureForPath('/api/crs/transform', capabilities), null);
   assert.equal(getDisabledFeatureForPath('/api/volume-jobs', capabilities), 'volumeJobs');
+  assert.equal(getDisabledFeatureForPath('/api/volume-jobs/job-1', capabilities), 'volumeJobs');
   assert.equal(getDisabledFeatureForPath('/api/generate-volume-surface', capabilities), 'volumeJobs');
   assert.equal(getDisabledFeatureForPath('/api/classify-ground', capabilities), 'terrainProcessing');
   assert.equal(getDisabledFeatureForPath('/api/find-las', capabilities), 'terrainProcessing');
+  assert.equal(getDisabledFeatureForPath('/api/terrain-jobs/job-1', capabilities), 'terrainProcessing');
   assert.equal(getDisabledFeatureForPath('/api/mesh-file', capabilities), 'terrainProcessing');
   assert.equal(getDisabledFeatureForPath('/api/project-dir', capabilities), 'terrainProcessing');
   assert.equal(getDisabledFeatureForPath('/api/forestry/prepare', capabilities), 'forestry');
@@ -135,6 +140,13 @@ test('disabled heavy and desktop-local API routes return FEATURE_DISABLED before
     assert.equal(body.errorCode, 'FEATURE_DISABLED');
     assert.equal(body.feature, 'volumeJobs');
 
+    const terrainJobResponse = await fetch(`${baseUrl}/api/terrain-jobs/job-1`);
+    assert.equal(terrainJobResponse.status, 403);
+    const terrainJobBody = await terrainJobResponse.json();
+    assert.equal(terrainJobBody.ok, false);
+    assert.equal(terrainJobBody.errorCode, 'FEATURE_DISABLED');
+    assert.equal(terrainJobBody.feature, 'terrainProcessing');
+
     const scanRootsResponse = await fetch(`${baseUrl}/api/scan-roots`);
     assert.equal(scanRootsResponse.status, 403);
     const scanRootsBody = await scanRootsResponse.json();
@@ -153,6 +165,28 @@ test('disabled heavy and desktop-local API routes return FEATURE_DISABLED before
     assert.equal(deleteBody.errorCode, 'FEATURE_DISABLED');
     assert.equal(deleteBody.feature, 'datasetManagement');
 
+    const removeCloudResponse = await fetch(`${baseUrl}/api/clouds/remove`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ cloudName: 'anything' }),
+    });
+    assert.equal(removeCloudResponse.status, 403);
+    const removeCloudBody = await removeCloudResponse.json();
+    assert.equal(removeCloudBody.ok, false);
+    assert.equal(removeCloudBody.errorCode, 'FEATURE_DISABLED');
+    assert.equal(removeCloudBody.feature, 'datasetManagement');
+
+    const removeProjectResponse = await fetch(`${baseUrl}/api/scan-projects/remove`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ projectId: 'anything' }),
+    });
+    assert.equal(removeProjectResponse.status, 403);
+    const removeProjectBody = await removeProjectResponse.json();
+    assert.equal(removeProjectBody.ok, false);
+    assert.equal(removeProjectBody.errorCode, 'FEATURE_DISABLED');
+    assert.equal(removeProjectBody.feature, 'datasetManagement');
+
     const registerResponse = await fetch(`${baseUrl}/api/scan-projects/register`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -163,6 +197,17 @@ test('disabled heavy and desktop-local API routes return FEATURE_DISABLED before
     assert.equal(registerBody.ok, false);
     assert.equal(registerBody.errorCode, 'FEATURE_DISABLED');
     assert.equal(registerBody.feature, 'desktopLocalImport');
+
+    const gridDialogResponse = await fetch(`${baseUrl}/api/grids/import-dialog`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    assert.equal(gridDialogResponse.status, 403);
+    const gridDialogBody = await gridDialogResponse.json();
+    assert.equal(gridDialogBody.ok, false);
+    assert.equal(gridDialogBody.errorCode, 'FEATURE_DISABLED');
+    assert.equal(gridDialogBody.feature, 'desktopLocalImport');
 
     const localImportResponse = await fetch(`${baseUrl}/api/import/local/jobs`, {
       method: 'POST',
