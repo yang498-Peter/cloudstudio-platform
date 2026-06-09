@@ -752,7 +752,8 @@
       "loadingProjects": "正在读取最近项目缓存。你现在也可以直接打开本地文件夹或 LAS/LAZ。",
       "selectingPath": "正在等待文件选择...",
       "importCancelled": "已取消导入。",
-      "emptyServerHint": "请从 CloudStudio 首页或服务器后台上传数据。"
+      "emptyServerHint": "请从 CloudStudio 首页或服务器后台上传数据。",
+      "uploadHomeAction": "上传数据"
     },
     "export": {
       "needDataset": "请先加载点云或扫描项目。",

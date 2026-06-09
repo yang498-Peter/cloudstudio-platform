@@ -752,7 +752,8 @@
       "loadingProjects": "Luetaan viimeisimmät projektit välimuistista. Voit avata paikallisen kansion tai LAS/LAZ-tiedoston nyt.",
       "selectingPath": "Odotetaan tiedoston valintaa...",
       "importCancelled": "Tuonti peruutettu.",
-      "emptyServerHint": "Lataa aineistot CloudStudion etusivulta tai palvelimen taustajärjestelmästä."
+      "emptyServerHint": "Lataa aineistot CloudStudion etusivulta tai palvelimen taustajärjestelmästä.",
+      "uploadHomeAction": "Lataa data"
     },
     "export": {
       "needDataset": "Lataa ensin pistepilvi tai skanneriprojekti.",

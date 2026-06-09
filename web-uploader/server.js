@@ -30,6 +30,7 @@ import {
 import {
   createFeatureDisabledError,
   getDisabledFeatureForPath,
+  getDisabledFeatureForStaticProjectPath,
   resolveServerCapabilities,
 } from './lib/server-capabilities.js';
 
@@ -183,24 +184,6 @@ function sanitizeApiPayloadForClient(value) {
     sanitized[key] = sanitizeApiPayloadForClient(entry);
   }
   return sanitized;
-}
-
-const SCAN_DATA_FEATURE_SUBPATH_RULES = Object.freeze([
-  { feature: 'forestry', pattern: /^\/forestry(?:\/|$)/i },
-  { feature: 'terrainProcessing', pattern: /^\/(?:terrain|dtm|floorplan|surface|contour|contours|hag|classification|classified)(?:\/|$)/i },
-  { feature: 'volumeJobs', pattern: /^\/(?:volume|volume_jobs|volume-jobs|volume_surface|volume-surface)(?:\/|$)/i },
-  { feature: 'orthoImage', pattern: /^\/(?:ortho|ortho-image|orthophoto)(?:\/|$)/i },
-]);
-
-function getDisabledFeatureForScanDataPath(requestPath) {
-  const rawPathname = String(requestPath || '').split('?')[0];
-  const pathname = rawPathname.replace(/^\/scan-data\/[^/]+/i, '') || '/';
-  for (const rule of SCAN_DATA_FEATURE_SUBPATH_RULES) {
-    if (rule.pattern.test(pathname) && !SERVER_CAPABILITIES.features?.[rule.feature]) {
-      return rule.feature;
-    }
-  }
-  return null;
 }
 
 function pathExists(candidate) {
@@ -844,10 +827,27 @@ app.use('/api', (req, res, next) => {
   });
 });
 
-function createGuardedStaticFallback(candidates) {
-  return createStaticFallbackMiddleware(express, candidates, {
+function sendFeatureDisabledResponse(res, feature) {
+  return sendApiError(res, createFeatureDisabledError(feature), {
+    fallbackCode: 'FEATURE_DISABLED',
+    fallbackStatus: 403,
+    extra: { feature },
+  });
+}
+
+function createGuardedStaticFallback(candidates, { staticProjectSubpaths = false } = {}) {
+  const fallback = createStaticFallbackMiddleware(express, candidates, {
     allowRequest: isSafePublicStaticRequest,
   });
+  return (req, res, next) => {
+    if (staticProjectSubpaths) {
+      const disabledFeature = getDisabledFeatureForStaticProjectPath(req.path || req.url, SERVER_CAPABILITIES, {
+        stripFirstSegment: true,
+      });
+      if (disabledFeature) return sendFeatureDisabledResponse(res, disabledFeature);
+    }
+    return fallback(req, res, next);
+  };
 }
 
 function createGuardedStaticDirectory(dirPath) {
@@ -857,18 +857,14 @@ function createGuardedStaticDirectory(dirPath) {
 function requireCapability(feature) {
   return (_req, res, next) => {
     if (SERVER_CAPABILITIES.features?.[feature]) return next();
-    return sendApiError(res, createFeatureDisabledError(feature), {
-      fallbackCode: 'FEATURE_DISABLED',
-      fallbackStatus: 403,
-      extra: { feature },
-    });
+    return sendFeatureDisabledResponse(res, feature);
   };
 }
 
 app.use('/potree', express.static(POTREE_ROOT));
 app.use('/pointclouds', createGuardedStaticFallback(RUNTIME_STORAGE.pointclouds.candidates));
 app.use('/gaussians', createGuardedStaticFallback(RUNTIME_STORAGE.gaussians.candidates));
-app.use('/projects', createGuardedStaticFallback(RUNTIME_STORAGE.projects.candidates));    // serve uploaded project files (photos etc.)
+app.use('/projects', requireCapability('scannerRuntime'), createGuardedStaticFallback(RUNTIME_STORAGE.projects.candidates, { staticProjectSubpaths: true }));    // serve uploaded project files (photos etc.)
 app.use('/exports', requireCapability('export'), createGuardedStaticFallback(RUNTIME_STORAGE.exports.candidates));
 app.use('/assets', express.static(ASSETS_DIR));
 
@@ -4362,18 +4358,14 @@ function discoverScanProjects() {
 }
 
 // ── Dynamic static file serving for scanner projects ──
-app.use('/scan-data/:projectId', (req, res, next) => {
+app.use('/scan-data/:projectId', requireCapability('scannerRuntime'), (req, res, next) => {
   const project = scanProjectRegistry.get(req.params.projectId);
   if (!project) {
     return sendApiError(res, new Error('Scanner project not found'), { fallbackCode: 'PROJECT_NOT_FOUND', fallbackStatus: 404 });
   }
-  const disabledFeature = getDisabledFeatureForScanDataPath(req.path || req.url);
+  const disabledFeature = getDisabledFeatureForStaticProjectPath(req.path || req.url, SERVER_CAPABILITIES);
   if (disabledFeature) {
-    return sendApiError(res, createFeatureDisabledError(disabledFeature), {
-      fallbackCode: 'FEATURE_DISABLED',
-      fallbackStatus: 403,
-      extra: { feature: disabledFeature },
-    });
+    return sendFeatureDisabledResponse(res, disabledFeature);
   }
   if (!isSafePublicStaticRequest(req)) {
     return res.sendStatus(404);

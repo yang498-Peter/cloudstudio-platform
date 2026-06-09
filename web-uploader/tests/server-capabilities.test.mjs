@@ -7,6 +7,7 @@ import test from 'node:test';
 
 import {
   getDisabledFeatureForPath,
+  getDisabledFeatureForStaticProjectPath,
   resolveServerCapabilities,
 } from '../lib/server-capabilities.js';
 
@@ -93,6 +94,8 @@ test('disabled feature routing maps heavy API paths to feature names', () => {
   assert.equal(getDisabledFeatureForPath('/api/import/local/jobs/job-1/cancel', capabilities), 'desktopLocalImport');
   assert.equal(getDisabledFeatureForPath('/api/scan-roots', capabilities), 'desktopLocalImport');
   assert.equal(getDisabledFeatureForPath('/api/scan-projects/register', capabilities), 'desktopLocalImport');
+  assert.equal(getDisabledFeatureForPath('/api/scan-projects', capabilities), null);
+  assert.equal(getDisabledFeatureForPath('/api/scan-projects/photos', capabilities), null);
   assert.equal(getDisabledFeatureForPath('/api/upload-project', capabilities), null);
   assert.equal(getDisabledFeatureForPath('/api/upload-preconverted', capabilities), null);
   assert.equal(getDisabledFeatureForPath('/api/export-pointcloud/jobs', capabilities), null);
@@ -101,6 +104,11 @@ test('disabled feature routing maps heavy API paths to feature names', () => {
   assert.equal(getDisabledFeatureForPath('/api/volume-jobs/job-1', capabilities), 'volumeJobs');
   assert.equal(getDisabledFeatureForPath('/api/generate-volume-surface', capabilities), 'volumeJobs');
   assert.equal(getDisabledFeatureForPath('/api/classify-ground', capabilities), 'terrainProcessing');
+  assert.equal(getDisabledFeatureForPath('/api/floorplan/extract', capabilities), 'terrainProcessing');
+  assert.equal(getDisabledFeatureForPath('/api/generate-dtm', capabilities), 'terrainProcessing');
+  assert.equal(getDisabledFeatureForPath('/api/generate-surface', capabilities), 'terrainProcessing');
+  assert.equal(getDisabledFeatureForPath('/api/generate-contours', capabilities), 'terrainProcessing');
+  assert.equal(getDisabledFeatureForPath('/api/run-semantic-pipeline', capabilities), 'terrainProcessing');
   assert.equal(getDisabledFeatureForPath('/api/find-las', capabilities), 'terrainProcessing');
   assert.equal(getDisabledFeatureForPath('/api/terrain-jobs/job-1', capabilities), 'terrainProcessing');
   assert.equal(getDisabledFeatureForPath('/api/mesh-file', capabilities), 'terrainProcessing');
@@ -108,6 +116,11 @@ test('disabled feature routing maps heavy API paths to feature names', () => {
   assert.equal(getDisabledFeatureForPath('/api/forestry/prepare', capabilities), 'forestry');
   assert.equal(getDisabledFeatureForPath('/api/clouds', capabilities), null);
   assert.equal(getDisabledFeatureForPath('/api/upload-gaussian', capabilities), null);
+
+  const scannerRuntimeDisabled = resolveServerCapabilities({ CLOUDSTUDIO_DISABLE_SCANNER_RUNTIME: '1' });
+  assert.equal(getDisabledFeatureForPath('/api/scan-projects', scannerRuntimeDisabled), 'scannerRuntime');
+  assert.equal(getDisabledFeatureForPath('/api/scan-projects/photos', scannerRuntimeDisabled), 'scannerRuntime');
+  assert.equal(getDisabledFeatureForPath('/api/scan-projects/crs', scannerRuntimeDisabled), null);
 
   const exportDisabled = resolveServerCapabilities({ CLOUDSTUDIO_DISABLE_EXPORT: '1' });
   assert.equal(getDisabledFeatureForPath('/api/export-pointcloud', exportDisabled), 'export');
@@ -120,6 +133,17 @@ test('disabled feature routing maps heavy API paths to feature names', () => {
   assert.equal(getDisabledFeatureForPath('/api/scan-projects/crs', crsDisabled), 'crs');
 });
 
+test('disabled feature routing maps static project subpaths to feature names', () => {
+  const capabilities = resolveServerCapabilities({});
+
+  assert.equal(getDisabledFeatureForStaticProjectPath('/forestry/result.json', capabilities), 'forestry');
+  assert.equal(getDisabledFeatureForStaticProjectPath('/scan-heavy-feature-output/forestry/result.json', capabilities, { stripFirstSegment: true }), 'forestry');
+  assert.equal(getDisabledFeatureForStaticProjectPath('/floorplan/floorplan.svg', capabilities), 'terrainProcessing');
+  assert.equal(getDisabledFeatureForStaticProjectPath('/volume-jobs/example/result.json', capabilities), 'volumeJobs');
+  assert.equal(getDisabledFeatureForStaticProjectPath('/orthophoto/preview.png', capabilities), 'orthoImage');
+  assert.equal(getDisabledFeatureForStaticProjectPath('/photos/camera.jpg', capabilities), null);
+});
+
 test('/api/capabilities reports the resolved server capability matrix', async () => {
   const { server, baseUrl } = await listen();
   try {
@@ -130,6 +154,39 @@ test('/api/capabilities reports the resolved server capability matrix', async ()
     assert.deepEqual(body.capabilities, SERVER_CAPABILITIES);
   } finally {
     await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test('scannerRuntime-disabled server blocks scanner APIs and static scanner routes', async () => {
+  const previous = process.env.CLOUDSTUDIO_DISABLE_SCANNER_RUNTIME;
+  process.env.CLOUDSTUDIO_DISABLE_SCANNER_RUNTIME = '1';
+  const disabledModule = await import(`../server.js?scannerRuntimeDisabled=${Date.now()}`);
+  const disabledServer = http.createServer(disabledModule.app);
+
+  try {
+    const baseUrl = await new Promise((resolve, reject) => {
+      disabledServer.once('error', reject);
+      disabledServer.listen(0, '127.0.0.1', () => {
+        const address = disabledServer.address();
+        resolve(`http://127.0.0.1:${address.port}`);
+      });
+    });
+
+    for (const route of ['/api/scan-projects', '/api/scan-projects/photos', '/scan-data/missing/converted/metadata.json', '/projects/missing/photos/a.jpg']) {
+      const response = await fetch(`${baseUrl}${route}`);
+      assert.equal(response.status, 403, route);
+      const body = await response.json();
+      assert.equal(body.ok, false, route);
+      assert.equal(body.errorCode, 'FEATURE_DISABLED', route);
+      assert.equal(body.feature, 'scannerRuntime', route);
+    }
+  } finally {
+    await new Promise(resolve => disabledServer.close(resolve));
+    if (previous == null) {
+      delete process.env.CLOUDSTUDIO_DISABLE_SCANNER_RUNTIME;
+    } else {
+      process.env.CLOUDSTUDIO_DISABLE_SCANNER_RUNTIME = previous;
+    }
   }
 });
 
@@ -237,6 +294,34 @@ test('disabled heavy and desktop-local API routes return FEATURE_DISABLED before
     assert.equal(cancelBody.ok, false);
     assert.equal(cancelBody.errorCode, 'FEATURE_DISABLED');
     assert.equal(cancelBody.feature, 'desktopLocalImport');
+
+    const disabledHeavyRoutes = [
+      { path: '/api/floorplan/extract', method: 'POST', feature: 'terrainProcessing' },
+      { path: '/api/generate-dtm', method: 'POST', feature: 'terrainProcessing' },
+      { path: '/api/download-dtm', method: 'GET', feature: 'terrainProcessing' },
+      { path: '/api/generate-surface', method: 'POST', feature: 'terrainProcessing' },
+      { path: '/api/surface-mesh', method: 'GET', feature: 'terrainProcessing' },
+      { path: '/api/generate-contours', method: 'POST', feature: 'terrainProcessing' },
+      { path: '/api/contour-geojson', method: 'GET', feature: 'terrainProcessing' },
+      { path: '/api/classify-ground', method: 'POST', feature: 'terrainProcessing' },
+      { path: '/api/run-semantic-pipeline', method: 'POST', feature: 'terrainProcessing' },
+      { path: '/api/forestry/prepare', method: 'POST', feature: 'forestry' },
+      { path: '/api/forestry/runs/latest', method: 'GET', feature: 'forestry' },
+      { path: '/api/forestry/export', method: 'POST', feature: 'forestry' },
+    ];
+
+    for (const route of disabledHeavyRoutes) {
+      const routeResponse = await fetch(`${baseUrl}${route.path}`, {
+        method: route.method,
+        headers: route.method === 'POST' ? { 'content-type': 'application/json' } : undefined,
+        body: route.method === 'POST' ? JSON.stringify({}) : undefined,
+      });
+      assert.equal(routeResponse.status, 403, route.path);
+      const routeBody = await routeResponse.json();
+      assert.equal(routeBody.ok, false, route.path);
+      assert.equal(routeBody.errorCode, 'FEATURE_DISABLED', route.path);
+      assert.equal(routeBody.feature, route.feature, route.path);
+    }
   } finally {
     await new Promise(resolve => server.close(resolve));
   }
@@ -272,6 +357,12 @@ test('scanner static serving blocks disabled heavy feature subdirectories', asyn
     const body = await response.json();
     assert.equal(body.errorCode, 'FEATURE_DISABLED');
     assert.equal(body.feature, 'forestry');
+
+    const projectsStaticResponse = await fetch(`${baseUrl}/projects/${encodeURIComponent(projectId)}/forestry/result.json`);
+    assert.equal(projectsStaticResponse.status, 403);
+    const projectsStaticBody = await projectsStaticResponse.json();
+    assert.equal(projectsStaticBody.errorCode, 'FEATURE_DISABLED');
+    assert.equal(projectsStaticBody.feature, 'forestry');
   } finally {
     await new Promise(resolve => server.close(resolve));
   }

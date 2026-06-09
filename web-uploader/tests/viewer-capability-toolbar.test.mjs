@@ -4,34 +4,11 @@ import test from 'node:test';
 import { DEFAULT_SERVER_CAPABILITIES, isCapabilityEnabled } from '../assets/app/services/capabilities.js';
 import { toolbarGroups } from '../assets/app/ui/toolbar-groups.js';
 
-const ACTION_CAPABILITIES = Object.freeze({
-  export: 'export',
-  'ortho-image': 'orthoImage',
-  'coordinate-convert': 'crs',
-  'mvp-s1': 'mvpSolver',
-  'measure-point': 'measurement',
-  'measure-distance': 'measurement',
-  'measure-height': 'measurement',
-  'measure-area': 'measurement',
-  'measure-angle': 'measurement',
-  volume: 'volumeJobs',
-  screenshot: 'capture',
-  capture: 'capture',
-  'clip-box': 'clipBox',
-  'delete-region': 'deleteRegion',
-  profile: 'profile',
-  'clear-clip': 'clipBox',
-  'terrain-gc': 'terrainProcessing',
-  'terrain-dtm': 'terrainProcessing',
-  'terrain-contour': 'terrainProcessing',
-});
-
 function visibleActions(capabilities = DEFAULT_SERVER_CAPABILITIES) {
   return toolbarGroups
     .flatMap(group => group.items || [])
     .filter(item => {
-      const feature = ACTION_CAPABILITIES[item.action];
-      return !feature || isCapabilityEnabled(capabilities, feature);
+      return !item.capability || isCapabilityEnabled(capabilities, item.capability);
     })
     .map(item => item.action);
 }

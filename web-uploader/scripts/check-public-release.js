@@ -34,6 +34,7 @@ const blockedContentPatterns = [
   /47\.254\.151\.31/,
   /47\.253\.63\.0/,
   /198\.18\.0\.29/,
+  /TERSUS-OFFICE/i,
   /root@/,
   /IdentityFile\s*[= ]/i,
   /BEGIN (OPENSSH|RSA|EC|DSA) PRIVATE KEY/,

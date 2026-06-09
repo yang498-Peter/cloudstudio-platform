@@ -752,7 +752,8 @@
       "loadingProjects": "Reading recent projects from cache. You can open a local folder or LAS/LAZ now.",
       "selectingPath": "Waiting for file selection...",
       "importCancelled": "Import cancelled.",
-      "emptyServerHint": "Upload datasets from the CloudStudio home page or server backend."
+      "emptyServerHint": "Upload datasets from the CloudStudio home page or server backend.",
+      "uploadHomeAction": "Upload data"
     },
     "export": {
       "needDataset": "Load a point cloud or scanner project first.",

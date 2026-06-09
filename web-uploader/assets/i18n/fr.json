@@ -752,7 +752,8 @@
       "loadingProjects": "Lecture du cache des projets récents. Vous pouvez déjà ouvrir un dossier local ou un fichier LAS/LAZ.",
       "selectingPath": "En attente de la sélection du fichier...",
       "importCancelled": "Import annulé.",
-      "emptyServerHint": "Importez des jeux de données depuis la page d’accueil CloudStudio ou le backend serveur."
+      "emptyServerHint": "Importez des jeux de données depuis la page d’accueil CloudStudio ou le backend serveur.",
+      "uploadHomeAction": "Importer des données"
     },
     "export": {
       "needDataset": "Chargez d'abord un nuage de points ou un projet scanner.",

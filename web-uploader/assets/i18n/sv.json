@@ -752,7 +752,8 @@
       "loadingProjects": "Läser senaste projekt från cache. Du kan öppna en lokal mapp eller LAS/LAZ nu.",
       "selectingPath": "Väntar på filval...",
       "importCancelled": "Importen avbröts.",
-      "emptyServerHint": "Ladda upp datauppsättningar från CloudStudios startsida eller serverns backend."
+      "emptyServerHint": "Ladda upp datauppsättningar från CloudStudios startsida eller serverns backend.",
+      "uploadHomeAction": "Ladda upp data"
     },
     "export": {
       "needDataset": "Ladda ett punktmoln eller skannerprojekt först.",

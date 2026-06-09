@@ -752,7 +752,8 @@
       "loadingProjects": "Lettura dei progetti recenti dalla cache. Puoi già aprire una cartella locale o un file LAS/LAZ.",
       "selectingPath": "In attesa della selezione del file...",
       "importCancelled": "Importazione annullata.",
-      "emptyServerHint": "Carica i dataset dalla home page di CloudStudio o dal backend del server."
+      "emptyServerHint": "Carica i dataset dalla home page di CloudStudio o dal backend del server.",
+      "uploadHomeAction": "Carica dati"
     },
     "export": {
       "needDataset": "Caricare prima una nuvola di punti o un progetto scanner.",

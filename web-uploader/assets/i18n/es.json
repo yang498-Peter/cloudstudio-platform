@@ -753,7 +753,8 @@
       "loadingProjects": "Leyendo proyectos recientes desde la caché. Ya puede abrir una carpeta local o un LAS/LAZ.",
       "selectingPath": "Esperando la selección del archivo...",
       "importCancelled": "Importación cancelada.",
-      "emptyServerHint": "Sube conjuntos de datos desde la página principal de CloudStudio o el backend del servidor."
+      "emptyServerHint": "Sube conjuntos de datos desde la página principal de CloudStudio o el backend del servidor.",
+      "uploadHomeAction": "Subir datos"
     },
     "export": {
       "needDataset": "Cargue primero una nube de puntos o un proyecto de escáner.",

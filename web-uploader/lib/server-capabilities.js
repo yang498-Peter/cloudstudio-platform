@@ -49,6 +49,7 @@ const FEATURE_ROUTE_RULES = Object.freeze([
   { feature: 'mvpSolver', pattern: /^\/api\/metacam-solver(?:\/|$)/ },
   { feature: 'export', pattern: /^\/api\/(?:export-pointcloud|export-las|export-sources)(?:\/|$)/ },
   { feature: 'crs', pattern: /^\/api\/(?:crs(?:\/|$)|grids(?:\/|$)|scan-projects\/crs(?:\/|$))/ },
+  { feature: 'scannerRuntime', pattern: /^\/api\/scan-projects(?:\/?$|\/photos(?:\/|$))/ },
   { feature: 'forestry', pattern: /^\/api\/forestry(?:\/|$)/ },
   { feature: 'pointcloudRegistration', pattern: /^\/api\/pointcloud-registration(?:\/|$)/ },
   { feature: 'orthoImage', pattern: /^\/api\/ortho-image(?:\/|$)/ },
@@ -61,6 +62,20 @@ const FEATURE_ROUTE_RULES = Object.freeze([
     pattern: /^\/api\/(?:generate-volume-surface|download-volume-surface|volume-surface-mesh|volume-surface-grid|volume-jobs|volume-results|volume-mesh|volume-grid|volume-report-view-snapshot|download-volume-job)(?:\/|$|\?)/,
   },
 ]);
+
+const STATIC_PROJECT_SUBPATH_RULES = Object.freeze([
+  { feature: 'forestry', pattern: /^\/forestry(?:\/|$)/i },
+  { feature: 'terrainProcessing', pattern: /^\/(?:terrain|dtm|floorplan|surface|contour|contours|hag|classification|classified)(?:\/|$)/i },
+  { feature: 'volumeJobs', pattern: /^\/(?:volume|volume_jobs|volume-jobs|volume_surface|volume-surface)(?:\/|$)/i },
+  { feature: 'orthoImage', pattern: /^\/(?:ortho|ortho-image|orthophoto)(?:\/|$)/i },
+]);
+
+function normalizeStaticProjectSubpath(requestPath, { stripFirstSegment = false } = {}) {
+  let pathname = String(requestPath || '').split('?')[0] || '/';
+  if (!pathname.startsWith('/')) pathname = `/${pathname}`;
+  if (stripFirstSegment) pathname = pathname.replace(/^\/[^/]+/i, '') || '/';
+  return pathname;
+}
 
 function parseEnvBoolean(value) {
   const normalized = String(value ?? '').trim().toLowerCase();
@@ -102,6 +117,16 @@ export function getDisabledFeatureForPath(pathname, capabilities) {
   const pathOnly = String(pathname || '').split('?')[0];
   for (const rule of FEATURE_ROUTE_RULES) {
     if (rule.pattern.test(pathOnly) && !isFeatureEnabled(capabilities, rule.feature)) {
+      return rule.feature;
+    }
+  }
+  return null;
+}
+
+export function getDisabledFeatureForStaticProjectPath(requestPath, capabilities, options = {}) {
+  const pathname = normalizeStaticProjectSubpath(requestPath, options);
+  for (const rule of STATIC_PROJECT_SUBPATH_RULES) {
+    if (rule.pattern.test(pathname) && !isFeatureEnabled(capabilities, rule.feature)) {
       return rule.feature;
     }
   }

@@ -476,6 +476,15 @@ export function createOpenModalFeature({
         ? translate('viewer.open.emptyHint', {}, 'Use the buttons above to open a local folder or LAS/LAZ file')
         : translate('viewer.open.emptyServerHint', {}, 'Upload datasets from the CloudStudio home page or server backend.');
       empty.innerHTML = `${translate('viewer.open.emptyTitle', {}, 'No available point clouds')}<br><small>${emptyHint}</small>`;
+      if (!canUseDesktopImport()) {
+        const uploadLink = document.createElement('a');
+        uploadLink.className = 'btn';
+        uploadLink.href = '/';
+        uploadLink.textContent = translate('viewer.open.uploadHomeAction', {}, 'Upload data');
+        uploadLink.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;margin-top:12px;min-width:128px;height:34px;text-decoration:none;font-size:12px;';
+        empty.appendChild(document.createElement('br'));
+        empty.appendChild(uploadLink);
+      }
       list.appendChild(empty);
     } else {
       renderScannerProjects(projects);

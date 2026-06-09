@@ -8352,28 +8352,6 @@ window.__CLOUDSTUDIO_THREE = THREE;
       });
     }
 
-    const TOOLBAR_ACTION_CAPABILITIES = Object.freeze({
-      export: 'export',
-      'ortho-image': 'orthoImage',
-      'coordinate-convert': 'crs',
-      'mvp-s1': 'mvpSolver',
-      'measure-point': 'measurement',
-      'measure-distance': 'measurement',
-      'measure-height': 'measurement',
-      'measure-area': 'measurement',
-      'measure-angle': 'measurement',
-      volume: 'volumeJobs',
-      screenshot: 'capture',
-      capture: 'capture',
-      'clip-box': 'clipBox',
-      'delete-region': 'deleteRegion',
-      profile: 'profile',
-      'clear-clip': 'clipBox',
-      'terrain-gc': 'terrainProcessing',
-      'terrain-dtm': 'terrainProcessing',
-      'terrain-contour': 'terrainProcessing',
-    });
-
     function isCapabilityEnabled(feature) {
       if (!feature) return true;
       return Boolean(APP_CAPABILITIES?.features?.[feature]);
@@ -8418,7 +8396,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
     }
 
     function isToolbarItemEnabled(item) {
-      return isCapabilityEnabled(TOOLBAR_ACTION_CAPABILITIES[item?.action]);
+      return isCapabilityEnabled(item?.capability);
     }
 
     function formatToolbarTitle(title, shortcut) {

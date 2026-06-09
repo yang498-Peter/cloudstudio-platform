@@ -752,7 +752,8 @@
       "loadingProjects": "Letzte Projekte werden aus dem Cache gelesen. Sie können jetzt einen lokalen Ordner oder LAS/LAZ öffnen.",
       "selectingPath": "Warten auf Dateiauswahl...",
       "importCancelled": "Import abgebrochen.",
-      "emptyServerHint": "Laden Sie Datensätze über die CloudStudio-Startseite oder das Server-Backend hoch."
+      "emptyServerHint": "Laden Sie Datensätze über die CloudStudio-Startseite oder das Server-Backend hoch.",
+      "uploadHomeAction": "Daten hochladen"
     },
     "export": {
       "needDataset": "Laden Sie zunächst eine Punktwolke oder ein Scannerprojekt.",
