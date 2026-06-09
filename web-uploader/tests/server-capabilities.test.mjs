@@ -51,8 +51,15 @@ test('server capabilities default to lightweight public-server features', () => 
   assert.equal(capabilities.mode, 'server');
   assert.equal(capabilities.features.viewerUiV2, true);
   assert.equal(capabilities.features.measurement, true);
+  assert.equal(capabilities.features.clipBox, true);
+  assert.equal(capabilities.features.deleteRegion, true);
+  assert.equal(capabilities.features.profile, true);
+  assert.equal(capabilities.features.capture, true);
   assert.equal(capabilities.features.crs, true);
   assert.equal(capabilities.features.export, true);
+  assert.equal(capabilities.features.sceneTree, true);
+  assert.equal(capabilities.features.scannerRuntime, true);
+  assert.equal(capabilities.features.datasetManagement, false);
   assert.equal(capabilities.features.volumeJobs, false);
   assert.equal(capabilities.features.terrainProcessing, false);
   assert.equal(capabilities.features.desktopLocalImport, false);

@@ -15,6 +15,7 @@ const ACTION_CAPABILITIES = Object.freeze({
   'measure-area': 'measurement',
   'measure-angle': 'measurement',
   volume: 'volumeJobs',
+  screenshot: 'capture',
   capture: 'capture',
   'clip-box': 'clipBox',
   'delete-region': 'deleteRegion',
@@ -41,6 +42,7 @@ test('server default toolbar keeps lightweight viewer tools and hides heavy work
   assert.equal(actions.has('open'), true);
   assert.equal(actions.has('export'), true);
   assert.equal(actions.has('coordinate-convert'), true);
+  assert.equal(actions.has('screenshot'), true);
   assert.equal(actions.has('measure-distance'), true);
   assert.equal(actions.has('clip-box'), true);
   assert.equal(actions.has('delete-region'), true);
@@ -52,4 +54,18 @@ test('server default toolbar keeps lightweight viewer tools and hides heavy work
   assert.equal(actions.has('terrain-gc'), false);
   assert.equal(actions.has('terrain-dtm'), false);
   assert.equal(actions.has('terrain-contour'), false);
+});
+
+test('toolbar hides capture-family actions when capture is disabled', () => {
+  const actions = new Set(visibleActions({
+    ...DEFAULT_SERVER_CAPABILITIES,
+    features: {
+      ...DEFAULT_SERVER_CAPABILITIES.features,
+      capture: false,
+    },
+  }));
+
+  assert.equal(actions.has('screenshot'), false);
+  assert.equal(actions.has('capture'), false);
+  assert.equal(actions.has('open'), true);
 });

@@ -8363,6 +8363,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
       'measure-area': 'measurement',
       'measure-angle': 'measurement',
       volume: 'volumeJobs',
+      screenshot: 'capture',
       capture: 'capture',
       'clip-box': 'clipBox',
       'delete-region': 'deleteRegion',
@@ -8378,8 +8379,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
       return Boolean(APP_CAPABILITIES?.features?.[feature]);
     }
 
-    function setCapabilityHidden(selector, feature) {
-      const disabled = !isCapabilityEnabled(feature);
+    function setCapabilityHiddenState(selector, disabled) {
       document.querySelectorAll(selector).forEach((el) => {
         el.hidden = disabled;
         el.setAttribute('aria-hidden', disabled ? 'true' : 'false');
@@ -8395,11 +8395,25 @@ window.__CLOUDSTUDIO_THREE = THREE;
       });
     }
 
+    function setCapabilityHidden(selector, feature) {
+      setCapabilityHiddenState(selector, !isCapabilityEnabled(feature));
+    }
+
+    function setCapabilityHiddenUnlessAny(selector, features = []) {
+      setCapabilityHiddenState(selector, !features.some(feature => isCapabilityEnabled(feature)));
+    }
+
     function applyCapabilityUiGates() {
+      setCapabilityHidden('#right-panel .tab[data-pane="measure"], #pane-measure', 'measurement');
+      setCapabilityHiddenUnlessAny('#right-panel .tab[data-pane="clip"], #pane-clip', ['clipBox', 'deleteRegion', 'profile']);
+      setCapabilityHidden('#right-panel .tab[data-pane="scanner"], #pane-scanner', 'scannerRuntime');
+      setCapabilityHidden('#right-panel .tab[data-pane="coordinate"], #pane-coordinate', 'crs');
+      setCapabilityHidden('#right-panel .tab[data-pane="capture"], #pane-capture', 'capture');
       setCapabilityHidden('#mi-t-volume, #volume-workflow-details', 'volumeJobs');
       setCapabilityHidden('#right-panel .tab[data-pane="classify"], #pane-classify', 'terrainProcessing');
-      if (!isCapabilityEnabled('terrainProcessing') && getActiveRightPane() === 'classify') {
-        setActiveRightPane('appearance', { expand: false });
+      const activePane = getActiveRightPane();
+      if (uiState.activeRightPane !== activePane) {
+        setActiveRightPane(activePane, { expand: false });
       }
     }
 
@@ -8693,9 +8707,20 @@ window.__CLOUDSTUDIO_THREE = THREE;
       applyNavigationPivotMode(getNavigationPivotMode(), { activate: true, notify, force: true });
     }
 
+    function isRightPaneAvailable(pane) {
+      const normalized = String(pane || 'appearance');
+      const panel = document.getElementById(`pane-${normalized}`);
+      const tab = Array.from(document.querySelectorAll('#right-panel .tab'))
+        .find(item => item.dataset.pane === normalized);
+      if (!panel || !tab) return false;
+      if (panel.hidden || tab.hidden) return false;
+      if (panel.style.display === 'none' || tab.style.display === 'none') return false;
+      return true;
+    }
+
     function getActiveRightPane() {
       const pane = String(uiState.activeRightPane || 'appearance');
-      return document.getElementById(`pane-${pane}`) ? pane : 'appearance';
+      return isRightPaneAvailable(pane) ? pane : 'appearance';
     }
 
     function setRightPanelCollapsed(collapsed) {
@@ -8707,7 +8732,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
     }
 
     function setActiveRightPane(pane, { expand = true } = {}) {
-      const resolvedPane = document.getElementById(`pane-${pane}`) ? pane : 'appearance';
+      const resolvedPane = isRightPaneAvailable(pane) ? pane : 'appearance';
       uiState.activeRightPane = resolvedPane;
       if (expand) setRightPanelCollapsed(false);
 
@@ -14225,15 +14250,15 @@ window.__CLOUDSTUDIO_THREE = THREE;
     // Toolbar wiring
     // ─────────────────────────────────────────────
     if (!openModalFeature) {
-      document.getElementById('tb-open').addEventListener('click', openOpenModal);
+      document.getElementById('tb-open')?.addEventListener('click', openOpenModal);
     }
     if (!exportLasFeature) {
-      document.getElementById('tb-export-las').addEventListener('click', openExportLasModal);
+      document.getElementById('tb-export-las')?.addEventListener('click', openExportLasModal);
     }
-    document.getElementById('tb-screenshot').addEventListener('click', takeScreenshot);
-    document.getElementById('tb-fit').addEventListener('click', () => { viewer.fitToScreen(); toast('View fitted', 'info'); });
-    document.getElementById('tb-edl').addEventListener('click', () => setEDLEnabledState(!edlOn));
-    document.getElementById('tb-orbit').addEventListener('click', () => {
+    document.getElementById('tb-screenshot')?.addEventListener('click', takeScreenshot);
+    document.getElementById('tb-fit')?.addEventListener('click', () => { viewer.fitToScreen(); toast('View fitted', 'info'); });
+    document.getElementById('tb-edl')?.addEventListener('click', () => setEDLEnabledState(!edlOn));
+    document.getElementById('tb-orbit')?.addEventListener('click', () => {
       const currentControls = viewer.getControls?.();
       if (currentControls === viewer.fpControls) {
         activateBrowseNavigation({ notify: true });
@@ -14241,13 +14266,13 @@ window.__CLOUDSTUDIO_THREE = THREE;
         cycleNavigationPivotMode({ activate: true, notify: true });
       }
     });
-    document.getElementById('tb-fly').addEventListener('click', () => {
+    document.getElementById('tb-fly')?.addEventListener('click', () => {
       viewer.setControls(viewer.fpControls);
       syncNavigationButtons();
       toast('Navigation mode: Fly', 'info');
     });
-    document.getElementById('tb-clipbox').addEventListener('click', startClipBox);
-    document.getElementById('tb-clearclip').addEventListener('click', clearAllClip);
+    document.getElementById('tb-clipbox')?.addEventListener('click', startClipBox);
+    document.getElementById('tb-clearclip')?.addEventListener('click', clearAllClip);
     document.querySelectorAll('[data-attr]').forEach(b => {
       if (b.closest('#toolbar')) b.addEventListener('click', () => setColorMode(b.dataset.attr));
     });
@@ -17257,6 +17282,12 @@ window.__CLOUDSTUDIO_THREE = THREE;
     }
 
     async function refreshServerGridCatalog({ silent = false, projectId = getCurrentScannerProjectId() } = {}) {
+      if (!isCapabilityEnabled('crs')) {
+        setAvailableServerGrids([]);
+        updateAttachedGridList(projectId);
+        updateGridFileSummary(projectId);
+        return;
+      }
       try {
         const data = await fetch('/api/grids', { cache: 'no-store' }).then(async r => {
           const json = await r.json().catch(() => ({}));
