@@ -143,6 +143,9 @@ test('viewer keeps scanner camera marker hooks wired', () => {
   assert.match(html, /id="chk-cameras"/);
   assert.match(html, /id="r-cam-size"/);
   assert.match(html, /id="chk-frustum"/);
+  assert.match(html, /id="btn-fly-traj"/);
+  assert.match(html, /id="r-traj-fly-speed"/);
+  assert.match(html, /id="l-traj-fly-speed"/);
   assert.match(html, /function buildCameraMarkers\(/);
   assert.match(html, /function buildCameraPhotoPlane\(/);
   assert.match(html, /camera\.photoPlane = photoPlane/);

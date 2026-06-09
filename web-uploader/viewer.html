@@ -7746,6 +7746,12 @@
             <div class="pr-val"><input type="range" id="r-traj-arrows" min="5" max="100" step="5" value="30"></div>
             <span class="pr-num" id="l-traj-arrows">Every 30 points</span>
           </div>
+          <div class="pr">
+            <span class="pr-label">Fly Speed</span>
+            <div class="pr-val"><input type="range" id="r-traj-fly-speed" min="0.1" max="12" step="0.1" value="2"></div>
+            <span class="pr-num" id="l-traj-fly-speed">2.0 m/s</span>
+          </div>
+          <button class="btn" id="btn-fly-traj" disabled data-i18n="viewer.scanner.flyTrajectoryStart">🎬 Fly Through Trajectory</button>
         </div>
 
         <!-- Camera markers -->
@@ -12435,6 +12441,18 @@ window.__CLOUDSTUDIO_THREE = THREE;
       document.getElementById('row-traj-arrow-density').style.display = state.trajSettings?.showArrows ? '' : 'none';
       document.getElementById('r-traj-arrows').value = String(state.trajSettings?.arrowDensity ?? 30);
       document.getElementById('l-traj-arrows').textContent = formatTrajectoryArrowDensityLabel(state.trajSettings?.arrowDensity ?? 30);
+      const flySpeed = Number(state.trajectoryFlySettings?.speed ?? 2);
+      const flySpeedSlider = document.getElementById('r-traj-fly-speed');
+      const flySpeedLabel = document.getElementById('l-traj-fly-speed');
+      const flyTrajectoryButton = document.getElementById('btn-fly-traj');
+      if (flySpeedSlider) flySpeedSlider.value = String(flySpeed);
+      if (flySpeedLabel) flySpeedLabel.textContent = `${flySpeed.toFixed(1)} m/s`;
+      if (flyTrajectoryButton) {
+        flyTrajectoryButton.disabled = !state.odomData || state.odomData.length < 2;
+        flyTrajectoryButton.textContent = state.flyActive
+          ? tr('viewer.scanner.flyTrajectoryStop', {}, '⏹ Stop Trajectory Flythrough')
+          : tr('viewer.scanner.flyTrajectoryStart', {}, '🎬 Fly Through Trajectory');
+      }
 
       const cameraSettings = state.cameraSettings || createDefaultCameraSettings();
       const cameraToggle = document.getElementById('chk-cameras');
@@ -15102,6 +15120,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
       'photoIndex',
       'photoSide',
       'timelineAnim',
+      'flyActive',
       'coordConfig',
       'resolvedCoordinateSystem',
       'geoMouseMoveHandler',
@@ -15178,6 +15197,7 @@ window.__CLOUDSTUDIO_THREE = THREE;
         photoIndex: 0,
         photoSide: 'left',
         timelineAnim: null,
+        flyActive: false,
         coordConfig: null,
         resolvedCoordinateSystem: null,
         geoMouseMoveHandler: null,
@@ -19114,6 +19134,14 @@ window.__CLOUDSTUDIO_THREE = THREE;
       document.getElementById('l-traj-arrows').textContent = formatTrajectoryArrowDensityLabel(e.target.value);
       scannerState.trajSettings.arrowDensity = parseInt(e.target.value, 10) || 30;
       buildTrajectory();
+    });
+    document.getElementById('r-traj-fly-speed')?.addEventListener('input', e => {
+      const speed = Math.max(0.1, Number(e.target.value) || 2);
+      scannerState.trajectoryFlySettings = {
+        ...(scannerState.trajectoryFlySettings || {}),
+        speed,
+      };
+      document.getElementById('l-traj-fly-speed').textContent = `${speed.toFixed(1)} m/s`;
     });
     document.getElementById('chk-cameras')?.addEventListener('change', e => {
       scannerState.cameraSettings.visible = e.target.checked;
