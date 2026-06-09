@@ -170,6 +170,21 @@ function sanitizeAsyncJobForClient(value) {
   return sanitized;
 }
 
+function sanitizeApiPayloadForClient(value) {
+  if (value == null) return value;
+  if (typeof value === 'string') return redactPathTextForClient(value);
+  if (typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map(sanitizeApiPayloadForClient);
+
+  const sanitized = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (key === 'stack') continue;
+    if (!EXPOSE_SERVER_PATHS && PRIVATE_RESPONSE_KEY_RE.test(key)) continue;
+    sanitized[key] = sanitizeApiPayloadForClient(entry);
+  }
+  return sanitized;
+}
+
 const SCAN_DATA_FEATURE_SUBPATH_RULES = Object.freeze([
   { feature: 'forestry', pattern: /^\/forestry(?:\/|$)/i },
   { feature: 'terrainProcessing', pattern: /^\/(?:terrain|dtm|floorplan|surface|contour|contours|hag|classification|classified)(?:\/|$)/i },
@@ -2015,12 +2030,12 @@ function sendApiError(res, error, {
   const normalizedError = normalizeApiError(error, fallbackCode);
   const errorCode = normalizedError?.code || fallbackCode;
   const status = API_ERROR_STATUS[errorCode] || fallbackStatus;
-  return res.status(status).json({
+  return res.status(status).json(sanitizeApiPayloadForClient({
     ok: false,
     errorCode,
     error: normalizedError?.message || String(normalizedError),
     ...extra,
-  });
+  }));
 }
 
 function requireNonEmptyString(value, fieldName, { code = 'BAD_REQUEST' } = {}) {
@@ -2278,7 +2293,7 @@ function failExportProgressJob(progressJobId, error, message = 'Export failed') 
 function createExportApiError(payload, status = 500) {
   const error = new Error(payload?.summary || payload?.message || payload?.error || 'Point cloud export failed');
   error.code = payload?.errorCode || 'EXPORT_FAILED';
-  error.apiPayload = payload;
+  error.apiPayload = sanitizeApiPayloadForClient(payload);
   error.apiStatus = status;
   return error;
 }
@@ -3649,7 +3664,7 @@ function buildConversionFailurePayload(error, {
   metadataPath = null,
   extra = {},
 } = {}) {
-  return {
+  return sanitizeApiPayloadForClient({
     ok: false,
     code: null,
     errorCode: error?.code || 'CONVERSION_FAILED',
@@ -3659,7 +3674,7 @@ function buildConversionFailurePayload(error, {
     error: error?.message || String(error),
     conversionJobId: error?.jobId || extra.conversionJobId || null,
     ...extra,
-  };
+  });
 }
 
 async function runTrackedCommandJob(jobId, {
@@ -5342,7 +5357,7 @@ app.post('/api/upload', uploadCredentialPrecheck, upload.single('pointcloud'), a
       console.warn('[Export] Failed to write source manifest:', error.message);
     }
 
-    return res.status(200).json({
+    return res.status(200).json(sanitizeApiPayloadForClient({
       ok: true,
       code: 0,
       errorCode: null,
@@ -5354,7 +5369,7 @@ app.post('/api/upload', uploadCredentialPrecheck, upload.single('pointcloud'), a
       sanitizedForPotree: Boolean(result.sanitized),
       stdout: String(result.stdout || '').slice(-4000),
       stderr: String(result.stderr || '').slice(-4000),
-    });
+    }));
   } catch (error) {
     removeDirIfExists(outDir);
     return res.status(error?.code === 'CONVERSION_TIMEOUT' ? 504 : 500).json(buildConversionFailurePayload(error, {
@@ -5492,17 +5507,25 @@ app.post('/api/upload-project', uploadCredentialPrecheck, zipUpload.single('proj
 
     // Verify LAS file exists before spawning converter
     if (!fs.existsSync(lasAbsPath)) {
-      return res.status(500).json({
-        ok: false, projectName, error: `LAS 文件路径不存在: ${lasAbsPath}。找到的 LAS 列表: [${info.lasFiles.join(', ')}]`,
-        errorCode: 'LAS_NOT_FOUND',
+      const error = new Error('LAS source file was not found after extracting the scanner project.');
+      error.code = 'LAS_NOT_FOUND';
+      return sendApiError(res, error, {
+        fallbackCode: 'LAS_NOT_FOUND',
+        fallbackStatus: 500,
+        extra: { projectName, lasFiles: info.lasFiles },
       });
     }
 
     if (!fs.existsSync(CONVERTER)) {
-      return res.status(500).json({
-        ok: false, projectName, error: `PotreeConverter 未找到: ${CONVERTER}`,
-        errorCode: 'CONVERTER_NOT_FOUND',
-        note: '项目文件夹已解压到 projects/' + projectName + '，但 LAS 转换失败（找不到转换器）',
+      const error = new Error('PotreeConverter is not available on this server.');
+      error.code = 'CONVERTER_NOT_FOUND';
+      return sendApiError(res, error, {
+        fallbackCode: 'CONVERTER_NOT_FOUND',
+        fallbackStatus: 500,
+        extra: {
+          projectName,
+          note: 'The scanner project was extracted, but LAS conversion could not start because the converter is unavailable.',
+        },
       });
     }
 
@@ -5556,7 +5579,7 @@ app.post('/api/upload-project', uploadCredentialPrecheck, zipUpload.single('proj
         } catch { }
         discoverScanProjects();
 
-        res.status(200).json({
+        res.status(200).json(sanitizeApiPayloadForClient({
           ok: true,
           projectName,
           cloudName,
@@ -5571,7 +5594,7 @@ app.post('/api/upload-project', uploadCredentialPrecheck, zipUpload.single('proj
           stdout: String(result.stdout || '').slice(-3000),
           stderr: String(result.stderr || '').slice(-3000),
           sanitizedForPotree: Boolean(result.sanitized),
-        });
+        }));
       } catch (error) {
         const status = error?.code === 'CONVERSION_TIMEOUT' ? 504 : 500;
         res.status(status).json(buildConversionFailurePayload(error, {
@@ -5990,13 +6013,13 @@ app.post('/api/crs/transform', (req, res) => {
 
       if (code !== 0) {
         const detailedError = summarizeExportProcessError(stdout, stderr);
-        return res.status(500).json({
+        return res.status(500).json(sanitizeApiPayloadForClient({
           ok: false,
           error: detailedError || '原生坐标变换失败',
           errorCode: 'EXPORT_FAILED',
           stdout: stdout.slice(-4000),
           stderr: stderr.slice(-4000),
-        });
+        }));
       }
 
       try {
@@ -6927,13 +6950,13 @@ app.post('/api/floorplan/extract', async (req, res) => {
     const result = readLastJsonLine(stdout) || {};
     if (code !== 0 || result.ok === false) {
       const detailedError = result.error || summarizeExportProcessError(stdout, stderr) || '平面图提取失败';
-      return res.status(500).json({
+      return res.status(500).json(sanitizeApiPayloadForClient({
         ok: false,
         error: detailedError,
         errorCode: 'FLOORPLAN_EXTRACTION_FAILED',
         stdout: stdout.slice(-4000),
         stderr: stderr.slice(-4000),
-      });
+      }));
     }
 
     return sendApiSuccess(res, {

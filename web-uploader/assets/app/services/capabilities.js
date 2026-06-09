@@ -11,6 +11,7 @@ export const DEFAULT_SERVER_CAPABILITIES = Object.freeze({
     export: true,
     sceneTree: true,
     scannerRuntime: true,
+    datasetManagement: false,
     desktopLocalImport: false,
     mvpSolver: false,
     forestry: false,

@@ -13,6 +13,7 @@ import {
 const runtimeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'cloudstudio-capabilities-'));
 process.env.CLOUDSTUDIO_SKIP_SERVER_LISTEN = '1';
 process.env.CLOUDSTUDIO_DATA_DIR = runtimeRoot;
+process.env.PYTHON_BIN = path.join(runtimeRoot, 'private-python', 'bin', 'python');
 
 const { app, SERVER_CAPABILITIES } = await import('../server.js');
 
@@ -78,8 +79,12 @@ test('disabled feature routing maps heavy API paths to feature names', () => {
 
   assert.equal(getDisabledFeatureForPath('/api/delete-cloud', capabilities), 'datasetManagement');
   assert.equal(getDisabledFeatureForPath('/api/upload-by-path', capabilities), 'desktopLocalImport');
+  assert.equal(getDisabledFeatureForPath('/api/import/local/jobs', capabilities), 'desktopLocalImport');
+  assert.equal(getDisabledFeatureForPath('/api/import/local/jobs/job-1/cancel', capabilities), 'desktopLocalImport');
   assert.equal(getDisabledFeatureForPath('/api/scan-roots', capabilities), 'desktopLocalImport');
   assert.equal(getDisabledFeatureForPath('/api/scan-projects/register', capabilities), 'desktopLocalImport');
+  assert.equal(getDisabledFeatureForPath('/api/upload-project', capabilities), null);
+  assert.equal(getDisabledFeatureForPath('/api/upload-preconverted', capabilities), null);
   assert.equal(getDisabledFeatureForPath('/api/export-pointcloud/jobs', capabilities), null);
   assert.equal(getDisabledFeatureForPath('/api/crs/transform', capabilities), null);
   assert.equal(getDisabledFeatureForPath('/api/volume-jobs', capabilities), 'volumeJobs');
@@ -158,6 +163,28 @@ test('disabled heavy and desktop-local API routes return FEATURE_DISABLED before
     assert.equal(registerBody.ok, false);
     assert.equal(registerBody.errorCode, 'FEATURE_DISABLED');
     assert.equal(registerBody.feature, 'desktopLocalImport');
+
+    const localImportResponse = await fetch(`${baseUrl}/api/import/local/jobs`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ entryPath: path.join(runtimeRoot, 'private', 'scan.las') }),
+    });
+    assert.equal(localImportResponse.status, 403);
+    const localImportBody = await localImportResponse.json();
+    assert.equal(localImportBody.ok, false);
+    assert.equal(localImportBody.errorCode, 'FEATURE_DISABLED');
+    assert.equal(localImportBody.feature, 'desktopLocalImport');
+
+    const cancelResponse = await fetch(`${baseUrl}/api/import/local/jobs/job-1/cancel`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    assert.equal(cancelResponse.status, 403);
+    const cancelBody = await cancelResponse.json();
+    assert.equal(cancelBody.ok, false);
+    assert.equal(cancelBody.errorCode, 'FEATURE_DISABLED');
+    assert.equal(cancelBody.feature, 'desktopLocalImport');
   } finally {
     await new Promise(resolve => server.close(resolve));
   }
@@ -281,6 +308,27 @@ test('/api/export-sources redacts local source paths by default', async () => {
     assert.equal(body.sources.length, 1);
     assert.equal(Object.hasOwn(body.sources[0], 'absPath'), false);
     assert.equal(Object.hasOwn(body.sources[0], 'path'), false);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test('default-enabled API error responses redact absolute server paths', async () => {
+  const { server, baseUrl } = await listen();
+  try {
+    const response = await fetch(`${baseUrl}/api/crs/transform`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ pointsWgs84: [[0, 0, 0]] }),
+    });
+    assert.equal(response.status, 500);
+    const body = await response.json();
+    assert.equal(body.ok, false);
+    assert.equal(body.errorCode, 'EXPORT_ENV_MISSING');
+    const serialized = JSON.stringify(body);
+    assert.doesNotMatch(serialized, /[A-Za-z]:[\\/]/);
+    assert.doesNotMatch(serialized, /\/(?:Users|home|mnt|Volumes|tmp|var|opt|workspace|root|srv)\b/);
+    assert.match(serialized, /<server-path:python>/);
   } finally {
     await new Promise(resolve => server.close(resolve));
   }
