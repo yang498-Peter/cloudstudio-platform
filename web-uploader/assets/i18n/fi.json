@@ -33,7 +33,8 @@
       "save": "Tallenna"
     },
     "status": {
-      "ready": "Valmis"
+      "ready": "Valmis",
+      "failed": "Epäonnistui"
     },
     "author": {
       "createdBy": "Tekijä",
@@ -604,7 +605,9 @@
       "removePending": "Poista odottava alue",
       "removeApplied": "Poista poistoalue",
       "regionLabel": "Poista alue {{index}}",
-      "toolHint": "🧹 Monikulmion poistaminen — klikkaa lisätäksesi pisteitä, kaksoisnapsauta vahvistaaksesi, esikatsele useita alueita ja käytä sitten kerran | ESC peruutus"
+      "toolHint": "🧹 Monikulmion poistaminen — klikkaa lisätäksesi pisteitä, kaksoisnapsauta vahvistaaksesi, esikatsele useita alueita ja käytä sitten kerran | ESC peruutus",
+      "exporting": "Viedaan poistoalueiden LAS-tulosta latausta varten...",
+      "exportComplete": "Poistoalueiden LAS vietiin. Lataus kaynnistyi."
     },
     "clip": {
       "toolsTitle": "Leikkaustyökalut",
@@ -669,7 +672,11 @@
       "exportFiltered": "Leikelaatikon suodatuspisteet: {{count}}",
       "toolHint": "⬜ Leikelaatikko — aseta laatikko, säädä kokoa, vahvista Clip-paneelissa ja vie sitten nykyinen leiketila läpi | ESC peruutus",
       "statusEditing": "Muokataan leikelaatikkoa... säädä kahvoja ja vahvista sitten tämä kierros, kun olet valmis",
-      "resumeEdit": "Jatka tämän leikkauslaatikon muokkausta"
+      "resumeEdit": "Jatka tämän leikkauslaatikon muokkausta",
+      "exporting": "Viedaan rajattua LAS-tiedostoa latausta varten...",
+      "exportComplete": "Rajattu LAS vietiin. Lataus kaynnistyi.",
+      "exportOpen": "Vie rajattu LAS ladattavaksi",
+      "exportHintReady": "Vie vahvistetut leikkauslaatikot ja kaynnistaa LAS-latauksen. Nykyinen katselunakyma ei muutu."
     },
     "profile": {
       "panelTitle": "✂ Poikkileikkaus/profiilinäkymä",
@@ -690,7 +697,10 @@
       "minimapPlaceholder": "Kartan näyttämiseen tarvitaan maantieteellisiä tietoja",
       "minimapPlaceholderHint": "Lataa skanneriprojekti, joka sisältää geo_info.csv",
       "crsBrowserSupportNote": "Tämä koordinaattityönkulku tukee paikallisia koordinaatteja, WGS84, Web Mercator, UTM/UPS ja offline authority-code haun käyttöä yleisille CRS-määritelmiä varten. Parametrin tiedostot voidaan tuoda muodossa `.prj / .wkt / .txt / .json / .csv`. Grid-resursseja voi liittää `.gsb / .gtx / .tif / .tiff`:stä, kun taas `.ggf / .grd` saattaa edellyttää muuntamista PROJ-yhteensopivaksi ruudukoksi ennen käyttöä. Vaakasuorat ruudukot voivat osallistua interaktiiviseen koordinaatinäyttöön kun nykyinen muunnosketju tukee niitä; pystysuorat geoidit ja yleisempiä ruudukoita käytetään pääasiassa alkuperäisen PROJ/pyproj-muunnos- ja vientiputken kautta.",
-      "trajectoryTitle": "Reitti"
+      "trajectoryTitle": "Reitti",
+      "expandMap": "Suurenna kartta",
+      "flyTrajectoryStart": "🎬 Lennä liikerataa pitkin",
+      "flyTrajectoryStop": "⏹ Pysäytä liikeradan läpilento"
     },
     "open": {
       "loading": "Ladataan...",
@@ -724,7 +734,26 @@
         "photos": "Valokuvat"
       },
       "importMeshReady": "Tuotu verkko: {{name}}",
-      "openObjFile": "Avaa OBJ-malli"
+      "openObjFile": "Avaa OBJ-malli",
+      "importCancelling": "Perutaan...",
+      "cancelFailed": "Peruutus epäonnistui: {{message}}",
+      "importTitle": "Avataan pistepilveä",
+      "importStarting": "Valmistellaan paikallista tuontia...",
+      "removeAction": "Poista",
+      "removeConfirm": "Poistetaanko \"{{name}}\" tästä luettelosta?",
+      "removeConfirmTitle": "Poistetaanko skanneriprojekti?",
+      "removing": "Poistetaan...",
+      "removeSuccess": "\"{{name}}\" poistettu luettelosta.",
+      "removeFailed": "Poistaminen epäonnistui: {{message}}",
+      "removeCloudConfirm": "Poistetaanko \"{{name}}\" tästä luettelosta? Alkuperäisiä tietoja ei poisteta.",
+      "removeCloudConfirmTitle": "Poistetaanko pistepilvi?",
+      "removeCloudSuccess": "\"{{name}}\" poistettu luettelosta.",
+      "removeCloudFailed": "Poistaminen epäonnistui: {{message}}",
+      "loadingProjects": "Luetaan viimeisimmät projektit välimuistista. Voit avata paikallisen kansion tai LAS/LAZ-tiedoston nyt.",
+      "selectingPath": "Odotetaan tiedoston valintaa...",
+      "importCancelled": "Tuonti peruutettu.",
+      "emptyServerHint": "Lataa aineistot CloudStudion etusivulta tai palvelimen taustajärjestelmästä.",
+      "uploadHomeAction": "Lataa data"
     },
     "export": {
       "needDataset": "Lataa ensin pistepilvi tai skanneriprojekti.",
@@ -1203,6 +1232,17 @@
     },
     "performance": {
       "detailLoading": "Valmis - suuren tarkkuuden ruudut latautuvat edelleen enintään {{budget}} pisteeseen asti"
+    },
+    "minimap": {
+      "projectCount": "{{count}} projektit"
+    },
+    "photo": {
+      "info": {
+        "position": "Sijainti: ({{x}}, {{y}}, {{z}})",
+        "orientation": "Suunta: yaw {{yaw}}° / pitch {{pitch}}°",
+        "camera": "Kamera: {{side}}",
+        "timestamp": "Aikaleima: {{timestamp}}"
+      }
     }
   },
   "phrases": {

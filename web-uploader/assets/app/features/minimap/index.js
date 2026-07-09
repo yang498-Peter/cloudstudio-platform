@@ -4,9 +4,11 @@ export function createMinimapFeature({
   getLoadedScannerProjects,
   ecefToWGS84,
   localToECEF,
+  getProjectOriginWgs = null,
+  getProjectOdomPointWgs = null,
+  translate = null,
 } = {}) {
   let controlsBound = false;
-  let lastWheelAt = 0;
   const state = {
     collapsed: false,
     canvas: null,
@@ -45,14 +47,46 @@ export function createMinimapFeature({
   function renderInfo() {
     const info = document.getElementById('minimap-info');
     if (!info || state.originLat === null || state.originLon === null) return;
-    const projectCount = getLoadedScannerProjects().filter(project => project.geoInfo).length;
-    info.innerHTML = `📍 ${state.originLat.toFixed(6)}, ${state.originLon.toFixed(6)} (WGS84)<br>🗺 ${state.providerLabel}${projectCount > 1 ? `<br>📡 ${projectCount} projects` : ''}`;
+    const projectCount = getLoadedScannerProjects().filter(project => getProjectOriginWgs?.(project) || project.geoInfo).length;
+    const projectCountLabel = typeof translate === 'function'
+      ? translate('viewer.minimap.projectCount', { count: projectCount }, '{{count}} projects')
+      : `${projectCount} projects`;
+    info.innerHTML = `📍 ${state.originLat.toFixed(6)}, ${state.originLon.toFixed(6)} (WGS84)<br>🗺 ${state.providerLabel}${projectCount > 1 ? `<br>📡 ${projectCountLabel}` : ''}`;
+  }
+
+  function clear() {
+    // 2026-04-28: Closing the last dataset must leave no stale map trajectory or marker behind.
+    state.wgsPoints = [];
+    state.tracks = [];
+    state.originLat = null;
+    state.originLon = null;
+    state.manualView = false;
+    state.currentZoom = null;
+    state.centerLat = null;
+    state.centerLon = null;
+    state.dragActive = false;
+    if (state.canvas) state.canvas.classList.remove('dragging');
+    if (state.ctx && state.canvas) {
+      const width = parseFloat(state.canvas.style.width) || (state.canvas.width / (window.devicePixelRatio || 1));
+      const height = parseFloat(state.canvas.style.height) || (state.canvas.height / (window.devicePixelRatio || 1));
+      state.ctx.clearRect(0, 0, width, height);
+    }
+    const placeholder = document.getElementById('minimap-placeholder');
+    const container = document.getElementById('minimap-container');
+    const info = document.getElementById('minimap-info');
+    if (placeholder) placeholder.style.display = '';
+    if (container) container.style.display = 'none';
+    if (info) {
+      info.style.display = 'none';
+      info.innerHTML = '';
+    }
   }
 
   function bindControls() {
     if (controlsBound) return;
     controlsBound = true;
 
+    syncExpandButton();
     document.getElementById('minimap-header')?.addEventListener('click', togglePanel);
     document.getElementById('btn-minimap-basemap')?.addEventListener('click', event => {
       event.stopPropagation();
@@ -78,10 +112,22 @@ export function createMinimapFeature({
     state.expanded = !state.expanded;
     const panel = document.getElementById('minimap-panel');
     panel.classList.toggle('expanded', state.expanded);
-    const button = document.querySelector('#minimap-controls .minimap-icon-btn:nth-child(3)');
-    if (button) button.textContent = state.expanded ? '🗗' : '⛶';
+    syncExpandButton();
     resizeCanvas();
     draw();
+  }
+
+  function syncExpandButton() {
+    const button = document.getElementById('btn-minimap-expand');
+    if (!button) return;
+    const icon = state.expanded ? 'close' : 'expand';
+    const title = state.expanded
+      ? (typeof translate === 'function' ? translate('common.actions.close', {}, 'Close') : 'Close')
+      : (typeof translate === 'function' ? translate('viewer.scanner.expandMap', {}, 'Expand Map') : 'Expand Map');
+    button.innerHTML = `<span data-cs-icon="${icon}"></span>`;
+    button.title = title;
+    button.setAttribute('aria-label', title);
+    window.renderAppIcons?.(button);
   }
 
   function toggleBasemap() {
@@ -200,9 +246,9 @@ export function createMinimapFeature({
   }
 
   function drawFallbackBackground(ctx, width, height) {
-    ctx.fillStyle = '#f2f4f7';
+    ctx.fillStyle = '#0d0f18';
     ctx.fillRect(0, 0, width, height);
-    ctx.strokeStyle = 'rgba(60,64,67,0.08)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.lineWidth = 0.5;
     for (let y = 0; y <= height; y += 24) {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
@@ -236,9 +282,6 @@ export function createMinimapFeature({
   function onWheel(event) {
     if (!state.canvas || state.originLat === null) return;
     event.preventDefault();
-    const now = performance.now();
-    if (now - lastWheelAt < 140) return;
-    lastWheelAt = now;
     const rect = state.canvas.getBoundingClientRect();
     const width = rect.width || 244;
     const height = rect.height || 220;
@@ -342,7 +385,7 @@ export function createMinimapFeature({
       }
     }
     if (loadedTileCount === 0) {
-      ctx.fillStyle = 'rgba(245, 247, 250, 0.82)';
+      ctx.fillStyle = 'rgba(10, 12, 18, 0.45)';
       ctx.fillRect(0, 0, width, height);
     }
 
@@ -383,26 +426,26 @@ export function createMinimapFeature({
     if (scalePixels > 10 && scalePixels < width * 0.6) {
       const barX = 10;
       const barY = height - 14;
-      ctx.strokeStyle = 'rgba(29, 29, 31, 0.78)';
+      ctx.strokeStyle = '#fff';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(barX, barY); ctx.lineTo(barX + scalePixels, barY);
       ctx.moveTo(barX, barY - 3); ctx.lineTo(barX, barY + 3);
       ctx.moveTo(barX + scalePixels, barY - 3); ctx.lineTo(barX + scalePixels, barY + 3);
       ctx.stroke();
-      ctx.fillStyle = 'rgba(29, 29, 31, 0.72)';
+      ctx.fillStyle = '#ccc';
       ctx.font = '9px sans-serif';
       ctx.fillText(scaleMeters >= 1000 ? `${(scaleMeters / 1000).toFixed(scaleMeters % 1000 === 0 ? 0 : 1)} km` : `${scaleMeters} m`, barX + 2, barY - 4);
     }
 
-    ctx.fillStyle = 'rgba(255,255,255,0.86)';
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(0, 0, width, 14);
-    ctx.fillStyle = 'rgba(62, 67, 76, 0.86)';
+    ctx.fillStyle = '#aac';
     ctx.font = '10px monospace';
     ctx.fillText(`${state.originLat.toFixed(6)}, ${state.originLon.toFixed(6)}  z${zoom}`, 4, 11);
-    ctx.fillStyle = 'rgba(255,255,255,0.88)';
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(0, height - 13, width, 13);
-    ctx.fillStyle = 'rgba(62, 67, 76, 0.80)';
+    ctx.fillStyle = '#d6dde8';
     ctx.font = '9px sans-serif';
     ctx.fillText(state.attributionLabel, 4, height - 4);
   }
@@ -410,16 +453,21 @@ export function createMinimapFeature({
   function updateTrajectory() {
     const tracks = [];
     getLoadedScannerProjects().forEach(project => {
-      if (!project.geoInfo) return;
-      const originWgs = ecefToWGS84(project.geoInfo.origin.x, project.geoInfo.origin.y, project.geoInfo.origin.z);
+      const originWgs = getProjectOriginWgs?.(project)
+        || (project.geoInfo ? ecefToWGS84(project.geoInfo.origin.x, project.geoInfo.origin.y, project.geoInfo.origin.z) : null);
+      if (!originWgs) return;
       const odom = Array.isArray(project.odomData) ? project.odomData : [];
       const step = Math.max(1, Math.floor(Math.max(odom.length, 1) / 800));
       const points = [];
       for (let i = 0; i < odom.length; i += step) {
         const point = odom[i];
-        const ecef = localToECEF({ x: point.x, y: point.y, z: point.z }, project.geoInfo);
-        const wgs = ecefToWGS84(ecef.x, ecef.y, ecef.z);
-        if (Number.isFinite(wgs.lat) && Number.isFinite(wgs.lon)) {
+        const wgs = getProjectOdomPointWgs?.(project, point)
+          || (() => {
+            if (!project.geoInfo) return null;
+            const ecef = localToECEF({ x: point.x, y: point.y, z: point.z }, project.geoInfo);
+            return ecefToWGS84(ecef.x, ecef.y, ecef.z);
+          })();
+        if (wgs && Number.isFinite(wgs.lat) && Number.isFinite(wgs.lon)) {
           points.push({ lat: wgs.lat, lon: wgs.lon });
         }
       }
@@ -437,18 +485,36 @@ export function createMinimapFeature({
     state.wgsPoints = selected?.points || [];
     state.originLat = selected?.originLat ?? null;
     state.originLon = selected?.originLon ?? null;
+    if (!selected) {
+      clear();
+      return;
+    }
     draw();
   }
 
   function update() {
     const scannerState = getScannerState();
-    if (!scannerState?.geoInfo) return;
-    const { lat, lon } = ecefToWGS84(
-      scannerState.geoInfo.origin.x,
-      scannerState.geoInfo.origin.y,
-      scannerState.geoInfo.origin.z
-    );
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    const projects = getLoadedScannerProjects();
+    if (!projects.length) {
+      clear();
+      return;
+    }
+    const selectedProject = projects.find(project => project.projectId === getSelectedProjectId())
+      || projects.find(project => getProjectOriginWgs?.(project) || project.geoInfo)
+      || scannerState;
+    const originWgs = getProjectOriginWgs?.(selectedProject)
+      || (scannerState?.geoInfo
+        ? ecefToWGS84(scannerState.geoInfo.origin.x, scannerState.geoInfo.origin.y, scannerState.geoInfo.origin.z)
+        : null);
+    if (!originWgs) {
+      clear();
+      return;
+    }
+    const { lat, lon } = originWgs;
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      clear();
+      return;
+    }
     const placeholder = document.getElementById('minimap-placeholder');
     const container = document.getElementById('minimap-container');
     const info = document.getElementById('minimap-info');
@@ -472,5 +538,6 @@ export function createMinimapFeature({
     resetView,
     updateTrajectory,
     update,
+    clear,
   };
 }

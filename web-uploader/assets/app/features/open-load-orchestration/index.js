@@ -1,5 +1,6 @@
 export function createOpenLoadOrchestrationFeature({
   fetchImpl = window.fetch.bind(window),
+  translate,
   translateText,
   toast,
   setStatus,
@@ -15,18 +16,40 @@ export function createOpenLoadOrchestrationFeature({
   loadCoordinateConfig,
   loadScannerData,
 } = {}) {
+  function t(key, fallback, vars = {}) {
+    if (typeof translate === 'function') return translate(key, vars, fallback);
+    if (typeof window !== 'undefined' && typeof window.__APP_SERVICES?.i18n?.t === 'function') {
+      return window.__APP_SERVICES.i18n.t(key, vars, fallback);
+    }
+    return typeof translateText === 'function' ? translateText(fallback) : fallback;
+  }
+
+  function inferScannerProjectIdFromScanDataUrl(url = '') {
+    const match = String(url || '').match(/\/scan-data\/([^/]+)\//i);
+    return match?.[1] ? decodeURIComponent(match[1]) : '';
+  }
+
   function prepareCloudOpen(url, context = null) {
     const nameParts = String(url || '').split('/').filter(Boolean);
     const inferredCloudName = inferCloudNameFromMetadataUrl(url);
-    const name = (context && (context.cloudName || context.projectName))
+    const inferredProjectId = inferScannerProjectIdFromScanDataUrl(url);
+    const name = (context && (context.displayName || context.projectName || context.cloudName))
       || inferredCloudName
+      || inferredProjectId
       || nameParts[nameParts.length - 2]
       || 'PointCloud';
-    const nextContext = context || { type: 'cloud', cloudName: inferredCloudName || name };
+    const nextContext = context || (inferredProjectId ? {
+      type: 'scanner',
+      projectId: inferredProjectId,
+      projectName: name,
+      scanDataUrl: `/scan-data/${encodeURIComponent(inferredProjectId)}`,
+      metadataUrl: url,
+      cloudName: inferredCloudName || name,
+    } : { type: 'cloud', cloudName: inferredCloudName || name });
 
     setActiveDatasetContext(nextContext);
-    setStatus(`${translateText('Loading')}: ${name}…`);
-    toast(`${translateText('Loading point cloud')}: ${name}`, 'info');
+    setStatus(t('viewer.openLoad.status.loading', 'Loading: {{name}}...', { name }));
+    toast(t('viewer.openLoad.toast.loadingPointCloud', 'Loading point cloud: {{name}}', { name }), 'info');
     setCloudDisplayName(name);
 
     return {
@@ -38,8 +61,8 @@ export function createOpenLoadOrchestrationFeature({
 
   function handlePointCloudLoaded({ name }) {
     pruneScannerProjectVisuals();
-    setStatus(translateText('Ready'));
-    toast(`${translateText('✓ Point cloud loaded')}: ${name}`, 'ok');
+    setStatus(t('common.status.ready', 'Ready'));
+    toast(t('viewer.openLoad.toast.pointCloudLoaded', 'Point cloud loaded: {{name}}', { name }), 'ok');
     refreshSceneTree();
     refreshClassification();
     pruneScannerProjectVisuals();
@@ -58,13 +81,34 @@ export function createOpenLoadOrchestrationFeature({
       projectName: manifest.scannerProjectName || manifest.scannerProjectId,
       scanDataUrl: manifest.scanDataUrl || `/scan-data/${manifest.scannerProjectId}`,
       cloudName: inferredCloudName,
+      sourcePath: manifest.sourcePath || manifest.dirPath || '',
+      dirPath: manifest.dirPath || manifest.sourcePath || '',
+      metadataUrl: manifest.pointcloudUrl || pointcloud?.userData?.metadataUrl || '',
+      coordinateContext: manifest.coordinateContext || null,
+      coordinateBasis: manifest.coordinateBasis || manifest.coordinateContext?.coordinateBasis || null,
+      globalCoordinateAvailable: Boolean(manifest.globalCoordinateAvailable || manifest.coordinateContext?.globalCoordinateAvailable),
+      vendor: manifest.vendor || null,
+      scannerFormat: manifest.scannerFormat || null,
       pointcloud,
     };
   }
 
-  async function openScannerProject({ projectId, pointcloudUrl, scanDataUrl, projectName }) {
+  async function openScannerProject({
+    projectId,
+    pointcloudUrl,
+    scanDataUrl,
+    projectName,
+    sourcePath = '',
+    coordinateContext = null,
+    coordinateBasis = null,
+    globalCoordinateAvailable = null,
+    vendor = null,
+    scannerFormat = null,
+  }) {
     setSelectedScannerProject(projectId, { syncContext: true });
     await loadCoordinateConfig(projectId);
+    const contextCoordinateBasis = coordinateBasis || coordinateContext?.coordinateBasis || null;
+    const contextGlobalCoordinateAvailable = Boolean(globalCoordinateAvailable ?? coordinateContext?.globalCoordinateAvailable ?? false);
     if (pointcloudUrl) {
       return {
         shouldOpenPointCloud: true,
@@ -74,6 +118,14 @@ export function createOpenLoadOrchestrationFeature({
           projectId,
           projectName: projectName || projectId,
           scanDataUrl,
+          metadataUrl: pointcloudUrl,
+          sourcePath,
+          dirPath: sourcePath,
+          coordinateContext,
+          coordinateBasis: contextCoordinateBasis,
+          globalCoordinateAvailable: contextGlobalCoordinateAvailable,
+          vendor,
+          scannerFormat,
         },
       };
     }
@@ -87,6 +139,13 @@ export function createOpenLoadOrchestrationFeature({
         projectId,
         projectName: projectName || projectId,
         scanDataUrl,
+        sourcePath,
+        dirPath: sourcePath,
+        coordinateContext,
+        coordinateBasis: contextCoordinateBasis,
+        globalCoordinateAvailable: contextGlobalCoordinateAvailable,
+        vendor,
+        scannerFormat,
       },
     };
   }

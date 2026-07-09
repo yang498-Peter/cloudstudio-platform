@@ -33,7 +33,8 @@
       "save": "Guardar"
     },
     "status": {
-      "ready": "Listo"
+      "ready": "Listo",
+      "failed": "Error"
     },
     "author": {
       "createdBy": "Creado por",
@@ -605,7 +606,9 @@
       "removePending": "Eliminar región pendiente",
       "removeApplied": "Eliminar eliminar región",
       "regionLabel": "Eliminar región {{index}}",
-      "toolHint": "🧹 Eliminación de polígonos: haga clic para agregar vértices, haga doble clic para confirmar, obtenga una vista previa de varias regiones y luego aplique una vez | ESC cancelar"
+      "toolHint": "🧹 Eliminación de polígonos: haga clic para agregar vértices, haga doble clic para confirmar, obtenga una vista previa de varias regiones y luego aplique una vez | ESC cancelar",
+      "exporting": "Exportando el resultado con regiones eliminadas para descargar...",
+      "exportComplete": "LAS con regiones eliminadas exportado. La descarga ha comenzado."
     },
     "clip": {
       "toolsTitle": "Herramientas de recorte",
@@ -670,7 +673,11 @@
       "exportFiltered": "Puntos filtrados de la caja de clips: {{count}}",
       "toolHint": "⬜ Cuadro de clip: coloque la caja, ajuste el tamaño, confírmela en el panel Clip y exporte con el modo Clip actual | ESC para cancelar",
       "statusEditing": "Editando cuadro de clip... ajuste los controles, luego confirme esta ronda cuando esté listo",
-      "resumeEdit": "Reanudar la edición de esta caja de recorte"
+      "resumeEdit": "Reanudar la edición de esta caja de recorte",
+      "exporting": "Exportando LAS recortado para descargar...",
+      "exportComplete": "LAS recortado exportado. La descarga ha comenzado.",
+      "exportOpen": "Exportar LAS recortado para descarga",
+      "exportHintReady": "Exporta los recortes confirmados e inicia una descarga LAS. La escena actual del visor no cambia."
     },
     "profile": {
       "panelTitle": "✂ Vista de sección transversal/perfil",
@@ -691,7 +698,10 @@
       "minimapPlaceholder": "Se requiere información geográfica para mostrar el mapa.",
       "minimapPlaceholderHint": "Cargue un proyecto de escáner que contenga geo_info.csv",
       "crsBrowserSupportNote": "Este flujo de trabajo de coordenadas admite coordenadas locales, WGS84, Web Mercator, UTM/UPS y búsqueda de códigos de autoridad offline para definiciones CRS comunes. Los archivos de parámetros pueden importarse como `.prj / .wkt / .txt / .json / .csv`. Los recursos de cuadrícula pueden conectarse desde `.gsb / .gtx / .tif / .tiff`, mientras que `.ggf / .grd` puede requerir conversión a una cuadrícula compatible con PROJ antes de usarse. Las cuadrículas horizontales pueden participar en la visualización interactiva de coordenadas cuando la cadena de transformación actual las admite; el geoide vertical y cuadrículas más genéricas se aplican principalmente mediante la canalización de transformación y exportación PROJ/pyproj.",
-      "trajectoryTitle": "Trayectoria"
+      "trajectoryTitle": "Trayectoria",
+      "expandMap": "Ampliar mapa",
+      "flyTrajectoryStart": "🎬 Vuela a través de la trayectoria",
+      "flyTrajectoryStop": "⏹ Detener trayectoria sobrevuelo"
     },
     "open": {
       "loading": "Cargando...",
@@ -725,7 +735,26 @@
         "photos": "Fotos"
       },
       "importMeshReady": "Malla importada: {{name}}",
-      "openObjFile": "Abrir malla OBJ"
+      "openObjFile": "Abrir malla OBJ",
+      "importCancelling": "Cancelando...",
+      "cancelFailed": "Cancelación fallida: {{message}}",
+      "importTitle": "Nube de puntos de apertura",
+      "importStarting": "Preparando importación local...",
+      "removeAction": "Quitar",
+      "removeConfirm": "¿Eliminar \"{{name}}\" de esta lista?",
+      "removeConfirmTitle": "¿Eliminar proyecto de escáner?",
+      "removing": "Eliminando...",
+      "removeSuccess": "Se eliminó \"{{name}}\" de la lista.",
+      "removeFailed": "Error al eliminar: {{message}}",
+      "removeCloudConfirm": "¿Eliminar \"{{name}}\" de esta lista? Los datos originales no se eliminarán.",
+      "removeCloudConfirmTitle": "¿Eliminar nube de puntos?",
+      "removeCloudSuccess": "Se eliminó \"{{name}}\" de la lista.",
+      "removeCloudFailed": "Error al eliminar: {{message}}",
+      "loadingProjects": "Leyendo proyectos recientes desde la caché. Ya puede abrir una carpeta local o un LAS/LAZ.",
+      "selectingPath": "Esperando la selección del archivo...",
+      "importCancelled": "Importación cancelada.",
+      "emptyServerHint": "Sube conjuntos de datos desde la página principal de CloudStudio o el backend del servidor.",
+      "uploadHomeAction": "Subir datos"
     },
     "export": {
       "needDataset": "Cargue primero una nube de puntos o un proyecto de escáner.",
@@ -1204,6 +1233,17 @@
     },
     "performance": {
       "detailLoading": "Listo - los mosaicos de alto detalle siguen cargando hasta {{budget}} puntos"
+    },
+    "minimap": {
+      "projectCount": "Proyectos {{count}}"
+    },
+    "photo": {
+      "info": {
+        "position": "Posición: ({{x}}, {{y}}, {{z}})",
+        "orientation": "Orientación: Yaw {{yaw}}° Pitch {{pitch}}°",
+        "camera": "Cámara: {{side}}",
+        "timestamp": "Marca de tiempo: {{timestamp}}"
+      }
     }
   },
   "phrases": {

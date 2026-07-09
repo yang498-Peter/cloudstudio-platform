@@ -49,8 +49,7 @@ git diff --stat
 git diff --check
 
 cd web-uploader
-npm run check:public-release
-npm run check:i18n
+npm run check:release
 cd ..
 ```
 
@@ -86,8 +85,8 @@ git push origin main
 
 ## Public Release Guardrails
 
-The repository includes `npm run check:public-release` in `web-uploader`. Run it
-before commits and rely on CI to run it again on GitHub.
+The repository includes `npm run check:release` in `web-uploader`. Run it before
+commits and rely on CI to run it again on GitHub.
 
 The check blocks common accidental-publication risks:
 
@@ -105,8 +104,9 @@ deployment records.
 ## Release Checklist
 
 1. Run local smoke tests for the homepage, point cloud viewer, upload flow, and 3DGS viewer.
-2. Run `npm run check:public-release` inside `web-uploader`.
-3. Run `npm run check:i18n` inside `web-uploader` after UI text changes.
+2. Run `npm run check:release` inside `web-uploader`.
+3. Run `npm run check:i18n` inside `web-uploader` after UI text changes if you
+   need a faster localization-only check.
 4. Confirm `git status` is clean except intentional changes.
 5. Push the branch to GitHub or publish a controlled release package.
 6. Deploy to a test or staging environment first and verify `/health`, homepage,

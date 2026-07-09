@@ -1,0 +1,110 @@
+/* DXF workspace visual overrides extracted from viewer-design-tokens.css. */
+
+/* DXF glyphs are emitted as <svg class="dxf-svg-icon" viewBox="0 0 24 24"> with no
+   intrinsic width/height. Without an explicit size they fall back to the replaced-element
+   default (~300x150) and overflow their buttons, so constrain them here. */
+.dxf-svg-icon,
+.dxf-line-type-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  color: inherit;
+}
+
+.dxf-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dxf-card-icon .dxf-svg-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.dxf-file-remove:hover {
+  color: var(--cs-error) !important;
+  background: var(--cs-error-soft) !important;
+  border-color: #fecaca !important;
+}
+
+.dxf-file-item,
+.dxf-draw-card {
+  background: var(--cs-surface-panel) !important;
+  border: 1px solid var(--cs-border-subtle) !important;
+  border-radius: var(--cs-radius-card) !important;
+  box-shadow: var(--cs-shadow-hairline) !important;
+  color: var(--cs-text-primary) !important;
+}
+
+.dxf-draw-section-title {
+  color: var(--cs-text-primary) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.dxf-layer-eye,
+.dxf-file-remove {
+  color: var(--cs-text-primary) !important;
+  background: var(--cs-surface-panel) !important;
+  border: 1px solid var(--cs-border-subtle) !important;
+  box-shadow: none !important;
+  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.dxf-layer-eye:hover,
+.dxf-file-remove:hover {
+  color: var(--cs-accent) !important;
+  background: var(--cs-accent-soft) !important;
+  border-color: var(--cs-accent-border) !important;
+}
+
+.dxf-line-color-pop {
+  color: var(--cs-text-primary) !important;
+  background: var(--cs-surface-panel) !important;
+  border: 1px solid var(--cs-border-subtle) !important;
+  border-radius: var(--cs-radius-card) !important;
+  box-shadow: var(--cs-shadow-popover) !important;
+}
+
+.dxf-draw-chip {
+  border-radius: 999px !important;
+  color: var(--cs-text-secondary) !important;
+  background: var(--cs-surface-muted) !important;
+  border: 1px solid var(--cs-border-subtle) !important;
+}
+
+.dxf-switch-row {
+  position: relative;
+  overflow: hidden;
+}
+
+.dxf-switch-row input[type="checkbox"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  appearance: none;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.dxf-switch-row input[type="checkbox"]:focus-visible + .dxf-switch-ui {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.dxf-color-swatch.active,
+.dxf-lc.on {
+  border-color: var(--cs-accent) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}

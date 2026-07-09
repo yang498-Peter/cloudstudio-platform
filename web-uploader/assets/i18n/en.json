@@ -33,7 +33,8 @@
       "save": "Save"
     },
     "status": {
-      "ready": "Ready"
+      "ready": "Ready",
+      "failed": "Failed"
     },
     "author": {
       "createdBy": "Created by",
@@ -604,7 +605,9 @@
       "removePending": "Remove pending region",
       "removeApplied": "Remove delete region",
       "regionLabel": "Delete Region {{index}}",
-      "toolHint": "🧹 Polygon delete — click to add vertices, double-click to confirm, preview multiple regions, then apply once | ESC cancel"
+      "toolHint": "🧹 Polygon delete — click to add vertices, double-click to confirm, preview multiple regions, then apply once | ESC cancel",
+      "exporting": "Exporting delete-region result for download...",
+      "exportComplete": "Delete-region LAS exported. Download started."
     },
     "clip": {
       "toolsTitle": "Clipping Tools",
@@ -669,7 +672,11 @@
       "exportFiltered": "Clip box filtered points: {{count}}",
       "toolHint": "⬜ Clip box — place the box, adjust its size, confirm it in the Clip panel, then export with the current clip mode | ESC cancel",
       "statusEditing": "Editing clip box... adjust the handles, then confirm this round when ready",
-      "resumeEdit": "Resume editing this clip box"
+      "resumeEdit": "Resume editing this clip box",
+      "exporting": "Exporting clipped LAS for download...",
+      "exportComplete": "Clipped LAS exported. Download started.",
+      "exportOpen": "Export clipped LAS for download",
+      "exportHintReady": "Exports confirmed clip boxes and starts a LAS download. The current viewer scene is not changed."
     },
     "profile": {
       "panelTitle": "✂ Cross-Section / Profile View",
@@ -690,7 +697,10 @@
       "minimapPlaceholder": "Geographic information is required to show the map",
       "minimapPlaceholderHint": "Load a scanner project that contains geo_info.csv",
       "crsBrowserSupportNote": "This coordinate workflow supports local coordinates, WGS84, Web Mercator, UTM/UPS, and offline authority-code lookup for common CRS definitions. Parameter files can be imported as `.prj / .wkt / .txt / .json / .csv`. Grid resources can be attached from `.gsb / .gtx / .tif / .tiff`, while `.ggf / .grd` may require conversion to a PROJ-compatible grid before they can be used. Horizontal grids can participate in interactive coordinate display when the current transform chain supports them; vertical geoid and more generic grids are applied mainly through the native PROJ/pyproj transform and export pipeline.",
-      "trajectoryTitle": "Trajectory"
+      "trajectoryTitle": "Trajectory",
+      "expandMap": "Expand Map",
+      "flyTrajectoryStart": "🎬 Fly Through Trajectory",
+      "flyTrajectoryStop": "⏹ Stop Trajectory Flythrough"
     },
     "open": {
       "loading": "Loading...",
@@ -724,7 +734,26 @@
         "photos": "Photos"
       },
       "importMeshReady": "Imported mesh: {{name}}",
-      "openObjFile": "Open OBJ Mesh"
+      "openObjFile": "Open OBJ Mesh",
+      "importCancelling": "Cancelling...",
+      "cancelFailed": "Cancel failed: {{message}}",
+      "importTitle": "Opening Point Cloud",
+      "importStarting": "Preparing local import...",
+      "removeAction": "Remove",
+      "removeConfirm": "Remove \"{{name}}\" from this list?",
+      "removeConfirmTitle": "Remove scanner project?",
+      "removing": "Removing...",
+      "removeSuccess": "Removed \"{{name}}\" from the list.",
+      "removeFailed": "Remove failed: {{message}}",
+      "removeCloudConfirm": "Remove \"{{name}}\" from this list? The original data will not be deleted.",
+      "removeCloudConfirmTitle": "Remove point cloud?",
+      "removeCloudSuccess": "Removed \"{{name}}\" from the list.",
+      "removeCloudFailed": "Remove failed: {{message}}",
+      "loadingProjects": "Reading recent projects from cache. You can open a local folder or LAS/LAZ now.",
+      "selectingPath": "Waiting for file selection...",
+      "importCancelled": "Import cancelled.",
+      "emptyServerHint": "Upload datasets from the CloudStudio home page or server backend.",
+      "uploadHomeAction": "Upload data"
     },
     "export": {
       "needDataset": "Load a point cloud or scanner project first.",
@@ -1203,6 +1232,17 @@
     },
     "performance": {
       "detailLoading": "Ready - high-detail tiles continue loading up to {{budget}} points"
+    },
+    "minimap": {
+      "projectCount": "{{count}} projects"
+    },
+    "photo": {
+      "info": {
+        "position": "Position: ({{x}}, {{y}}, {{z}})",
+        "orientation": "Orientation: Yaw {{yaw}}° Pitch {{pitch}}°",
+        "camera": "Camera: {{side}}",
+        "timestamp": "Timestamp: {{timestamp}}"
+      }
     }
   },
   "phrases": {

@@ -33,7 +33,8 @@
       "save": "Speichern"
     },
     "status": {
-      "ready": "Bereit"
+      "ready": "Bereit",
+      "failed": "Fehlgeschlagen"
     },
     "author": {
       "createdBy": "Erstellt von",
@@ -604,7 +605,9 @@
       "removePending": "Ausstehende Region entfernen",
       "removeApplied": "Löschbereich entfernen",
       "regionLabel": "Region {{index}} löschen",
-      "toolHint": "🧹 Polygon löschen – Klicken Sie, um Eckpunkte hinzuzufügen, doppelklicken Sie zur Bestätigung, zeigen Sie eine Vorschau mehrerer Regionen an und wenden Sie sie dann einmal an | ESC abbrechen"
+      "toolHint": "🧹 Polygon löschen – Klicken Sie, um Eckpunkte hinzuzufügen, doppelklicken Sie zur Bestätigung, zeigen Sie eine Vorschau mehrerer Regionen an und wenden Sie sie dann einmal an | ESC abbrechen",
+      "exporting": "LAS-Ergebnis mit geloeschten Bereichen wird zum Download exportiert...",
+      "exportComplete": "LAS mit geloeschten Bereichen exportiert. Der Download wurde gestartet."
     },
     "clip": {
       "toolsTitle": "Clipping-Tools",
@@ -669,7 +672,11 @@
       "exportFiltered": "Clipbox-gefilterte Punkte: {{count}}",
       "toolHint": "⬜ Clipbox — platzieren Sie die Box, passen Sie ihre Größe an, bestätigen Sie sie im Clip-Bereich und exportieren Sie mit dem aktuellen Clip-Modus | ESC abbrechen",
       "statusEditing": "Clip-Box bearbeiten... Passen Sie die Griffe an und bestätigen Sie diese Runde, wenn Sie fertig sind",
-      "resumeEdit": "Diese Clip-Box weiter bearbeiten"
+      "resumeEdit": "Diese Clip-Box weiter bearbeiten",
+      "exporting": "Zugeschnittene LAS-Datei wird zum Download exportiert...",
+      "exportComplete": "Zugeschnittene LAS-Datei exportiert. Der Download wurde gestartet.",
+      "exportOpen": "Zugeschnittenes LAS zum Download exportieren",
+      "exportHintReady": "Exportiert die bestaetigten Clip-Boxen und startet einen LAS-Download. Die aktuelle Viewer-Szene bleibt unveraendert."
     },
     "profile": {
       "panelTitle": "✂ Querschnitt-/Profilansicht",
@@ -690,7 +697,10 @@
       "minimapPlaceholder": "Für die Darstellung der Karte sind geografische Informationen erforderlich",
       "minimapPlaceholderHint": "Laden Sie ein Scannerprojekt, das geo_info.csv enthält",
       "crsBrowserSupportNote": "Dieser Koordinaten-Workflow unterstützt lokale Koordinaten, WGS84, Web Mercator, UTM/UPS und die Offline-Suche nach Authority-Codes für häufig genutzte CRS-Definitionen. Parameterdateien können als `.prj / .wkt / .txt / .json / .csv` importiert werden. Raster-Ressourcen können über `.gsb / .gtx / .tif / .tiff` angefügt werden, während `.ggf / .grd` möglicherweise erst in ein PROJ-kompatibles Raster konvertiert werden muss. Horizontale Raster können bei unterstützter Transformationskette an der interaktiven Koordinatendarstellung teilnehmen; vertikale Geoid- und allgemeine Raster werden in der Regel über die native PROJ/pyproj-Transformations- und Exportpipeline angewendet.",
-      "trajectoryTitle": "Trajektorie"
+      "trajectoryTitle": "Trajektorie",
+      "expandMap": "Karte vergrößern",
+      "flyTrajectoryStart": "🎬 Durch die Flugbahn fliegen",
+      "flyTrajectoryStop": "⏹ Flugbahndurchflug stoppen"
     },
     "open": {
       "loading": "Laden...",
@@ -724,7 +734,26 @@
         "photos": "Fotos"
       },
       "importMeshReady": "Importiertes Netz: {{name}}",
-      "openObjFile": "OBJ-Mesh öffnen"
+      "openObjFile": "OBJ-Mesh öffnen",
+      "importCancelling": "Stornierung...",
+      "cancelFailed": "Abbrechen fehlgeschlagen: {{message}}",
+      "importTitle": "Eröffnungspunktwolke",
+      "importStarting": "Lokaler Import wird vorbereitet...",
+      "removeAction": "Entfernen",
+      "removeConfirm": "„{{name}}“ aus dieser Liste entfernen?",
+      "removeConfirmTitle": "Scannerprojekt entfernen?",
+      "removing": "Entfernen...",
+      "removeSuccess": "„{{name}}“ aus der Liste entfernt.",
+      "removeFailed": "Entfernen fehlgeschlagen: {{message}}",
+      "removeCloudConfirm": "„{{name}}“ aus dieser Liste entfernen? Die Originaldaten werden nicht gelöscht.",
+      "removeCloudConfirmTitle": "Punktwolke entfernen?",
+      "removeCloudSuccess": "„{{name}}“ aus der Liste entfernt.",
+      "removeCloudFailed": "Entfernen fehlgeschlagen: {{message}}",
+      "loadingProjects": "Letzte Projekte werden aus dem Cache gelesen. Sie können jetzt einen lokalen Ordner oder LAS/LAZ öffnen.",
+      "selectingPath": "Warten auf Dateiauswahl...",
+      "importCancelled": "Import abgebrochen.",
+      "emptyServerHint": "Laden Sie Datensätze über die CloudStudio-Startseite oder das Server-Backend hoch.",
+      "uploadHomeAction": "Daten hochladen"
     },
     "export": {
       "needDataset": "Laden Sie zunächst eine Punktwolke oder ein Scannerprojekt.",
@@ -1203,6 +1232,17 @@
     },
     "performance": {
       "detailLoading": "Bereit - hochdetaillierte Kacheln werden bis zu {{budget}} Punkten weiter geladen"
+    },
+    "minimap": {
+      "projectCount": "{{count}}-Projekte"
+    },
+    "photo": {
+      "info": {
+        "position": "Position: ({{x}}, {{y}}, {{z}})",
+        "orientation": "Ausrichtung: Yaw {{yaw}}° Pitch {{pitch}}°",
+        "camera": "Kamera: {{side}}",
+        "timestamp": "Zeitstempel: {{timestamp}}"
+      }
     }
   },
   "phrases": {

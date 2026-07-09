@@ -15,7 +15,8 @@ import {
 const DEFAULT_COLOR = '#3399ff';
 const DEFAULT_WIDTH = 2;
 const DXF_ENDPOINT_RADIUS = 0.2;
-const SHOW_AUTO_EXTRACT_UI = false;
+// Auto Extract is still internally validated, so it stays hidden in customer builds.
+const SHOW_DXF_AUTO_EXTRACT_BETA = false;
 const DRAW_COLORS = [
   '#3399ff', '#33cc33', '#ff3333', '#ff9900', '#cc33ff',
   '#00cccc', '#ffcc00', '#ff66b2', '#66ff66', '#ffffff',
@@ -75,7 +76,7 @@ function hexToTrueColor(hex) {
 }
 
 // ── Minimal DXF writer ──────────────────────────────────────────────────
-function buildDxfString(layers, aciTable, getExportEndpoints) {
+export function buildDxfString(layers, aciTable, getExportEndpoints) {
   const out = [];
   const w = (s) => out.push(s);
   w('0'); w('SECTION'); w('2'); w('HEADER');
@@ -120,6 +121,8 @@ export function createDxfDrawFeature({
   translate,
   translateText,
   getActiveDatasetContext,
+  textDialog,
+  getScenePointDisplayCoordinate,
 } = {}) {
 
   // ── State ─────────────────────────────────────────────────────────────
@@ -184,6 +187,164 @@ export function createDxfDrawFeature({
     return `${count} ${tt(unitText)}`;
   }
 
+  function resetFixedLayoutScroll() {
+    const layout = document.getElementById('layout');
+    if (!layout) return;
+    if (layout.scrollTop) layout.scrollTop = 0;
+    if (layout.scrollLeft) layout.scrollLeft = 0;
+  }
+
+  function requestViewerRelayout() {
+    const run = () => {
+      resetFixedLayoutScroll();
+      try {
+        const renderArea = document.getElementById('potree_render_area');
+        const canvas = viewer?.renderer?.domElement;
+        const rect = renderArea?.getBoundingClientRect?.();
+        const width = Math.max(1, Math.round(rect?.width || renderArea?.clientWidth || canvas?.clientWidth || 1));
+        const height = Math.max(1, Math.round(rect?.height || renderArea?.clientHeight || canvas?.clientHeight || 1));
+        if (renderArea?.style) {
+          renderArea.style.width = '100%';
+          renderArea.style.height = '100%';
+        }
+        if (canvas?.style) {
+          canvas.style.width = '100%';
+          canvas.style.height = '100%';
+          canvas.style.display = 'block';
+        }
+        viewer?.renderer?.setSize?.(width, height, false);
+        const camera = viewer?.scene?.getActiveCamera?.();
+        if (camera?.isPerspectiveCamera) {
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix?.();
+        }
+        camera?.updateMatrixWorld?.(true);
+      } catch { /* best-effort only */ }
+      try {
+        window.dispatchEvent(new Event('resize'));
+      } catch { /* best-effort only */ }
+      try {
+        viewer?.setNeedsUpdate?.();
+        viewer?.render?.();
+      } catch { /* best-effort only */ }
+    };
+
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(() => {
+        run();
+        window.requestAnimationFrame(run);
+      });
+      return;
+    }
+    setTimeout(run, 0);
+  }
+
+  function dxfIcon(name, tone = 'blue') {
+    const palette = {
+      blue: { stroke: '#2563eb', fill: '#dbeafe' },
+      cyan: { stroke: '#0891b2', fill: '#cffafe' },
+      violet: { stroke: '#7c3aed', fill: '#ede9fe' },
+      orange: { stroke: '#ea580c', fill: '#ffedd5' },
+      green: { stroke: '#16a34a', fill: '#dcfce7' },
+      red: { stroke: '#dc2626', fill: '#fee2e2' },
+      slate: { stroke: '#64748b', fill: '#f1f5f9' },
+    };
+    const c = palette[tone] || palette.blue;
+    const common = `fill="none" stroke="${c.stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"`;
+    const fill = `fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.8"`;
+    const icons = {
+      line: `<path ${common} d="M6 17 18 7"/><circle ${fill} cx="6" cy="17" r="2.2"/><circle ${fill} cx="18" cy="7" r="2.2"/>`,
+      vertical: `<path ${common} d="M12 4v16"/><path ${common} d="m8.5 7.5 3.5-3.5 3.5 3.5"/><path ${common} d="m8.5 16.5 3.5 3.5 3.5-3.5"/><path ${common} d="M6 5h3"/><path ${common} d="M6 19h3"/>`,
+      horizontal: `<path ${common} d="M4 12h16"/><path ${common} d="m7.5 8.5-3.5 3.5 3.5 3.5"/><path ${common} d="m16.5 8.5 3.5 3.5-3.5 3.5"/><circle ${fill} cx="12" cy="12" r="1.8"/>`,
+      corner: `<path ${common} d="M6 18 10.5 8.5 18 6"/><path ${common} d="M10.5 8.5 16.5 17"/><circle ${fill} cx="6" cy="18" r="2"/><circle ${fill} cx="10.5" cy="8.5" r="2"/><circle ${fill} cx="18" cy="6" r="2"/><circle ${fill} cx="16.5" cy="17" r="2"/>`,
+      undo: `<path ${common} d="M9 7 5 11l4 4"/><path ${common} d="M5 11h9a5 5 0 1 1-3.2 8.8"/>`,
+      trash: `<path ${common} d="M4 7h16"/><path ${common} d="M9 7V5h6v2"/><path ${common} d="M8 10v8"/><path ${common} d="M12 10v8"/><path ${common} d="M16 10v8"/><path ${common} d="M6.5 7 7.5 20h9L17.5 7"/>`,
+      export: `<path ${common} d="M12 4v10"/><path ${common} d="m16 10-4 4-4-4"/><path ${common} d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/>`,
+      target: `<circle ${fill} cx="12" cy="12" r="7"/><circle fill="${c.stroke}" cx="12" cy="12" r="2"/><path ${common} d="M12 2v3"/><path ${common} d="M12 19v3"/><path ${common} d="M2 12h3"/><path ${common} d="M19 12h3"/>`,
+      compass: `<path ${common} d="m12 3 7 18-7-4-7 4z"/><path ${common} d="M12 3v14"/>`,
+      dxf: `<path ${common} d="M5 5.5h14"/><path ${common} d="M5 18.5h14"/><path ${common} d="m8 5.5 8 13"/><path ${common} d="m16 5.5-8 13"/>`,
+      eye: `<path ${common} d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle ${fill} cx="12" cy="12" r="2.5"/>`,
+      eyeOff: `<path ${common} d="M3 3l18 18"/><path ${common} d="M10.6 10.6a2.5 2.5 0 0 0 2.8 2.8"/><path ${common} d="M7.2 7.8C4.7 9.2 3 12 3 12s3.5 6 9 6c1.5 0 2.9-.4 4.1-1"/><path ${common} d="M14.4 6.4C13.6 6.1 12.8 6 12 6c-5.5 0-9 6-9 6"/>`,
+      close: `<path ${common} d="M6 6l12 12"/><path ${common} d="M18 6 6 18"/>`,
+      layer: `<path ${fill} d="m12 3 8 4-8 4-8-4z"/><path ${common} d="m4 12 8 4 8-4"/><path ${common} d="m4 17 8 4 8-4"/>`,
+      plus: `<path ${common} d="M12 5v14"/><path ${common} d="M5 12h14"/>`,
+    };
+    return `<svg class="dxf-svg-icon dxf-svg-icon-${name}" viewBox="0 0 24 24" aria-hidden="true">${icons[name] || icons.line}</svg>`;
+  }
+
+  function dxfLineTypeIcon(type) {
+    const common = 'fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"';
+    const icons = {
+      vertical: `<path ${common} d="M12 4v16"/><path ${common} d="m9 7 3-3 3 3"/><path ${common} d="m9 17 3 3 3-3"/>`,
+      horizontal: `<path ${common} d="M4 12h16"/><path ${common} d="m7 9-3 3 3 3"/><path ${common} d="m17 9 3 3-3 3"/>`,
+      corner: `<path ${common} d="M6 18 11 8l7-2"/><path ${common} d="M11 8l6 9"/>`,
+      free: `<path ${common} d="M6 17 18 7"/><circle fill="currentColor" cx="6" cy="17" r="2"/><circle fill="currentColor" cx="18" cy="7" r="2"/>`,
+    };
+    return `<svg class="dxf-line-type-icon" viewBox="0 0 24 24" aria-hidden="true">${icons[type] || icons.free}</svg>`;
+  }
+
+  function getActiveDxfProjectId() {
+    const context = typeof getActiveDatasetContext === 'function' ? getActiveDatasetContext() : null;
+    return context?.type === 'scanner' && context.projectId ? String(context.projectId) : null;
+  }
+
+  function assignLineProject(lineEntry, projectId = getActiveDxfProjectId()) {
+    const resolvedProjectId = projectId
+      || lineEntry?.scannerProjectId
+      || lineEntry?.projectId
+      || lineEntry?.measure?.userData?.scannerProjectId
+      || null;
+    if (!resolvedProjectId || !lineEntry) return lineEntry;
+    lineEntry.scannerProjectId = resolvedProjectId;
+    if (lineEntry.measure) {
+      if (!lineEntry.measure.userData) lineEntry.measure.userData = {};
+      lineEntry.measure.userData.scannerProjectId = resolvedProjectId;
+    }
+    return lineEntry;
+  }
+
+  function getLineProjectId(line) {
+    return line?.scannerProjectId
+      || line?.projectId
+      || line?.measure?.userData?.scannerProjectId
+      || line?.measure?.userData?.projectId
+      || getActiveDxfProjectId();
+  }
+
+  function getPointProjectId(point, fallback = null) {
+    return point?.scannerProjectId
+      || point?.projectId
+      || point?.sourceProjectId
+      || fallback
+      || null;
+  }
+
+  function copyPointProject(targetPoint, sourcePoint) {
+    if (!targetPoint || !sourcePoint) return targetPoint;
+    const projectId = getPointProjectId(sourcePoint);
+    if (projectId) targetPoint.scannerProjectId = projectId;
+    if (sourcePoint.pointcloudUuid) targetPoint.pointcloudUuid = sourcePoint.pointcloudUuid;
+    return targetPoint;
+  }
+
+  function toDxfExportPoint(point, projectId = null) {
+    const raw = {
+      x: Number(point?.x),
+      y: Number(point?.y),
+      z: Number(point?.z),
+    };
+    if (!Number.isFinite(raw.x) || !Number.isFinite(raw.y) || !Number.isFinite(raw.z)) return null;
+    if (typeof getScenePointDisplayCoordinate !== 'function') return raw;
+    const coord = getScenePointDisplayCoordinate(raw, projectId || getActiveDxfProjectId());
+    if (coord?.kind === 'projected' || coord?.kind === 'local') {
+      const x = Number(coord.x);
+      const y = Number(coord.y);
+      const z = Number(coord.z);
+      if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z)) return { x, y, z };
+    }
+    return raw;
+  }
+
   function getAllLines() {
     const all = [];
     for (const [, layer] of layers) all.push(...layer.lines);
@@ -240,10 +401,20 @@ export function createDxfDrawFeature({
   // draggedIndex: which point was just dragged
   //   -1 = initial finalize after drawing (use pt 0 as reference — the first click)
   //    0 or 1 = editing drag (use the dragged point as reference — moves the whole line)
-  function getExportEndpoints(line, draggedIndex = -1) {
+  function getSceneEndpoints(line, draggedIndex = -1) {
     const pts = line.measure?.points;
     if (!pts || pts.length < 2) return null;
     return computeLineEndpoints(line.lineType, pts[0].position, pts[1].position, draggedIndex);
+  }
+
+  function getExportEndpoints(line, draggedIndex = -1) {
+    const endpoints = getSceneEndpoints(line, draggedIndex);
+    if (!endpoints) return null;
+    const projectId = getLineProjectId(line);
+    const sourcePoints = line.measure?.points || [];
+    const p1 = toDxfExportPoint(endpoints.p1, getPointProjectId(sourcePoints[0], projectId));
+    const p2 = toDxfExportPoint(endpoints.p2, getPointProjectId(sourcePoints[1], projectId));
+    return p1 && p2 ? { p1, p2 } : endpoints;
   }
 
   // ── 2D line intersection (XY plane) ─────────────────────────────────
@@ -452,6 +623,23 @@ export function createDxfDrawFeature({
     return addOverlayObject(line);
   }
 
+  function getStableSegmentOrigin(p1, p2) {
+    const maxMagnitude = Math.max(
+      Math.abs(Number(p1?.x) || 0),
+      Math.abs(Number(p1?.y) || 0),
+      Math.abs(Number(p1?.z) || 0),
+      Math.abs(Number(p2?.x) || 0),
+      Math.abs(Number(p2?.y) || 0),
+      Math.abs(Number(p2?.z) || 0),
+    );
+    if (maxMagnitude <= 10000) return new THREE.Vector3(0, 0, 0);
+    return new THREE.Vector3(
+      ((Number(p1.x) || 0) + (Number(p2.x) || 0)) / 2,
+      ((Number(p1.y) || 0) + (Number(p2.y) || 0)) / 2,
+      ((Number(p1.z) || 0) + (Number(p2.z) || 0)) / 2,
+    );
+  }
+
   function clearFloorplanPreview() {
     floorplanPreviewObjects.forEach(removeOverlayObject);
     floorplanPreviewObjects = [];
@@ -473,15 +661,23 @@ export function createDxfDrawFeature({
 
   function setOverlayLinePositions(line, p1, p2) {
     if (!line) return;
+    const origin = getStableSegmentOrigin(p1, p2);
+    line.position.copy(origin);
+    const ax = p1.x - origin.x;
+    const ay = p1.y - origin.y;
+    const az = p1.z - origin.z;
+    const bx = p2.x - origin.x;
+    const by = p2.y - origin.y;
+    const bz = p2.z - origin.z;
     if (line.userData?.isSimpleOverlayLine) {
       const positions = line.geometry.attributes.position.array;
-      positions[0] = p1.x; positions[1] = p1.y; positions[2] = p1.z;
-      positions[3] = p2.x; positions[4] = p2.y; positions[5] = p2.z;
+      positions[0] = ax; positions[1] = ay; positions[2] = az;
+      positions[3] = bx; positions[4] = by; positions[5] = bz;
       line.geometry.attributes.position.needsUpdate = true;
       line.geometry.computeBoundingSphere();
       return;
     }
-    setFatLinePositions(line, p1, p2);
+    setFatLinePositions(line, new THREE.Vector3(ax, ay, az), new THREE.Vector3(bx, by, bz), { preservePosition: true });
   }
 
   // ── Corner intersection helpers ─────────────────────────────────────
@@ -629,6 +825,8 @@ export function createDxfDrawFeature({
     viewer.scene.addMeasurement(measure);
     measure.addMarker(from.clone());
     measure.addMarker(to.clone());
+    copyPointProject(measure.points[0], from);
+    copyPointProject(measure.points[1], to);
     measure.setPosition(0, from.clone());
     measure.setPosition(1, to.clone());
     if (measure.spheres?.[0]) measure.spheres[0].position.copy(from);
@@ -649,7 +847,7 @@ export function createDxfDrawFeature({
     // Patch for snap + linked drag
     for (let si = 0; si < measure.spheres.length; si++) patchSphereDrag(measure, si);
 
-    const lineEntry = { id: nextLineId++, layerName: style.layerName, measure, color, lineWidth: style.lineWidth, lineType: 'corner' };
+    const lineEntry = assignLineProject({ id: nextLineId++, layerName: style.layerName, measure, color, lineWidth: style.lineWidth, lineType: 'corner' });
     layer.lines.push(lineEntry);
     undoStack.push(lineEntry.id);
 
@@ -696,6 +894,8 @@ export function createDxfDrawFeature({
     viewer.scene.addMeasurement(measure);
     measure.addMarker(from.clone());
     measure.addMarker(to.clone());
+    copyPointProject(measure.points[0], from);
+    copyPointProject(measure.points[1], to);
     measure.setPosition(0, from.clone());
     measure.setPosition(1, to.clone());
     const c3 = new THREE.Color(color);
@@ -715,7 +915,7 @@ export function createDxfDrawFeature({
     });
     measure.update?.();
     for (let si = 0; si < measure.spheres.length; si++) patchSphereDrag(measure, si);
-    const lineEntry = { id: nextLineId++, layerName, measure, color, lineWidth, lineType };
+    const lineEntry = assignLineProject({ id: nextLineId++, layerName, measure, color, lineWidth, lineType });
     layer.lines.push(lineEntry);
     undoStack.push(lineEntry.id);
     return lineEntry;
@@ -915,6 +1115,9 @@ export function createDxfDrawFeature({
 
       const locked = planeZ ?? (collectedPts.length === 0 ? I.location.z : collectedPts[0].z);
       const pt = constrainPointToPlane(I.location, locked);
+      const pointProjectId = I.pointcloud?.userData?.scannerProjectId || I.pointcloud?.userData?.projectId || null;
+      if (pointProjectId) pt.scannerProjectId = String(pointProjectId);
+      if (I.pointcloud?.uuid) pt.pointcloudUuid = I.pointcloud.uuid;
       collectedPts.push(pt);
 
       // Immediately show a properly-sized dot at clicked point
@@ -1293,6 +1496,8 @@ export function createDxfDrawFeature({
       viewer.scene.addMeasurement(measure);
       measure.addMarker(snapToPosition.clone());
       measure.addMarker(snapToPosition.clone());
+      copyPointProject(measure.points[0], snapToPosition);
+      copyPointProject(measure.points[1], snapToPosition);
       measure.setPosition(0, snapToPosition.clone());
       measure.setPosition(1, snapToPosition.clone());
       if (measure.spheres?.[0]) measure.spheres[0].position.copy(snapToPosition);
@@ -1315,12 +1520,13 @@ export function createDxfDrawFeature({
     measure.spheres?.forEach(s => { if (s.material) s.material.color.copy(c3); });
 
     pendingMeasure = measure;
-    const lineEntry = { id: nextLineId++, layerName: activeLayer, measure, color, lineWidth: layer.lineWidth, lineType: 'free' };
+    const lineEntry = assignLineProject({ id: nextLineId++, layerName: activeLayer, measure, color, lineWidth: layer.lineWidth, lineType: 'free' });
 
     // If snapping to a previous endpoint (continuous draw), set first point
     let snapDoneForFirst = false;
     if (snapToPosition) {
       measure.setPosition(0, snapToPosition.clone());
+      copyPointProject(measure.points[0], snapToPosition);
       snapDoneForFirst = true;
     }
 
@@ -1468,13 +1674,21 @@ export function createDxfDrawFeature({
     return line;
   }
 
-  function setFatLinePositions(line, p1, p2) {
+  function setFatLinePositions(line, p1, p2, { preservePosition = false } = {}) {
     if (!line) return;
     if (line.userData?.isSimpleOverlayLine) {
       setOverlayLinePositions(line, p1, p2);
       return;
     }
-    line.geometry.setPositions([p1.x, p1.y, p1.z, p2.x, p2.y, p2.z]);
+    let a = p1;
+    let b = p2;
+    if (!preservePosition) {
+      const origin = getStableSegmentOrigin(p1, p2);
+      line.position.copy(origin);
+      a = new THREE.Vector3(p1.x - origin.x, p1.y - origin.y, p1.z - origin.z);
+      b = new THREE.Vector3(p2.x - origin.x, p2.y - origin.y, p2.z - origin.z);
+    }
+    line.geometry.setPositions([a.x, a.y, a.z, b.x, b.y, b.z]);
     line.geometry.verticesNeedUpdate = true;
     line.geometry.computeBoundingSphere();
     line.computeLineDistances();
@@ -1582,10 +1796,10 @@ export function createDxfDrawFeature({
     viewer.addEventListener('update', onUpdate);
 
     pendingMeasure = measure;
-    const lineEntry = {
+    const lineEntry = assignLineProject({
       id: nextLineId++, layerName: activeLayer, measure, color,
       lineWidth: layer.lineWidth, lineType,
-    };
+    });
 
     for (let si = 0; si < measure.spheres.length; si++) {
       patchSphereDrag(measure, si);
@@ -1618,7 +1832,7 @@ export function createDxfDrawFeature({
 
           renderPanel();
           refreshSceneTree?.();
-          toast?.(`${label} ${tt('added')}`, 'info', 1200);
+          toast?.(tk('viewer.dxf.draw.toasts.lineAdded', '{{label}} added', { label }), 'info', 1200);
         };
         lastSphere.addEventListener('drop', onSecondDrop);
         if (activeDrawSession) {
@@ -1658,7 +1872,7 @@ export function createDxfDrawFeature({
   // After the user places 2 points (or drops after drag), compute the
   // constrained endpoints, move the measure points there, show the edge.
   function finalizeConstrainedLine(measure, lineEntry, draggedIndex = -1) {
-    const ep = getExportEndpoints(lineEntry, draggedIndex);
+    const ep = getSceneEndpoints(lineEntry, draggedIndex);
     if (!ep) return;
 
     // Move measure points to the constrained positions
@@ -1840,11 +2054,13 @@ export function createDxfDrawFeature({
   }
 
   function setEndpointsVisible(visible) {
-    showEndpoints = visible;
+    showEndpoints = !!visible;
     for (const line of getAllLines()) {
-      line.measure.spheres.forEach(s => { s.visible = visible; });
+      line.measure.spheres.forEach(s => { s.visible = showEndpoints; });
     }
-    renderPanel();
+    const checkbox = document.getElementById('chk-dxf-endpoints');
+    if (checkbox && checkbox.checked !== showEndpoints) checkbox.checked = showEndpoints;
+    requestViewerRelayout();
   }
 
   function applyColorToLayer(layerName, color) {
@@ -1928,28 +2144,35 @@ export function createDxfDrawFeature({
 
     let html = `<div class="dxf-draw-shell">
       <div class="dxf-draw-topbar">
-        <div class="dxf-draw-toolgroup">
-          <button class="btn dxf-draw-toolbtn" id="btn-dxf-draw-line"${drawing ? ' disabled' : ''} title="${escapeHtml(tk('viewer.dxf.draw.tool.freeTitle', 'Free line segment'))}"><span class="dxf-btn-icon">✏️</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.tool.line', 'Line'))}</span></button>
-          <button class="btn dxf-draw-toolbtn" id="btn-dxf-draw-vert"${drawing ? ' disabled' : ''} title="${escapeHtml(tk('viewer.dxf.draw.tool.verticalTitle', 'Vertical line (height axis)'))}"><span class="dxf-btn-icon">↕</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.tool.vertical', 'Vertical'))}</span></button>
-          <button class="btn dxf-draw-toolbtn" id="btn-dxf-draw-horiz"${drawing ? ' disabled' : ''} title="${escapeHtml(tk('viewer.dxf.draw.tool.horizontalTitle', 'Horizontal line (planar)'))}"><span class="dxf-btn-icon">↔</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.tool.horizontal', 'Horizontal'))}</span></button>
-          <button class="btn dxf-draw-toolbtn" id="btn-dxf-draw-corner"${drawing || ciActive ? ' disabled' : ''} title="${escapeHtml(tk('viewer.dxf.draw.tool.cornerTitle', 'Corner intersection draw'))}"><span class="dxf-btn-icon">⊾</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.tool.corner', 'Corner Draw'))}</span></button>
+        <div class="dxf-draw-tool-card dxf-draw-tool-card-primary">
+          <div class="dxf-draw-card-hd">${escapeHtml(tk('viewer.dxf.drawTitle', 'Drawing'))}</div>
+          <div class="dxf-draw-toolgroup">
+            <button class="btn dxf-draw-toolbtn${pendingDrawMode === 'free' ? ' active' : ''}" id="btn-dxf-draw-line"${drawing ? ' disabled' : ''} title="${escapeHtml(tk('viewer.dxf.draw.tool.freeTitle', 'Free line segment'))}"><span class="dxf-btn-icon">${dxfIcon('line', 'blue')}</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.tool.line', 'Line'))}</span></button>
+            <button class="btn dxf-draw-toolbtn${pendingDrawMode === 'vertical' ? ' active' : ''}" id="btn-dxf-draw-vert"${drawing ? ' disabled' : ''} title="${escapeHtml(tk('viewer.dxf.draw.tool.verticalTitle', 'Vertical line (height axis)'))}"><span class="dxf-btn-icon">${dxfIcon('vertical', 'cyan')}</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.tool.vertical', 'Vertical'))}</span></button>
+            <button class="btn dxf-draw-toolbtn${pendingDrawMode === 'horizontal' ? ' active' : ''}" id="btn-dxf-draw-horiz"${drawing ? ' disabled' : ''} title="${escapeHtml(tk('viewer.dxf.draw.tool.horizontalTitle', 'Horizontal line (planar)'))}"><span class="dxf-btn-icon">${dxfIcon('horizontal', 'orange')}</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.tool.horizontal', 'Horizontal'))}</span></button>
+            <button class="btn dxf-draw-toolbtn${ciActive ? ' active' : ''}" id="btn-dxf-draw-corner"${drawing || ciActive ? ' disabled' : ''} title="${escapeHtml(tk('viewer.dxf.draw.tool.cornerTitle', 'Corner intersection draw'))}"><span class="dxf-btn-icon">${dxfIcon('corner', 'violet')}</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.tool.corner', 'Corner Draw'))}</span></button>
+          </div>
         </div>
-        <div class="dxf-draw-toolgroup dxf-draw-toolgroup-secondary">
-          <button class="btn dxf-draw-toolbtn" id="btn-dxf-undo"${undoStack.length && !structureLocked ? '' : ' disabled'} title="${escapeHtml(tk('viewer.dxf.draw.actions.undoTitle', 'Undo (Ctrl+Z)'))}"><span class="dxf-btn-icon">↩</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.actions.undo', 'Undo'))}</span></button>
-          <button class="btn dxf-draw-toolbtn" id="btn-dxf-delete-selected"${selectedLineId && !structureLocked ? '' : ' disabled'} title="${escapeHtml(tk('viewer.dxf.draw.actions.deleteSelectedTitle', 'Delete selected line (Delete)'))}"><span class="dxf-btn-icon">🗑</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.actions.deleteSelected', 'Delete Selected'))}</span></button>
-          <button class="btn dxf-draw-toolbtn" id="btn-dxf-export"${total ? '' : ' disabled'} title="${escapeHtml(tk('viewer.dxf.draw.actions.exportTitle', 'Export DXF'))}"><span class="dxf-btn-icon">📥</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.actions.export', 'Export DXF'))}</span></button>
+        <div class="dxf-draw-tool-card dxf-draw-tool-card-actions">
+          <div class="dxf-draw-card-hd">${escapeHtml(tk('viewer.dxf.draw.sections.options', 'Options'))}</div>
+          <div class="dxf-draw-toolgroup dxf-draw-toolgroup-secondary">
+            <button class="btn dxf-draw-toolbtn" id="btn-dxf-undo"${undoStack.length && !structureLocked ? '' : ' disabled'} title="${escapeHtml(tk('viewer.dxf.draw.actions.undoTitle', 'Undo (Ctrl+Z)'))}"><span class="dxf-btn-icon">${dxfIcon('undo', 'blue')}</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.actions.undo', 'Undo'))}</span></button>
+            <button class="btn dxf-draw-toolbtn" id="btn-dxf-delete-selected"${selectedLineId && !structureLocked ? '' : ' disabled'} title="${escapeHtml(tk('viewer.dxf.draw.actions.deleteSelectedTitle', 'Delete selected line (Delete)'))}"><span class="dxf-btn-icon">${dxfIcon('trash', 'red')}</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.actions.deleteSelected', 'Delete Selected'))}</span></button>
+            <button class="btn dxf-draw-toolbtn dxf-draw-toolbtn-primary" id="btn-dxf-export"${total ? '' : ' disabled'} title="${escapeHtml(tk('viewer.dxf.draw.actions.exportTitle', 'Export DXF'))}"><span class="dxf-btn-icon">${dxfIcon('export', 'green')}</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.draw.actions.export', 'Export DXF'))}</span></button>
+          </div>
         </div>
       </div>`;
 
     // ── Drawing / CI status + quick actions
     if (ciActive) {
       let ciLabel = '';
-      if (ciState === 'PICKING_WALL_A') ciLabel = `🎯 ${tk('viewer.dxf.draw.status.pickWallA', 'Pick two points to define wall A')}`;
+      if (ciState === 'PICKING_WALL_A') ciLabel = tk('viewer.dxf.draw.status.pickWallA', 'Pick two points to define wall A');
       else if (ciState === 'PICKING_WALL_B') ciLabel = ciCorners.length
-        ? `🎯 ${tk('viewer.dxf.draw.status.pickNextWall', 'Pick two points to define the next wall')} · ${tk('viewer.dxf.draw.status.confirmedCorners', '{{count}} corners', { count: ciCorners.length })}`
-        : `🎯 ${tk('viewer.dxf.draw.status.pickWallB', 'Pick two points to define wall B')}`;
+        ? `${tk('viewer.dxf.draw.status.pickNextWall', 'Pick two points to define the next wall')} · ${tk('viewer.dxf.draw.status.confirmedCorners', '{{count}} corners', { count: ciCorners.length })}`
+        : tk('viewer.dxf.draw.status.pickWallB', 'Pick two points to define wall B');
       html += `<div class="dxf-draw-status">
-        <span class="dxf-draw-status-text">${ciLabel}</span>
+        <span class="dxf-draw-status-mark">${dxfIcon('target', 'violet')}</span>
+        <span class="dxf-draw-status-text">${escapeHtml(ciLabel)}</span>
         <span class="dxf-draw-status-actions">
           <button class="btn btn-sm" id="btn-dxf-ci-close"${ciCorners.length >= 3 ? '' : ' disabled'} title="${escapeHtml(tk('viewer.dxf.draw.actions.closeLoopTitle', 'Close loop (C)'))}">${escapeHtml(tk('viewer.dxf.draw.actions.closeLoop', 'C Close'))}</button>
           <button class="btn btn-sm" id="btn-dxf-ci-finish" title="${escapeHtml(tk('viewer.dxf.draw.actions.finishTitle', 'Finish and exit (Esc)'))}">${escapeHtml(tk('viewer.dxf.draw.actions.finish', 'Esc Finish'))}</button>
@@ -1957,18 +2180,18 @@ export function createDxfDrawFeature({
       </div>`;
     } else if (drawing) {
       const modeLabel = pendingDrawMode === 'vertical'
-        ? `🎯 ${tk('viewer.dxf.draw.status.pickVertical', 'Pick two points to define a vertical line')} · ${tk('viewer.dxf.draw.actions.rightClickCancel', 'Right-click to cancel')}`
+        ? `${tk('viewer.dxf.draw.status.pickVertical', 'Pick two points to define a vertical line')} · ${tk('viewer.dxf.draw.actions.rightClickCancel', 'Right-click to cancel')}`
         : pendingDrawMode === 'horizontal'
-          ? `🎯 ${tk('viewer.dxf.draw.status.pickHorizontal', 'Pick two points to define a horizontal line')} · ${tk('viewer.dxf.draw.actions.rightClickCancel', 'Right-click to cancel')}`
-          : `🎯 ${tk('viewer.dxf.draw.status.placeEndpoints', 'Click the point cloud to place endpoints')} · ${tk('viewer.dxf.draw.actions.rightClickCancel', 'Right-click to cancel')}`;
-      html += `<div class="dxf-draw-status"><span class="dxf-draw-status-text">${modeLabel}</span></div>`;
+          ? `${tk('viewer.dxf.draw.status.pickHorizontal', 'Pick two points to define a horizontal line')} · ${tk('viewer.dxf.draw.actions.rightClickCancel', 'Right-click to cancel')}`
+          : `${tk('viewer.dxf.draw.status.placeEndpoints', 'Click the point cloud to place endpoints')} · ${tk('viewer.dxf.draw.actions.rightClickCancel', 'Right-click to cancel')}`;
+      html += `<div class="dxf-draw-status"><span class="dxf-draw-status-mark">${dxfIcon('target', 'blue')}</span><span class="dxf-draw-status-text">${escapeHtml(modeLabel)}</span></div>`;
     } else if (selectedLineId) {
-      html += `<div class="dxf-draw-status"><span class="dxf-draw-status-text">${escapeHtml(tk('viewer.dxf.draw.status.selectedLine', 'Line selected'))} · ${escapeHtml(tk('viewer.dxf.draw.status.switchSelection', 'Click another line in the view to switch selection'))} · Delete ${escapeHtml(tk('viewer.dxf.draw.actions.delete', 'Delete'))}</span></div>`;
+      html += `<div class="dxf-draw-status"><span class="dxf-draw-status-mark">${dxfIcon('line', 'orange')}</span><span class="dxf-draw-status-text">${escapeHtml(tk('viewer.dxf.draw.status.selectedLine', 'Line selected'))} · ${escapeHtml(tk('viewer.dxf.draw.status.switchSelection', 'Click another line in the view to switch selection'))} · ${escapeHtml(tk('viewer.dxf.draw.status.deleteHint', 'Delete: {{action}}', { action: tk('viewer.dxf.draw.actions.delete', 'Delete') }))}</span></div>`;
     }
 
     const floorplanSegments = floorplanResult?.segments?.length || 0;
     const floorplanStats = floorplanResult?.stats || null;
-    const floorplanPanelHtml = `<div class="dxf-draw-card dxf-draw-card-beta">
+    const floorplanPanelHtml = SHOW_DXF_AUTO_EXTRACT_BETA ? `<div class="dxf-draw-card dxf-draw-card-beta">
       <div class="dxf-draw-card-hd">${escapeHtml(tk('viewer.dxf.floorplan.title', 'Auto Extract (Beta)'))}</div>
       <div class="dxf-draw-floorplan-form">
         <div class="dxf-draw-floorplan-row">
@@ -1989,8 +2212,8 @@ export function createDxfDrawFeature({
           <label><input type="checkbox" id="chk-dxf-floorplan-preview"${floorplanPreviewVisible ? ' checked' : ''}> ${escapeHtml(tk('viewer.dxf.floorplan.previewToggle', 'Show preview'))}</label>
         </div>
         <div class="dxf-draw-toolgroup dxf-draw-toolgroup-secondary">
-          <button class="btn dxf-draw-toolbtn" id="btn-dxf-floorplan-extract"${floorplanLoading ? ' disabled' : ''}><span class="dxf-btn-icon">🧭</span><span class="dxf-btn-label">${escapeHtml(floorplanLoading ? tk('viewer.dxf.floorplan.extracting', 'Extracting…') : tk('viewer.dxf.floorplan.extract', 'Extract Wall Lines'))}</span></button>
-          <button class="btn dxf-draw-toolbtn" id="btn-dxf-floorplan-import"${floorplanSegments ? '' : ' disabled'}><span class="dxf-btn-icon">📐</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.floorplan.import', 'Import to DXF Draw'))}</span></button>
+          <button class="btn dxf-draw-toolbtn" id="btn-dxf-floorplan-extract"${floorplanLoading ? ' disabled' : ''}><span class="dxf-btn-icon">${dxfIcon('compass', 'violet')}</span><span class="dxf-btn-label">${escapeHtml(floorplanLoading ? tk('viewer.dxf.floorplan.extracting', 'Extracting…') : tk('viewer.dxf.floorplan.extract', 'Extract Wall Lines'))}</span></button>
+          <button class="btn dxf-draw-toolbtn" id="btn-dxf-floorplan-import"${floorplanSegments ? '' : ' disabled'}><span class="dxf-btn-icon">${dxfIcon('dxf', 'blue')}</span><span class="dxf-btn-label">${escapeHtml(tk('viewer.dxf.floorplan.import', 'Import to DXF Draw'))}</span></button>
         </div>
         <div class="dxf-draw-meta">
           <span class="dxf-draw-chip">${escapeHtml(tk('viewer.dxf.floorplan.segmentCount', 'Candidates'))} <strong>${floorplanSegments}</strong></span>
@@ -1999,11 +2222,11 @@ export function createDxfDrawFeature({
         </div>
         ${floorplanResult?.debugImages?.length ? `<div class="dxf-draw-floorplan-debug">${floorplanResult.debugImages.map(image => `<a href="${escapeHtml(image.url)}" target="_blank" rel="noreferrer">${escapeHtml(image.name)}</a>`).join('')}</div>` : ''}
       </div>
-    </div>`;
+    </div>` : '';
 
     html += `<div class="dxf-draw-card-grid">
       <div class="dxf-draw-card">
-        <div class="dxf-draw-card-hd">${escapeHtml(tk('viewer.dxf.draw.sections.currentLayer', 'Current Layer'))}</div>
+        <div class="dxf-draw-card-hd"><span class="dxf-card-icon">${dxfIcon('layer', 'blue')}</span>${escapeHtml(tk('viewer.dxf.draw.sections.currentLayer', 'Current Layer'))}</div>
         <div class="dxf-draw-layer-bar">
           <label class="dxf-draw-label">${escapeHtml(tk('viewer.dxf.draw.fields.layer', 'Layer'))}</label>
           <select id="sel-dxf-draw-layer" class="dxf-draw-select"${structureLocked ? ' disabled' : ''}>`;
@@ -2011,7 +2234,7 @@ export function createDxfDrawFeature({
       html += `<option value="${escapeHtml(name)}"${name === activeLayer ? ' selected' : ''}>${escapeHtml(name)}</option>`;
     }
     html += `</select>
-          <button class="btn btn-sm" id="btn-dxf-add-layer" title="${escapeHtml(tk('viewer.dxf.draw.actions.addLayerTitle', 'Create a new layer'))}"${structureLocked ? ' disabled' : ''}>+</button>
+          <button class="btn btn-sm dxf-icon-only-btn" id="btn-dxf-add-layer" title="${escapeHtml(tk('viewer.dxf.draw.actions.addLayerTitle', 'Create a new layer'))}" aria-label="${escapeHtml(tk('viewer.dxf.draw.actions.addLayerTitle', 'Create a new layer'))}"${structureLocked ? ' disabled' : ''}>${dxfIcon('plus', 'blue')}</button>
         </div>`;
 
     html += `<div class="dxf-draw-color-bar">`;
@@ -2029,10 +2252,10 @@ export function createDxfDrawFeature({
         </div>
       </div>
       <div class="dxf-draw-card">
-        <div class="dxf-draw-card-hd">${escapeHtml(tk('viewer.dxf.draw.sections.options', 'Options'))}</div>
+        <div class="dxf-draw-card-hd"><span class="dxf-card-icon">${dxfIcon('target', 'violet')}</span>${escapeHtml(tk('viewer.dxf.draw.sections.options', 'Options'))}</div>
         <div class="dxf-draw-opts">
-          <label><input type="checkbox" id="chk-dxf-endpoints"${showEndpoints ? ' checked' : ''}> ${escapeHtml(tk('viewer.dxf.draw.options.showEndpoints', 'Show Endpoints'))}</label>
-          <label><input type="checkbox" id="chk-dxf-continuous"${continuousDraw ? ' checked' : ''}${structureLocked ? ' disabled' : ''}> ${escapeHtml(tk('viewer.dxf.draw.options.continuous', 'Continuous Drawing'))}</label>
+          <label class="dxf-switch-row"><span class="dxf-switch-text">${escapeHtml(tk('viewer.dxf.draw.options.showEndpoints', 'Show Endpoints'))}</span><input type="checkbox" id="chk-dxf-endpoints"${showEndpoints ? ' checked' : ''}><span class="dxf-switch-ui" aria-hidden="true"></span></label>
+          <label class="dxf-switch-row"><span class="dxf-switch-text">${escapeHtml(tk('viewer.dxf.draw.options.continuous', 'Continuous Drawing'))}</span><input type="checkbox" id="chk-dxf-continuous"${continuousDraw ? ' checked' : ''}${structureLocked ? ' disabled' : ''}><span class="dxf-switch-ui" aria-hidden="true"></span></label>
         </div>
         <div class="dxf-draw-meta">
           <span class="dxf-draw-chip">${escapeHtml(tk('viewer.dxf.draw.meta.totalLines', 'Total lines'))} <strong>${total}</strong></span>
@@ -2049,7 +2272,7 @@ export function createDxfDrawFeature({
         <span class="dxf-layer-swatch" style="background:${ly.color}"></span>
         <span class="dxf-draw-layer-name">${escapeHtml(layerName)}</span>
         <span class="dxf-layer-count">${ly.lines.length}</span>
-        <button class="dxf-layer-eye" data-dxf-draw-toggle="${escapeHtml(layerName)}" title="${escapeHtml(tk('viewer.dxf.draw.actions.toggleLayerVisibility', 'Toggle layer visibility'))}"${structureLocked ? ' disabled' : ''}>${ly.visible ? '👁' : '🚫'}</button>
+        <button class="dxf-layer-eye" data-dxf-draw-toggle="${escapeHtml(layerName)}" title="${escapeHtml(tk('viewer.dxf.draw.actions.toggleLayerVisibility', 'Toggle layer visibility'))}" aria-label="${escapeHtml(tk('viewer.dxf.draw.actions.toggleLayerVisibility', 'Toggle layer visibility'))}"${structureLocked ? ' disabled' : ''}>${dxfIcon(ly.visible ? 'eye' : 'eyeOff', ly.visible ? 'blue' : 'slate')}</button>
       </div>`;
       for (const line of ly.lines) {
         const pts = line.measure.points;
@@ -2062,9 +2285,9 @@ export function createDxfDrawFeature({
             info = formatLinearMeasurement ? formatLinearMeasurement(d, 'm') : `${d.toFixed(3)} m`;
           }
         }
-        const typeIcon = line.lineType === 'vertical' ? '↕' : line.lineType === 'horizontal' ? '↔' : line.lineType === 'corner' ? '⊾' : '✏';
+        const typeKey = line.lineType === 'vertical' ? 'vertical' : line.lineType === 'horizontal' ? 'horizontal' : line.lineType === 'corner' ? 'corner' : 'free';
         html += `<div class="dxf-draw-line-row${selectedLineId === line.id ? ' selected' : ''}" data-dxf-line-select="${line.id}">
-          <span class="dxf-draw-line-dot" style="background:${line.color}">${typeIcon}</span>
+          <span class="dxf-draw-line-dot" style="background:${line.color}">${dxfLineTypeIcon(typeKey)}</span>
           <span class="dxf-draw-line-name">${escapeHtml(line.measure.name)}</span>
           <span class="dxf-draw-line-len">${info}</span>
           <span class="dxf-line-color-wrap">
@@ -2073,7 +2296,7 @@ export function createDxfDrawFeature({
               `<span class="dxf-lc${c === line.color ? ' on' : ''}" data-c="${c}" style="background:${c}"></span>`
             ).join('')}</span>
           </span>
-          <button class="icon-btn del" data-dxf-draw-del="${line.id}" title="${escapeHtml(tk('viewer.dxf.draw.actions.delete', 'Delete'))}"${structureLocked ? ' disabled' : ''}>✕</button>
+          <button class="icon-btn del" data-dxf-draw-del="${line.id}" title="${escapeHtml(tk('viewer.dxf.draw.actions.delete', 'Delete'))}" aria-label="${escapeHtml(tk('viewer.dxf.draw.actions.delete', 'Delete'))}"${structureLocked ? ' disabled' : ''}>${dxfIcon('close', 'red')}</button>
         </div>`;
       }
     }
@@ -2087,9 +2310,7 @@ export function createDxfDrawFeature({
       html += `<div class="dxf-draw-stats">${tk('viewer.dxf.draw.meta.totalLinesCount', '{{count}} line segments', { count: total })}</div>`;
     }
 
-    if (SHOW_AUTO_EXTRACT_UI) {
-      html += floorplanPanelHtml;
-    }
+    html += floorplanPanelHtml;
 
     container.innerHTML = `${html}</div>`;
     wireEvents(container);
@@ -2108,24 +2329,34 @@ export function createDxfDrawFeature({
       if (selectedLineId != null) removeLine(selectedLineId);
     });
     container.querySelector('#btn-dxf-export')?.addEventListener('click', exportDxf);
-    container.querySelector('#sel-dxf-floorplan-source')?.addEventListener('change', (e) => { floorplanSourceMode = e.target.value; });
-    container.querySelector('#inp-dxf-floorplan-z')?.addEventListener('input', (e) => { floorplanConfig.zCenter = Number(e.target.value); });
-    container.querySelector('#inp-dxf-floorplan-thickness')?.addEventListener('input', (e) => { floorplanConfig.thickness = Number(e.target.value); });
-    container.querySelector('#inp-dxf-floorplan-min-length')?.addEventListener('input', (e) => { floorplanConfig.minWallLength = Number(e.target.value); });
-    container.querySelector('#inp-dxf-floorplan-merge')?.addEventListener('input', (e) => { floorplanConfig.mergeTolerance = Number(e.target.value); });
-    container.querySelector('#chk-dxf-floorplan-align')?.addEventListener('change', (e) => { floorplanConfig.autoAlign = e.target.checked; });
-    container.querySelector('#chk-dxf-floorplan-ortho')?.addEventListener('change', (e) => { floorplanConfig.orthogonalOnly = e.target.checked; });
-    container.querySelector('#chk-dxf-floorplan-preview')?.addEventListener('change', (e) => {
-      floorplanPreviewVisible = e.target.checked;
-      renderFloorplanPreview();
-    });
-    container.querySelector('#btn-dxf-floorplan-extract')?.addEventListener('click', requestFloorplanExtraction);
-    container.querySelector('#btn-dxf-floorplan-import')?.addEventListener('click', importFloorplanSegments);
+    if (SHOW_DXF_AUTO_EXTRACT_BETA) {
+      container.querySelector('#sel-dxf-floorplan-source')?.addEventListener('change', (e) => { floorplanSourceMode = e.target.value; });
+      container.querySelector('#inp-dxf-floorplan-z')?.addEventListener('input', (e) => { floorplanConfig.zCenter = Number(e.target.value); });
+      container.querySelector('#inp-dxf-floorplan-thickness')?.addEventListener('input', (e) => { floorplanConfig.thickness = Number(e.target.value); });
+      container.querySelector('#inp-dxf-floorplan-min-length')?.addEventListener('input', (e) => { floorplanConfig.minWallLength = Number(e.target.value); });
+      container.querySelector('#inp-dxf-floorplan-merge')?.addEventListener('input', (e) => { floorplanConfig.mergeTolerance = Number(e.target.value); });
+      container.querySelector('#chk-dxf-floorplan-align')?.addEventListener('change', (e) => { floorplanConfig.autoAlign = e.target.checked; });
+      container.querySelector('#chk-dxf-floorplan-ortho')?.addEventListener('change', (e) => { floorplanConfig.orthogonalOnly = e.target.checked; });
+      container.querySelector('#chk-dxf-floorplan-preview')?.addEventListener('change', (e) => {
+        floorplanPreviewVisible = e.target.checked;
+        renderFloorplanPreview();
+      });
+      container.querySelector('#btn-dxf-floorplan-extract')?.addEventListener('click', requestFloorplanExtraction);
+      container.querySelector('#btn-dxf-floorplan-import')?.addEventListener('click', importFloorplanSegments);
+    }
     container.querySelector('#chk-dxf-endpoints')?.addEventListener('change', (e) => setEndpointsVisible(e.target.checked));
     container.querySelector('#chk-dxf-continuous')?.addEventListener('change', (e) => { continuousDraw = e.target.checked; });
     container.querySelector('#sel-dxf-draw-layer')?.addEventListener('change', (e) => { activeLayer = e.target.value; ensureLayer(activeLayer); renderPanel(); });
-    container.querySelector('#btn-dxf-add-layer')?.addEventListener('click', () => {
-      const name = prompt(tt('Layer name:'));
+    container.querySelector('#btn-dxf-add-layer')?.addEventListener('click', async () => {
+      const name = typeof textDialog === 'function'
+        ? await textDialog({
+          title: tk('viewer.dxf.layerNameTitle', 'Layer Name'),
+          message: tk('viewer.dxf.layerNamePrompt', 'Enter a new DXF layer name.'),
+          placeholder: tk('viewer.dxf.layerNamePlaceholder', 'New layer'),
+          confirmText: tk('viewer.dxf.layerNameAdd', 'Add'),
+          cancelText: tk('common.actions.cancel', 'Cancel'),
+        })
+        : null;
       if (name?.trim()) { addLayer(name.trim()); activeLayer = name.trim(); renderPanel(); }
     });
     container.querySelector('#btn-dxf-apply-color')?.addEventListener('click', () => applyColorToLayer(activeLayer, ensureLayer(activeLayer).color));
@@ -2184,10 +2415,10 @@ export function createDxfDrawFeature({
     if (!treeContainer) return;
     for (const [, layer] of layers) {
       for (const line of layer.lines) {
-        const typeIcon = line.lineType === 'vertical' ? '↕' : line.lineType === 'horizontal' ? '↔' : line.lineType === 'corner' ? '⊾' : '✏';
+        const typeKey = line.lineType === 'vertical' ? 'vertical' : line.lineType === 'horizontal' ? 'horizontal' : line.lineType === 'corner' ? 'corner' : 'free';
         const item = document.createElement('div');
         item.className = 'tree-item';
-        item.innerHTML = `<span class="ti-icon" style="color:${line.color}">${typeIcon}</span><span class="ti-name">${escapeHtml(line.measure.name)}</span><div class="ti-acts"><button class="icon-btn del" title="${escapeHtml(tt('Delete'))}">✕</button></div>`;
+        item.innerHTML = `<span class="ti-icon dxf-tree-line-icon" style="color:${line.color}">${dxfLineTypeIcon(typeKey)}</span><span class="ti-name">${escapeHtml(line.measure.name)}</span><div class="ti-acts"><button class="icon-btn del" title="${escapeHtml(tk('common.actions.delete', 'Delete'))}" aria-label="${escapeHtml(tk('common.actions.delete', 'Delete'))}">${dxfIcon('close', 'red')}</button></div>`;
         item.querySelector('.del').addEventListener('click', (e) => { e.stopPropagation(); removeLine(line.id); });
         treeContainer.appendChild(item);
       }

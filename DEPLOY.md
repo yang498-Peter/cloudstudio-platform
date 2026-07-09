@@ -29,8 +29,9 @@ and analysis workflows are CPU, memory, and disk intensive.
 4. Creates `web-uploader/.venv` and installs Python script dependencies.
 5. Installs Node dependencies for the Express app.
 6. Creates `web-uploader/.env` from `.env.example` if needed.
-7. Configures Nginx as a reverse proxy to `127.0.0.1:8090`.
-8. Starts the app with PM2 under the process name `cloudstudio`.
+7. Sets production mode and generates an upload password hash if one is not already configured.
+8. Configures Nginx as a reverse proxy to `127.0.0.1:8090`.
+9. Starts the app with PM2 under the process name `cloudstudio`.
 
 ## Quick Deployment
 
@@ -52,6 +53,21 @@ http://<server-ip>/
 For production use, configure a domain name and HTTPS after the basic HTTP
 deployment is healthy.
 
+## Pre-Deploy Verification
+
+Before deploying a changed branch, run the release gate locally:
+
+```bash
+cd web-uploader
+npm run check:release
+```
+
+This checks localization, public-release hygiene, deployment docs, server-safe
+API behavior, upload security, 3DGS publish state, capability gating, and viewer
+smoke coverage. If Playwright Chromium is not installed, browser-only smoke
+subtests may be reported as skipped; still do a manual browser check before
+promoting a public demo or production server.
+
 ## Environment Configuration
 
 The main environment file is:
@@ -64,6 +80,8 @@ Common variables:
 
 ```bash
 PORT=8090
+CLOUDSTUDIO_ENV=production
+UPLOAD_REVIEW_PASSWORD_SHA256=<sha256-of-your-upload-password>
 CONVERTER_PATH=/opt/cloudstudio/PotreeConverter/build-gcc/PotreeConverter
 PYTHON_BIN=/opt/cloudstudio/web-uploader/.venv/bin/python
 PYTHON3_BIN=python3
@@ -71,6 +89,23 @@ PYTHON3_BIN=python3
 
 The app can auto-detect many paths, but production deployments should set
 explicit paths so future maintenance is predictable.
+
+Legacy desktop scan-root discovery is disabled by default on public servers.
+Uploaded/runtime projects are still discovered automatically. Only set
+`CLOUDSTUDIO_ENABLE_DESKTOP_SCAN_ROOTS=true` together with the desktop-local
+capability flags in a controlled private environment.
+
+`setup.sh` generates a random upload password when
+`UPLOAD_REVIEW_PASSWORD_SHA256` is missing and writes the one-time plaintext
+password to the server checkout:
+
+```text
+web-uploader/.cloudstudio-upload-password.txt
+```
+
+Set `CLOUDSTUDIO_UPLOAD_PASSWORD_FILE` before running the installer if you want
+that one-time file somewhere else. Store the password securely and remove or
+rotate it when appropriate.
 
 ## Health Check
 

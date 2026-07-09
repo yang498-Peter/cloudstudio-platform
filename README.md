@@ -225,7 +225,7 @@ For a colleague, dealer, developer, or AI coding agent:
    logs, and fix missing dependencies or configuration issues.
 5. Keep real customer data, generated point clouds, credentials, server logs,
    and private deployment notes outside Git.
-6. Before pushing changes, run `cd web-uploader && npm run check:public-release`.
+6. Before pushing changes, run `cd web-uploader && npm run check:release`.
 7. Open issues or pull requests for improvements that should benefit the wider
    project.
 

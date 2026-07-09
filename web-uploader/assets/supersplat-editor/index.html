@@ -7,7 +7,7 @@
         <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
         <meta http-equiv="Pragma" content="no-cache" />
         <meta http-equiv="Expires" content="0" />
-        <link rel="stylesheet" href="./index.css?v=cloudstudio-browse-20260518-1">
+        <link rel="stylesheet" href="./index.css?v=cloudstudio-browse-20260709-camera-1">
         <link rel="shortcut icon" href="#">
         <meta name="description" content="SuperSplat is an advanced browser-based editor for manipulating and optimizing 3D Gaussian Splats. It is open source and engine agnostic." />
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
@@ -144,6 +144,65 @@
                     'canvas-container'
                 ];
 
+                const cameraOverride = (() => {
+                    const params = new URLSearchParams(window.location.search);
+                    const read = (key) => {
+                        const value = Number(params.get(key));
+                        return Number.isFinite(value) ? value : null;
+                    };
+                    const position = {
+                        x: read('cam.px'),
+                        y: read('cam.py'),
+                        z: read('cam.pz')
+                    };
+                    const target = {
+                        x: read('cam.tx'),
+                        y: read('cam.ty'),
+                        z: read('cam.tz')
+                    };
+                    if ([position.x, position.y, position.z, target.x, target.y, target.z].some(value => value === null)) {
+                        return null;
+                    }
+                    const fov = read('cam.fov');
+                    return {
+                        position,
+                        target,
+                        fov: fov && fov > 5 && fov < 175 ? fov : null
+                    };
+                })();
+
+                let userCameraInteracted = false;
+                ['pointerdown', 'wheel', 'keydown', 'touchstart'].forEach((eventName) => {
+                    window.addEventListener(eventName, () => {
+                        userCameraInteracted = true;
+                    }, { passive: true, capture: true });
+                });
+
+                const applyCameraOverride = () => {
+                    if (!cameraOverride || userCameraInteracted) return false;
+                    const camera = window.scene?.camera;
+                    if (!camera?.position || !camera?.focalPoint) return false;
+                    const Vector = camera.position.constructor || camera.focalPoint.constructor;
+                    if (typeof Vector !== 'function') return false;
+                    const position = new Vector(cameraOverride.position.x, cameraOverride.position.y, cameraOverride.position.z);
+                    const target = new Vector(cameraOverride.target.x, cameraOverride.target.y, cameraOverride.target.z);
+                    if (typeof camera.setPose === 'function') {
+                        camera.setPose(position, target, cameraOverride.fov || camera.fov || 75);
+                    } else {
+                        camera.position.copy?.(position);
+                        camera.setFocalPoint?.(target);
+                        if (cameraOverride.fov && typeof camera.fov !== 'undefined') camera.fov = cameraOverride.fov;
+                    }
+                    window.scene.forceRender = true;
+                    return true;
+                };
+
+                if (cameraOverride) {
+                    const applyDelays = [900, 1800, 3500, 6500, 10000, 15000, 22000];
+                    applyDelays.forEach(delay => window.setTimeout(applyCameraOverride, delay));
+                    window.addEventListener('load', () => window.setTimeout(applyCameraOverride, 1200));
+                }
+
                 const hideEditorChrome = () => {
                     document.documentElement.classList.add('cloudstudio-browse-mode');
                     document.body?.classList.add('cloudstudio-browse-mode');
@@ -207,6 +266,6 @@
     </head>
 
     <body>
-        <script type="module" src="./index.js?v=cloudstudio-browse-20260518-1"></script>
+        <script type="module" src="./index.js?v=cloudstudio-browse-20260709-camera-1"></script>
     </body>
 </html>

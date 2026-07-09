@@ -1,3 +1,5 @@
+import { computePolygonArea2D } from '../../core/stable-polygon.js';
+
 const MEASUREMENT_TYPES = new Set(['point', 'distance', 'height', 'area', 'angle']);
 
 function escapeHtml(value) {
@@ -20,6 +22,7 @@ function dist3(a, b) {
 
 export function createMeasurementFeature({
   viewer,
+  translate,
   translateText,
   toast,
   setStatus,
@@ -29,14 +32,14 @@ export function createMeasurementFeature({
   formatLinearAxis,
   pointToLocalCoordinates,
   convertLocalPointToCurrentSystem,
+  getScenePointDisplayCoordinate = null,
   getCurrentCoordinateProjectContext,
+  getActiveDatasetContext = null,
   getToolMode,
   setToolMode,
   stopCapture,
   cancelVolumeSelection,
   cancelDeletePolygonSelection,
-  cancelClipBoxSelection,
-  cancelActiveProfile,
   hideAllVolumeRegionOverlays,
   getVolumeRegions = () => [],
   clearAllVolumeRegions,
@@ -49,8 +52,22 @@ export function createMeasurementFeature({
   let controlsBound = false;
   let activeInsertion = null;
 
+  function t(key, fallback, vars = {}) {
+    if (typeof translate === 'function') return translate(key, vars, fallback);
+    if (typeof window !== 'undefined' && typeof window.__APP_SERVICES?.i18n?.t === 'function') {
+      return window.__APP_SERVICES.i18n.t(key, vars, fallback);
+    }
+    return typeof translateText === 'function' ? translateText(fallback) : fallback;
+  }
+
   function getMeasurements() {
     return Array.from(viewer?.scene?.measurements || []).filter(measurement => !measurement?.userData?.isDxfDraw);
+  }
+
+  function getActiveMeasurementProjectId() {
+    const active = typeof getActiveDatasetContext === 'function' ? getActiveDatasetContext() : null;
+    if (active?.type === 'scanner' && active.projectId) return String(active.projectId);
+    return getCurrentCoordinateProjectContext?.()?.projectId || null;
   }
 
   function syncToolButtons(toolMode = getToolMode?.() || null) {
@@ -73,7 +90,7 @@ export function createMeasurementFeature({
   function getMeasurementDisplayName(measurement, index = 0) {
     const raw = String(measurement?.name || '').trim();
     if (raw) return translateText(raw);
-    return `${translateText('Measurement')} ${index + 1}`;
+    return t('viewer.measurement.defaultName', 'Measurement {{index}}', { index: index + 1 });
   }
 
   function formatCoordinateHtml(coord) {
@@ -92,20 +109,21 @@ export function createMeasurementFeature({
   function getMeasDetails(measurement) {
     const points = measurement.points || [];
     let html = '';
-    if (!points.length) return translateText('No data');
+    if (!points.length) return t('viewer.measurement.noData', 'No data');
 
     if (measurement.showCoordinates && points.length >= 1) {
       const position = points[0].position;
-      const projectId = measurement?.userData?.scannerProjectId
-        || getCurrentCoordinateProjectContext?.()?.projectId
-        || null;
-      const localCoord = (measurement.maxMarkers === 1)
-        ? { x: Number(position.x), y: Number(position.y), z: Number(position.z) }
-        : pointToLocalCoordinates(position, projectId);
-      const converted = convertLocalPointToCurrentSystem(localCoord, projectId);
-      html += `X: ${formatLinearAxis(localCoord.x, 'm')}<br>Y: ${formatLinearAxis(localCoord.y, 'm')}<br>Z: ${formatLinearAxis(localCoord.z, 'm')}`;
-      if (converted && !converted.error && converted.kind !== 'local') {
-        html += `<hr style="border-color:var(--border);margin:6px 0;">${escapeHtml(converted.label)}<br>${formatCoordinateHtml(converted)}`;
+      const projectId = points[0]?.scannerProjectId || measurement?.userData?.scannerProjectId || getActiveMeasurementProjectId();
+      const displayed = getScenePointDisplayCoordinate?.(position, projectId);
+      if (displayed) {
+        html += `${escapeHtml(displayed.label || t('viewer.measurement.details.coordinates', 'Coordinates'))}<br>${formatCoordinateHtml(displayed)}`;
+      } else {
+        const localCoord = pointToLocalCoordinates(position, projectId);
+        const converted = convertLocalPointToCurrentSystem(localCoord, projectId);
+        html += `X: ${formatLinearAxis(localCoord.x, 'm')}<br>Y: ${formatLinearAxis(localCoord.y, 'm')}<br>Z: ${formatLinearAxis(localCoord.z, 'm')}`;
+        if (converted && !converted.error && converted.kind !== 'local') {
+          html += `<hr style="border-color:var(--border);margin:6px 0;">${escapeHtml(converted.label)}<br>${formatCoordinateHtml(converted)}`;
+        }
       }
     }
     if (measurement.showDistances && points.length >= 2) {
@@ -116,9 +134,9 @@ export function createMeasurementFeature({
       if (measurement.closed && points.length > 2) {
         total += dist3(points[points.length - 1].position, points[0].position);
       }
-      html += `<br>${translateText('Total length')}: ${formatLinearMeasurement(total, 'm')}`;
+      html += `<br>${t('viewer.measurement.details.totalLength', 'Total length')}: ${formatLinearMeasurement(total, 'm')}`;
       if (points.length > 2) {
-        html += ` (${measurement.closed ? points.length : points.length - 1} ${translateText('segments')})`;
+        html += ` (${measurement.closed ? points.length : points.length - 1} ${t('viewer.measurement.details.segments', 'segments')})`;
       }
     }
     if (measurement.showHeight && points.length >= 2) {
@@ -127,21 +145,16 @@ export function createMeasurementFeature({
       const dz = Math.abs(pointA.z - pointB.z);
       const dxy = Math.sqrt((pointA.x - pointB.x) ** 2 + (pointA.y - pointB.y) ** 2);
       const slope = dxy > 0 ? Math.atan(dz / dxy) * 180 / Math.PI : 90;
-      html += `${translateText('Height difference')}: ${formatLinearMeasurement(dz, 'm')}<br>${translateText('Horizontal distance')}: ${formatLinearMeasurement(dxy, 'm')}<br>${translateText('Slope')}: ${formatNumber(slope)}°`;
+      html += `${t('viewer.measurement.details.heightDifference', 'Height difference')}: ${formatLinearMeasurement(dz, 'm')}<br>${t('viewer.measurement.details.horizontalDistance', 'Horizontal distance')}: ${formatLinearMeasurement(dxy, 'm')}<br>${t('viewer.measurement.details.slope', 'Slope')}: ${formatNumber(slope)}°`;
     }
     if (measurement.showArea && points.length >= 3) {
-      let area = 0;
-      for (let index = 0; index < points.length; index += 1) {
-        const pointA = points[index].position;
-        const pointB = points[(index + 1) % points.length].position;
-        area += pointA.x * pointB.y - pointB.x * pointA.y;
-      }
-      html += `${translateText('Area')}: ${formatAreaMeasurement(Math.abs(area) / 2, 'm')}<br>${translateText('Vertex count')}: ${points.length}`;
+      const area = computePolygonArea2D(points.map(point => point.position));
+      html += `${t('viewer.measurement.details.area', 'Area')}: ${formatAreaMeasurement(area, 'm')}<br>${t('viewer.measurement.details.vertices', 'Vertices')}: ${points.length}`;
     }
     if (measurement.showAngles && points.length >= 3) {
-      html += `${translateText('Vertex count')}: ${points.length}<br>(${translateText('Angles are shown visually')})`;
+      html += `${t('viewer.measurement.details.vertices', 'Vertices')}: ${points.length}<br>(${t('viewer.measurement.details.anglesVisualized', 'Angles are shown in the viewer')})`;
     }
-    return html || `${translateText('Vertices')}: ${points.length}`;
+    return html || `${t('viewer.measurement.details.vertices', 'Vertices')}: ${points.length}`;
   }
 
   function renderMeasurementListItem(measurement, index, tree, detail) {
@@ -150,7 +163,7 @@ export function createMeasurementFeature({
 
     const treeItem = document.createElement('div');
     treeItem.className = 'tree-item';
-    treeItem.innerHTML = `<span class="ti-icon">${icon}</span><span class="ti-name">${name}</span><div class="ti-acts"><button class="icon-btn del" title="${escapeHtml(translateText('Delete'))}">✕</button></div>`;
+    treeItem.innerHTML = `<span class="ti-icon">${icon}</span><span class="ti-name">${name}</span><div class="ti-acts"><button class="icon-btn del" title="${escapeHtml(t('common.actions.delete', 'Delete'))}">✕</button></div>`;
     treeItem.querySelector('.icon-btn').addEventListener('click', event => {
       event.stopPropagation();
       removeMeasurement(measurement);
@@ -164,7 +177,7 @@ export function createMeasurementFeature({
       <div class="meas-card-hd">
         <span>${icon}</span>
         <span style="flex:1;font-size:11px;font-weight:500;">${name}</span>
-        <button class="meas-del" title="${escapeHtml(translateText('Delete'))}">✕</button>
+        <button class="meas-del" title="${escapeHtml(t('common.actions.delete', 'Delete'))}">✕</button>
       </div>
       <div class="meas-vals">${getMeasDetails(measurement)}</div>`;
     card.querySelector('.meas-del').addEventListener('click', event => {
@@ -180,8 +193,7 @@ export function createMeasurementFeature({
 
     const treeItem = document.createElement('div');
     treeItem.className = 'tree-item';
-    const regionName = region.name || `${translateText('Volume')} ${index + 1}`;
-    treeItem.innerHTML = `<span class="ti-icon">⛏</span><span class="ti-name">${escapeHtml(regionName)}</span><div class="ti-acts"><button class="icon-btn" title="${escapeHtml(translateText('View details'))}">↗</button><button class="icon-btn del" title="${escapeHtml(translateText('Delete'))}">✕</button></div>`;
+    treeItem.innerHTML = `<span class="ti-icon">⛏</span><span class="ti-name">${escapeHtml(region.name || t('viewer.measurement.volumeName', 'Volume {{index}}', { index: index + 1 }))}</span><div class="ti-acts"><button class="icon-btn" title="${escapeHtml(t('viewer.measurement.viewDetails', 'View details'))}">↗</button><button class="icon-btn del" title="${escapeHtml(t('common.actions.delete', 'Delete'))}">✕</button></div>`;
     const [openButton, deleteButton] = treeItem.querySelectorAll('.icon-btn');
     openButton.addEventListener('click', event => {
       event.stopPropagation();
@@ -193,14 +205,20 @@ export function createMeasurementFeature({
     });
     tree.appendChild(treeItem);
 
-    // 2026-05-07 redesign: the Measure tab used to render a duplicate
-    // "meas-card" detail card with Reference Plane / Sample Points / etc.
-    // The new Volume workspace (Volume tab) already shows all of that —
-    // and better. Skip the redundant card on the Measure tab; keep only
-    // the scene-tree entry above so the user can still locate/delete the
-    // volume region from the scene tree. The `detail` argument is kept
-    // for signature compatibility with `renderMeasurementListItem`.
-    void detail;
+    const card = document.createElement('div');
+    card.className = 'meas-card';
+    card.innerHTML = `
+      <div class="meas-card-hd">
+        <span>⛏</span>
+        <span style="flex:1;font-size:11px;font-weight:500;">${escapeHtml(region.name)}</span>
+        <button class="meas-del" title="${escapeHtml(t('common.actions.delete', 'Delete'))}">✕</button>
+      </div>
+      <div class="meas-vals">${getVolumeRegionResultHtml(region)}</div>`;
+    card.querySelector('.meas-del').addEventListener('click', event => {
+      event.stopPropagation();
+      removeVolumeRegion(region.id);
+    });
+    detail.appendChild(card);
   }
 
   function refreshMeasurements() {
@@ -222,8 +240,7 @@ export function createMeasurementFeature({
     empty.style.display = totalCount ? 'none' : '';
 
     if (!totalCount) {
-      const emptyText = escapeHtml(translateText('No measurement results'));
-      detail.innerHTML = `<div style="color:var(--text3);font-size:11px;text-align:center;padding:16px;">${emptyText}</div>`;
+      detail.innerHTML = `<div style="color:var(--text3);font-size:11px;text-align:center;padding:16px;">${escapeHtml(t('viewer.measurement.emptyResults', 'No measurement results'))}</div>`;
       return;
     }
 
@@ -235,91 +252,232 @@ export function createMeasurementFeature({
     });
   }
 
-  function finishMeasurement() {
+  function syncReadyState() {
     setToolMode(null);
-    setStatus(translateText('Ready'));
+    syncToolButtons(null);
+    setStatus(t('common.status.ready', 'Ready'));
     refreshSceneTree();
-    toast(translateText('✓ Measurement complete'), 'ok');
+  }
+
+  function cleanupActiveInsertion(active = activeInsertion) {
+    if (!active) return;
+    document.removeEventListener('keydown', active.onKeyDown, true);
+    window.removeEventListener('keydown', active.onKeyDown, true);
+    active.canvas?.removeEventListener('keydown', active.onKeyDown, true);
+    active.canvas?.removeEventListener('mousedown', active.onMouseDown, true);
+    active.canvas?.removeEventListener('mouseup', active.onMouseUp, true);
+    active.canvas?.removeEventListener('dblclick', active.onDoubleClick, true);
+    if (activeInsertion === active) activeInsertion = null;
+  }
+
+  function dispatchPotreeCancelInsertion() {
+    try {
+      viewer?.dispatchEvent?.({ type: 'cancel_insertions' });
+    } catch (_error) {
+      // Best effort: older Potree builds do not expose the same event surface.
+    }
+  }
+
+  function cancelActiveMeasurement({ notify = true } = {}) {
+    const active = activeInsertion;
+    if (!active) return false;
+    active.cancelled = true;
+    if (active.measurement?.userData) active.measurement.userData.__cloudstudioCancelled = true;
+    dispatchPotreeCancelInsertion();
+    cleanupActiveInsertion(active);
+    if (active.measurement) removeMeasurement(active.measurement);
+    syncReadyState();
+    if (notify) toast(t('viewer.measurement.toast.cancelled', 'Measurement cancelled'), 'info');
+    return true;
+  }
+
+  function finishMeasurement(measurement = null) {
+    const active = activeInsertion && (!measurement || activeInsertion.measurement === measurement)
+      ? activeInsertion
+      : null;
+    const target = measurement || active?.measurement || null;
+    if (!active && target?.userData?.__cloudstudioInsertionActive === false) return;
+    if (target?.userData?.__cloudstudioCancelled) {
+      cleanupActiveInsertion(active);
+      syncReadyState();
+      return;
+    }
+
+    const pointCount = Array.isArray(target?.points) ? target.points.length : 0;
+    const minMarkers = active?.minMarkers ?? 1;
+    cleanupActiveInsertion(active);
+    if (target && pointCount < minMarkers) {
+      if (target.userData) target.userData.__cloudstudioCancelled = true;
+      removeMeasurement(target);
+      syncReadyState();
+      toast(t('viewer.measurement.toast.cancelled', 'Measurement cancelled'), 'info');
+      return;
+    }
+
+    if (target?.userData) target.userData.__cloudstudioInsertionActive = false;
+    syncReadyState();
+    toast(t('viewer.measurement.toast.completed', 'Measurement completed'), 'ok');
+  }
+
+  function getMinimumMarkers(type) {
+    if (type === 'point') return 1;
+    if (type === 'area' || type === 'angle') return 3;
+    return 2;
+  }
+
+  function getMeasurementStatusText(type) {
+    const statusByType = {
+      point: t('viewer.measurement.status.point', 'Point measurement: click one point. ESC cancels.'),
+      distance: t('viewer.measurement.status.distance', 'Distance: click points, right-click to finish. ESC cancels.'),
+      height: t('viewer.measurement.status.height', 'Height: click two points. ESC cancels.'),
+      area: t('viewer.measurement.status.area', 'Area: click boundary points, double-click to finish. ESC cancels.'),
+      angle: t('viewer.measurement.status.angle', 'Angle: click three points. ESC cancels.'),
+    };
+    return statusByType[type] || t('viewer.measurement.status.measuring', 'Measuring... ESC to cancel');
   }
 
   function startMeasurement(type) {
     if (!MEASUREMENT_TYPES.has(type)) return null;
     if (!viewer.scene.pointclouds.length) {
-      toast(translateText('Please load a point cloud first'), 'err');
+      toast(t('viewer.measurement.toast.needPointCloud', 'Please load a point cloud first'), 'err');
       return null;
     }
 
     stopCapture();
-    cancelActiveProfile?.({ notify: false });
-    cancelClipBoxSelection?.({ notify: false });
     cancelVolumeSelection({ notify: false });
     cancelDeletePolygonSelection({ notify: false });
     hideAllVolumeRegionOverlays();
 
     const configs = {
-      point: { showDistances: false, showAngles: false, showCoordinates: true, showArea: false, closed: true, maxMarkers: 1, name: translateText('Coordinate Point') },
-      distance: { showDistances: true, showArea: false, closed: false, name: translateText('Distance') },
-      height: { showDistances: false, showHeight: true, showArea: false, closed: false, maxMarkers: 2, name: translateText('Height') },
-      area: { showDistances: true, showArea: true, closed: true, name: translateText('Area') },
-      angle: { showDistances: false, showAngles: true, closed: false, maxMarkers: 3, name: translateText('Angle') },
+      point: { showDistances: false, showAngles: false, showCoordinates: true, showArea: false, closed: true, maxMarkers: 1, name: t('viewer.measurement.type.point', 'Point') },
+      distance: { showDistances: true, showArea: false, closed: false, name: t('viewer.measurement.type.distance', 'Distance') },
+      height: { showDistances: false, showHeight: true, showArea: false, closed: false, maxMarkers: 2, name: t('viewer.measurement.type.height', 'Height') },
+      area: { showDistances: true, showArea: true, closed: true, name: t('viewer.measurement.type.area', 'Area') },
+      angle: { showDistances: false, showAngles: true, closed: false, maxMarkers: 3, name: t('viewer.measurement.type.angle', 'Angle') },
     };
 
     const config = configs[type];
     if (!config) return null;
 
     setToolMode(type);
-    setStatus(translateText('Measuring... double-click to finish / ESC to cancel'));
+    setStatus(getMeasurementStatusText(type));
     activateMeasureTab();
 
-    cancelActiveMeasurement({ notify: false });
     const measurement = viewer.measuringTool.startInsertion(config);
-    if (!measurement) return null;
+    if (!measurement) {
+      syncReadyState();
+      return null;
+    }
     if (!measurement.userData) measurement.userData = {};
-    measurement.userData.scannerProjectId = getCurrentCoordinateProjectContext?.()?.projectId || null;
-    activeInsertion = measurement;
+    measurement.userData.scannerProjectId = getActiveMeasurementProjectId();
+    measurement.userData.measurementType = type;
+    measurement.userData.__cloudstudioInsertionActive = true;
+
+    const canvas = viewer?.renderer?.domElement || null;
+
+    const active = {
+      measurement,
+      type,
+      minMarkers: getMinimumMarkers(type),
+      cancelled: false,
+      canvas,
+      rightMouseDown: null,
+      onKeyDown(event) {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        event.stopPropagation();
+        cancelActiveMeasurement({ notify: true });
+      },
+      onMouseDown(event) {
+        if (event.button !== 2) return;
+        active.rightMouseDown = { x: event.clientX || 0, y: event.clientY || 0 };
+      },
+      onMouseUp(event) {
+        if (type === 'point' && event.button === 0) {
+          try {
+            viewer?.inputHandler?.onMouseUp?.(event);
+          } catch (_error) {
+            // Older Potree input handlers may not expose a direct mouseup hook.
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation?.();
+          setTimeout(() => finishMeasurement(measurement), 0);
+          return;
+        }
+        if (event.button !== 2) return;
+        const down = active.rightMouseDown;
+        active.rightMouseDown = null;
+        const dragDistance = down
+          ? Math.hypot((event.clientX || 0) - down.x, (event.clientY || 0) - down.y)
+          : 0;
+        if (dragDistance > 6) {
+          try {
+            viewer?.inputHandler?.onMouseUp?.(event);
+          } catch (_error) {
+            // Keep camera rotation release best-effort while shielding Potree insertion.
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation?.();
+          return;
+        }
+        if (type === 'distance') {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation?.();
+          dispatchPotreeCancelInsertion();
+          setTimeout(() => finishMeasurement(measurement), 0);
+          return;
+        }
+        if (type === 'area' || type === 'angle') {
+          try {
+            viewer?.inputHandler?.onMouseUp?.(event);
+          } catch (_error) {
+            // Keep Potree's measurement insertion alive even if an older input handler differs.
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation?.();
+        }
+      },
+      onDoubleClick(event) {
+        if (type !== 'area') return;
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        dispatchPotreeCancelInsertion();
+        setTimeout(() => finishMeasurement(measurement), 0);
+      },
+    };
+    cleanupActiveInsertion();
+    activeInsertion = active;
+    document.addEventListener('keydown', active.onKeyDown, true);
+    window.addEventListener('keydown', active.onKeyDown, true);
+    canvas?.addEventListener('keydown', active.onKeyDown, true);
+    canvas?.addEventListener('mousedown', active.onMouseDown, true);
+    canvas?.addEventListener('mouseup', active.onMouseUp, true);
+    canvas?.addEventListener('dblclick', active.onDoubleClick, true);
 
     measurement.addEventListener('marker_added', () => {
       refreshMeasurements();
       if (measurement.maxMarkers !== undefined && measurement.points && measurement.points.length >= measurement.maxMarkers) {
         setTimeout(() => {
-          if (activeInsertion === measurement) activeInsertion = null;
-          finishMeasurement();
+          finishMeasurement(measurement);
         }, 200);
       }
     });
     measurement.addEventListener('finish', () => {
-      if (activeInsertion === measurement) activeInsertion = null;
-      finishMeasurement();
+      finishMeasurement(measurement);
     });
 
     return measurement;
   }
 
-  function cancelActiveMeasurement({ notify = false } = {}) {
-    const measurement = activeInsertion;
-    activeInsertion = null;
-    if (!measurement) return false;
-
-    try {
-      viewer.dispatchEvent?.({ type: 'cancel_insertions' });
-    } catch (error) { }
-
-    const pointCount = Array.isArray(measurement.points) ? measurement.points.length : 0;
-    if (pointCount < 2 || measurement.maxMarkers === 1) {
-      try { removeMeasurement(measurement); } catch (error) { }
-      refreshSceneTree();
-      refreshMeasurements();
-      if (notify) toast(translateText('Cancel'), 'info');
-      return true;
-    }
-
-    refreshMeasurements();
-    return false;
-  }
-
-  function clearAllMeasurements({ toastMessage = translateText('All measurements cleared') } = {}) {
+  function clearAllMeasurements({ toastMessage = t('viewer.measurement.toast.allCleared', 'All measurements cleared') } = {}) {
     getMeasurements().forEach(measurement => removeMeasurement(measurement));
-    clearAllVolumeRegions?.({ notify: false });
+    // Volume measurements are a separate "Volume" workspace tool now; do NOT clear
+    // them from the Measure tab's Clear All (prevents accidental deletion).
     refreshSceneTree();
     toast(toastMessage, 'info');
   }
@@ -358,12 +516,12 @@ export function createMeasurementFeature({
 
     const clearButton = document.getElementById('btn-clear-meas');
     if (clearButton) {
-      clearButton.addEventListener('click', () => clearAllMeasurements({ toastMessage: translateText('All measurements cleared') }));
+      clearButton.addEventListener('click', () => clearAllMeasurements({ toastMessage: t('viewer.measurement.toast.allCleared', 'All measurements cleared') }));
     }
 
     const clearMenuItem = document.getElementById('mi-clear-meas');
     if (clearMenuItem) {
-      clearMenuItem.addEventListener('click', () => clearAllMeasurements({ toastMessage: translateText('Measurement cleared') }));
+      clearMenuItem.addEventListener('click', () => clearAllMeasurements({ toastMessage: t('viewer.measurement.toast.cleared', 'Measurements cleared') }));
     }
 
     syncToolButtons();
@@ -371,7 +529,6 @@ export function createMeasurementFeature({
 
   return {
     bindControls,
-    cancelActiveMeasurement,
     clearAllMeasurements,
     refreshMeasurements,
     startMeasurement,

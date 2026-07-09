@@ -33,7 +33,8 @@
       "save": "Spara"
     },
     "status": {
-      "ready": "Klar"
+      "ready": "Klar",
+      "failed": "Misslyckades"
     },
     "author": {
       "createdBy": "Skapad av",
@@ -604,7 +605,9 @@
       "removePending": "Ta bort väntande region",
       "removeApplied": "Ta bort raderingsregion",
       "regionLabel": "Ta bort region {{index}}",
-      "toolHint": "🧹 Polygon radera — klicka för att lägga till hörn, dubbelklicka för att bekräfta, förhandsgranska flera regioner och använd sedan en gång | ESC avbryt"
+      "toolHint": "🧹 Polygon radera — klicka för att lägga till hörn, dubbelklicka för att bekräfta, förhandsgranska flera regioner och använd sedan en gång | ESC avbryt",
+      "exporting": "Exporterar resultatet med borttagna regioner for nedladdning...",
+      "exportComplete": "LAS med borttagna regioner har exporterats. Nedladdningen har startat."
     },
     "clip": {
       "toolsTitle": "Klippverktyg",
@@ -669,7 +672,11 @@
       "exportFiltered": "Clip box filtrerade punkter: {{count}}",
       "toolHint": "⬜ Clipbox — placera rutan, justera storleken, bekräfta i Clip-panelen och exportera sedan med aktuellt klippläge | ESC avbryt",
       "statusEditing": "Redigera klippruta... justera handtagen, bekräfta sedan denna omgång när du är klar",
-      "resumeEdit": "Fortsätt redigera den här klippboxen"
+      "resumeEdit": "Fortsätt redigera den här klippboxen",
+      "exporting": "Exporterar beskuren LAS for nedladdning...",
+      "exportComplete": "Beskuren LAS har exporterats. Nedladdningen har startat.",
+      "exportOpen": "Exportera beskuren LAS for nedladdning",
+      "exportHintReady": "Exporterar bekraftade klipprutor och startar en LAS-nedladdning. Den aktuella visarscenen andras inte."
     },
     "profile": {
       "panelTitle": "✂ Tvärsnitt/profilvy",
@@ -690,7 +697,10 @@
       "minimapPlaceholder": "Geografisk information krävs för att visa kartan",
       "minimapPlaceholderHint": "Ladda ett skannerprojekt som innehåller geo_info.csv",
       "crsBrowserSupportNote": "Detta koordinatarbetsflöde stöder lokala koordinater, WGS84, Web Mercator, UTM/UPS och offline-uppslagning av authority codes för vanliga CRS-definitioner. Parameterfiler kan importeras som `.prj / .wkt / .txt / .json / .csv`. Rutnätsresurser kan anslutas från `.gsb / .gtx / .tif / .tiff`, medan `.ggf / .grd` kan behöva konverteras till ett PROJ-kompatibelt rutnät innan de kan användas. Horisontella rutnät kan delta i den interaktiva koordinatavvisningen när den aktuella transformeringskedjan stöder dem; vertikala geoid- och höjdraster och mer generiska rutnät tillämpas främst via den inbyggda PROJ/pyproj-transformerings- och exportpipeline.",
-      "trajectoryTitle": "Bana"
+      "trajectoryTitle": "Bana",
+      "expandMap": "Förstora kartan",
+      "flyTrajectoryStart": "🎬 Flyga genom banan",
+      "flyTrajectoryStop": "⏹ Stoppa bana genomflyttning"
     },
     "open": {
       "loading": "Laddar...",
@@ -724,7 +734,26 @@
         "photos": "Foton"
       },
       "importMeshReady": "Importerat nät: {{name}}",
-      "openObjFile": "Öppna OBJ-modell"
+      "openObjFile": "Öppna OBJ-modell",
+      "importCancelling": "Avbryter...",
+      "cancelFailed": "Avbryt misslyckades: {{message}}",
+      "importTitle": "Öppnar punktmoln",
+      "importStarting": "Förbereder lokal import...",
+      "removeAction": "Ta bort",
+      "removeConfirm": "Ta bort \"{{name}}\" från den här listan?",
+      "removeConfirmTitle": "Ta bort skannerprojekt?",
+      "removing": "Tar bort...",
+      "removeSuccess": "Tog bort \"{{name}}\" från listan.",
+      "removeFailed": "Det gick inte att ta bort: {{message}}",
+      "removeCloudConfirm": "Ta bort \"{{name}}\" från den här listan? De ursprungliga uppgifterna kommer inte att raderas.",
+      "removeCloudConfirmTitle": "Ta bort punktmoln?",
+      "removeCloudSuccess": "Tog bort \"{{name}}\" från listan.",
+      "removeCloudFailed": "Det gick inte att ta bort: {{message}}",
+      "loadingProjects": "Läser senaste projekt från cache. Du kan öppna en lokal mapp eller LAS/LAZ nu.",
+      "selectingPath": "Väntar på filval...",
+      "importCancelled": "Importen avbröts.",
+      "emptyServerHint": "Ladda upp datauppsättningar från CloudStudios startsida eller serverns backend.",
+      "uploadHomeAction": "Ladda upp data"
     },
     "export": {
       "needDataset": "Ladda ett punktmoln eller skannerprojekt först.",
@@ -1203,6 +1232,17 @@
     },
     "performance": {
       "detailLoading": "Klar - högdetaljerade rutor fortsätter att laddas upp till {{budget}} punkter"
+    },
+    "minimap": {
+      "projectCount": "{{count}}-projekt"
+    },
+    "photo": {
+      "info": {
+        "position": "Position: ({{x}}, {{y}}, {{z}})",
+        "orientation": "Orientering: yaw {{yaw}}° / pitch {{pitch}}°",
+        "camera": "Kamera: {{side}}",
+        "timestamp": "Tidsstämpel: {{timestamp}}"
+      }
     }
   },
   "phrases": {

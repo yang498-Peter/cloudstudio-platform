@@ -3,8 +3,11 @@ export function createScannerRuntimeFeature({
   getLoadedScannerProjects,
   getCurrentScannerProjectId,
   getScannerProjectState,
+  getVisiblePhotoCameras,
   escapeHtml,
-  formatTrajectoryArrowDensityLabel,
+  getFlyTrajectoryButtonLabel,
+  formatTrajectoryFlySpeedLabel,
+  stopScannerTimeline,
   setSelectedScannerProject,
   updateCoordinateFormVisibility,
   refreshCoordinateSystem,
@@ -28,12 +31,17 @@ export function createScannerRuntimeFeature({
   tr,
   toast,
   buildTrajectory,
+  buildCameraMarkers,
   viewer,
 } = {}) {
   let controlsBound = false;
 
   function getState() {
     return getScannerState?.() || null;
+  }
+
+  function timelinePlayLabel(isPlaying = false) {
+    return `${isPlaying ? '⏸' : '▶'} ${tr(isPlaying ? 'viewer.scanner.timeline.pause' : 'viewer.scanner.timeline.play', {}, isPlaying ? 'Pause' : 'Play')}`;
   }
 
   function applyProjectUiState(projectId = getCurrentScannerProjectId?.()) {
@@ -65,9 +73,54 @@ export function createScannerRuntimeFeature({
     document.getElementById('inp-traj-color').value = state.trajSettings?.solidColor || '#4078ff';
     document.getElementById('row-traj-solid').style.display = (state.trajSettings?.colorMode || 'time') === 'solid' ? '' : 'none';
     document.getElementById('chk-traj-arrows').checked = Boolean(state.trajSettings?.showArrows);
-    document.getElementById('row-traj-arrow-density').style.display = state.trajSettings?.showArrows ? '' : 'none';
-    document.getElementById('r-traj-arrows').value = String(state.trajSettings?.arrowDensity ?? 30);
-    document.getElementById('l-traj-arrows').textContent = formatTrajectoryArrowDensityLabel(state.trajSettings?.arrowDensity ?? 30);
+
+    document.getElementById('chk-cameras').checked = Boolean(state.cameraSettings?.visible);
+    document.getElementById('r-cam-size').value = String(state.cameraSettings?.size ?? 0.15);
+    document.getElementById('l-cam-size').textContent = String(state.cameraSettings?.size ?? 0.15);
+    document.getElementById('chk-frustum').checked = Boolean(state.cameraSettings?.showFrustum);
+
+    const timelinePlayButton = document.getElementById('btn-timeline-play');
+    if (timelinePlayButton) {
+      timelinePlayButton.textContent = timelinePlayLabel(Boolean(state.timelineAnim));
+    }
+    const flySpeed = Number(state.trajectoryFlySettings?.speed ?? 2);
+    document.getElementById('r-traj-fly-speed').value = String(flySpeed);
+    document.getElementById('l-traj-fly-speed').textContent = formatTrajectoryFlySpeedLabel?.(flySpeed) || `${flySpeed.toFixed(1)} m/s`;
+    const flyTrajectoryButton = document.getElementById('btn-fly-traj');
+    if (flyTrajectoryButton) {
+      flyTrajectoryButton.disabled = !state.odomData || state.odomData.length < 2;
+      flyTrajectoryButton.textContent = getFlyTrajectoryButtonLabel(Boolean(state.flyActive));
+    }
+  }
+
+  function updateTimeline() {
+    const state = getState();
+    if (!state?.odomData?.length) return;
+    const startSlider = document.getElementById('r-time-start');
+    const endSlider = document.getElementById('r-time-end');
+    if (!startSlider || !endSlider) return;
+    const startValue = parseFloat(startSlider.value);
+    const endValue = parseFloat(endSlider.value);
+    const startLabel = document.getElementById('l-time-start');
+    const endLabel = document.getElementById('l-time-end');
+    if (startLabel) startLabel.textContent = `${(startValue * 100).toFixed(0)}%`;
+    if (endLabel) endLabel.textContent = `${(endValue * 100).toFixed(0)}%`;
+
+    const odom = state.odomData;
+    const tMin = odom[0].t;
+    const tMax = odom[odom.length - 1].t;
+    const absStart = tMin + (tMax - tMin) * startValue;
+    const absEnd = tMin + (tMax - tMin) * endValue;
+
+    if (state.trajGroup) buildTrajectory?.();
+    if (state.camGroup) {
+      const leftCameras = getVisiblePhotoCameras?.(getCurrentScannerProjectId?.()) || state.cameras.filter(camera => camera.side === 'left');
+      state.camGroup.children.forEach((sprite, index) => {
+        if (index >= leftCameras.length) return;
+        const cameraTime = leftCameras[index].timestamp;
+        sprite.visible = cameraTime >= absStart && cameraTime <= absEnd;
+      });
+    }
   }
 
   function bindControls() {
@@ -96,12 +149,14 @@ export function createScannerRuntimeFeature({
     document.getElementById('btn-reset-crs')?.addEventListener('click', () => resetCoordinateConfig(getCurrentScannerProjectId?.()));
     document.getElementById('btn-copy-crs-origin')?.addEventListener('click', copyCoordinateOrigin);
     document.getElementById('btn-add-grid-catalog')?.addEventListener('click', () => {
-      const catalogId = document.getElementById('sel-grid-catalog').value;
-      if (!catalogId) {
+      const attachButton = document.getElementById('btn-add-grid-catalog');
+      if (attachButton?.dataset.unifiedFallbackBound === '1' || attachButton?.dataset.unifiedStorageFallbackBound === '1') return;
+      const gridId = document.getElementById('sel-grid-catalog').value;
+      if (!gridId) {
         toast(tr('viewer.crs.chooseBuiltinGridFirst', {}, 'Choose a built-in grid first.'), 'info', 3000);
         return;
       }
-      const record = getAvailableServerGrids().find(item => item.catalogId === catalogId);
+      const record = getAvailableServerGrids().find(item => String(item?.id || item?.catalogId || '').trim() === gridId);
       if (!record) {
         toast(tr('viewer.crs.gridNotReady', {}, 'This built-in grid is not ready yet. Refresh the grid catalog first.'), 'info', 4000);
         return;
@@ -112,9 +167,10 @@ export function createScannerRuntimeFeature({
     });
     document.getElementById('btn-refresh-grid-catalog')?.addEventListener('click', () => refreshServerGridCatalog({ silent: false, projectId: getCurrentScannerProjectId?.() }));
     document.getElementById('sel-grid-catalog')?.addEventListener('change', event => {
-      const catalogId = event.target.value;
-      if (!catalogId) return;
-      const record = getAvailableServerGrids().find(item => item.catalogId === catalogId);
+      if (event.currentTarget?.dataset.unifiedFallbackBound === '1' || event.currentTarget?.dataset.unifiedStorageFallbackBound === '1') return;
+      const gridId = event.target.value;
+      if (!gridId) return;
+      const record = getAvailableServerGrids().find(item => String(item?.id || item?.catalogId || '').trim() === gridId);
       if (!record) {
         toast(tr('viewer.crs.gridNotReady', {}, 'This built-in grid is not ready yet. Refresh the grid catalog first.'), 'info', 4000);
         return;
@@ -137,6 +193,8 @@ export function createScannerRuntimeFeature({
       setSelectedScannerProject(event.target.value, { syncContext: true });
     });
     document.getElementById('btn-grid-file-picker')?.addEventListener('click', async () => {
+      const pickerButton = document.getElementById('btn-grid-file-picker');
+      if (pickerButton?.dataset.unifiedFallbackBound === '1' || pickerButton?.dataset.unifiedStorageFallbackBound === '1') return;
       const input = document.getElementById('inp-grid-file');
       const state = getState();
 
@@ -190,7 +248,7 @@ export function createScannerRuntimeFeature({
         const state = getState();
         state.importedGridFile = {
           name: file.name,
-          status: tr('phrases.Failed', {}, 'Failed'),
+          status: tr('common.status.failed', {}, 'Failed'),
           note: error.message || String(error),
         };
         saveCoordinateConfig(getCurrentScannerProjectId?.());
@@ -232,19 +290,90 @@ export function createScannerRuntimeFeature({
     document.getElementById('chk-traj-arrows')?.addEventListener('change', event => {
       const state = getState();
       state.trajSettings.showArrows = event.target.checked;
-      document.getElementById('row-traj-arrow-density').style.display = event.target.checked ? '' : 'none';
       buildTrajectory?.();
     });
-    document.getElementById('r-traj-arrows')?.addEventListener('input', event => {
+    document.getElementById('r-traj-fly-speed')?.addEventListener('input', event => {
       const state = getState();
-      document.getElementById('l-traj-arrows').textContent = formatTrajectoryArrowDensityLabel(event.target.value);
-      state.trajSettings.arrowDensity = parseInt(event.target.value, 10) || 30;
-      buildTrajectory?.();
+      const speed = Math.max(0.1, Number(event.target.value) || 2);
+      if (state) {
+        state.trajectoryFlySettings = {
+          ...(state.trajectoryFlySettings || {}),
+          speed,
+        };
+      }
+      document.getElementById('l-traj-fly-speed').textContent = formatTrajectoryFlySpeedLabel?.(speed) || `${speed.toFixed(1)} m/s`;
+    });
+
+    document.getElementById('chk-cameras')?.addEventListener('change', event => {
+      const state = getState();
+      state.cameraSettings.visible = event.target.checked;
+      if (state.camGroup) state.camGroup.visible = event.target.checked;
+      if (state.frustumGroup) state.frustumGroup.visible = event.target.checked && document.getElementById('chk-frustum').checked;
+    });
+    document.getElementById('r-cam-size')?.addEventListener('input', event => {
+      const state = getState();
+      document.getElementById('l-cam-size').textContent = event.target.value;
+      state.cameraSettings.size = parseFloat(event.target.value);
+      buildCameraMarkers?.();
+    });
+    document.getElementById('chk-frustum')?.addEventListener('change', event => {
+      getState().cameraSettings.showFrustum = event.target.checked;
+      buildCameraMarkers?.();
+    });
+
+    document.getElementById('chk-timeline')?.addEventListener('change', event => {
+      document.getElementById('timeline-controls').style.display = event.target.checked ? '' : 'none';
+      if (!event.target.checked) {
+        const state = getState();
+        if (state.trajGroup) state.trajGroup.visible = document.getElementById('chk-traj').checked;
+        if (state.camGroup) state.camGroup.visible = document.getElementById('chk-cameras').checked;
+        viewer.scene.pointclouds.forEach(pointcloud => {
+          if (pointcloud.material.activeAttributeName === 'gps-time') {
+            pointcloud.material.activeAttributeName = 'rgba';
+          }
+        });
+      }
+    });
+    document.getElementById('r-time-start')?.addEventListener('input', updateTimeline);
+    document.getElementById('r-time-end')?.addEventListener('input', updateTimeline);
+    document.getElementById('btn-timeline-play')?.addEventListener('click', function () {
+      const state = getState();
+      if (state.timelineAnim) {
+        clearInterval(state.timelineAnim);
+        state.timelineAnim = null;
+        this.textContent = timelinePlayLabel(false);
+        return;
+      }
+      this.textContent = timelinePlayLabel(true);
+      const slider = document.getElementById('r-time-end');
+      slider.value = 0;
+      document.getElementById('r-time-start').value = 0;
+      state.timelineAnim = setInterval(() => {
+        let value = parseFloat(slider.value) + 0.005;
+        if (value > 1) {
+          value = 1;
+          stopScannerTimeline(getCurrentScannerProjectId?.());
+          document.getElementById('btn-timeline-play').textContent = timelinePlayLabel(false);
+        }
+        slider.value = value;
+        updateTimeline();
+      }, 50);
+    });
+    document.getElementById('btn-timeline-reset')?.addEventListener('click', () => {
+      const state = getState();
+      if (state.timelineAnim) {
+        stopScannerTimeline(getCurrentScannerProjectId?.());
+        document.getElementById('btn-timeline-play').textContent = timelinePlayLabel(false);
+      }
+      document.getElementById('r-time-start').value = 0;
+      document.getElementById('r-time-end').value = 1;
+      updateTimeline();
     });
   }
 
   return {
     applyProjectUiState,
     bindControls,
+    updateTimeline,
   };
 }

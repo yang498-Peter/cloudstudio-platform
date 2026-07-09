@@ -1,0 +1,18 @@
+/* Volume workspace overrides with pane-scoped selectors only.
+   2026-06: Volume moved out of the Measure tab into its own "Volume" workspace
+   tool (#pane-volume). */
+
+#pane-volume .volume-panel {
+  margin-left: 4px !important;
+  margin-right: 4px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  overflow: visible !important;
+}
+
+#pane-volume .volume-panel-list {
+  max-height: none !important;
+  overflow: visible !important;
+  padding-right: 0 !important;
+  min-width: 0;
+}

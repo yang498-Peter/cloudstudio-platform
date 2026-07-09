@@ -2,7 +2,6 @@ export function createMagnifierFeature({
   viewer,
   getRenderArea = () => document.getElementById('potree_render_area'),
   toast,
-  translateText = text => text,
 } = {}) {
   let controlsBound = false;
   let updateBound = false;
@@ -196,7 +195,7 @@ export function createMagnifierFeature({
       resizeLensCanvas();
       drawLens();
     }
-    toast?.(next ? translateText('Magnifier enabled') : translateText('Magnifier disabled'), 'info', 1800);
+    toast?.(next ? 'Magnifier enabled' : 'Magnifier disabled', 'info', 1800);
     return state.active;
   }
 

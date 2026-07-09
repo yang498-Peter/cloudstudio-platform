@@ -33,7 +33,8 @@
       "save": "Salva"
     },
     "status": {
-      "ready": "Pronto"
+      "ready": "Pronto",
+      "failed": "Non riuscito"
     },
     "author": {
       "createdBy": "Creato da",
@@ -604,7 +605,9 @@
       "removePending": "Rimuovi la regione in sospeso",
       "removeApplied": "Rimuovi la regione eliminata",
       "regionLabel": "Elimina regione {{index}}",
-      "toolHint": "🧹 Elimina poligono: fai clic per aggiungere vertici, fai doppio clic per confermare, visualizza l'anteprima di più regioni, quindi applica una volta | Annulla ESC"
+      "toolHint": "🧹 Elimina poligono: fai clic per aggiungere vertici, fai doppio clic per confermare, visualizza l'anteprima di più regioni, quindi applica una volta | Annulla ESC",
+      "exporting": "Esportazione del risultato con regioni eliminate per il download...",
+      "exportComplete": "LAS con regioni eliminate esportato. Download avviato."
     },
     "clip": {
       "toolsTitle": "Strumenti di ritaglio",
@@ -669,7 +672,11 @@
       "exportFiltered": "Punti filtrati della clip box: {{count}}",
       "toolHint": "⬜ Casella clip — posiziona la casella, regola la dimensione, confermala nel pannello Clip e poi esporta con la modalità Clip corrente | ESC per annullare",
       "statusEditing": "Modifica casella di ritaglio... regola le maniglie, quindi conferma questo giro quando sei pronto",
-      "resumeEdit": "Riprendi la modifica di questo box di ritaglio"
+      "resumeEdit": "Riprendi la modifica di questo box di ritaglio",
+      "exporting": "Esportazione del LAS ritagliato per il download...",
+      "exportComplete": "LAS ritagliato esportato. Download avviato.",
+      "exportOpen": "Esporta LAS ritagliato per il download",
+      "exportHintReady": "Esporta i riquadri di ritaglio confermati e avvia il download LAS. La scena corrente del viewer non cambia."
     },
     "profile": {
       "panelTitle": "✂ Vista in sezione trasversale/profilo",
@@ -690,7 +697,10 @@
       "minimapPlaceholder": "Per visualizzare la mappa sono necessarie informazioni geografiche",
       "minimapPlaceholderHint": "Carica un progetto scanner che contenga geo_info.csv",
       "crsBrowserSupportNote": "Questo flusso di lavoro per coordinate supporta coordinate locali, WGS84, Web Mercator, UTM/UPS e la ricerca offline di codici authority per definizioni CRS comuni. I file parametro possono essere importati come `.prj / .wkt / .txt / .json / .csv`. Le risorse di griglia possono essere collegate da `.gsb / .gtx / .tif / .tiff`, mentre `.ggf / .grd` potrebbe richiedere conversione in una griglia compatibile PROJ prima di poter essere usata. Le griglie orizzontali possono partecipare alla visualizzazione interattiva delle coordinate quando la catena di trasformazione corrente lo supporta; i geoid verticali e le griglie più generiche sono applicati principalmente tramite la pipeline di trasformazione/esportazione PROJ/pyproj.",
-      "trajectoryTitle": "Traiettoria"
+      "trajectoryTitle": "Traiettoria",
+      "expandMap": "Ingrandisci mappa",
+      "flyTrajectoryStart": "🎬 Vola attraverso la traiettoria",
+      "flyTrajectoryStop": "⏹ Interrompi il volo in traiettoria"
     },
     "open": {
       "loading": "Caricamento...",
@@ -724,7 +734,26 @@
         "photos": "Foto"
       },
       "importMeshReady": "Maglia importata: {{name}}",
-      "openObjFile": "Apri mesh OBJ"
+      "openObjFile": "Apri mesh OBJ",
+      "importCancelling": "Annullamento...",
+      "cancelFailed": "Annullamento non riuscito: {{message}}",
+      "importTitle": "Nuvola di punti di apertura",
+      "importStarting": "Preparazione dell'importazione locale...",
+      "removeAction": "Rimuovere",
+      "removeConfirm": "Rimuovere \"{{name}}\" da questo elenco?",
+      "removeConfirmTitle": "Rimuovere il progetto scanner?",
+      "removing": "Rimozione...",
+      "removeSuccess": "Rimosso \"{{name}}\" dall'elenco.",
+      "removeFailed": "Rimozione non riuscita: {{message}}",
+      "removeCloudConfirm": "Rimuovere \"{{name}}\" da questo elenco? I dati originali non verranno cancellati.",
+      "removeCloudConfirmTitle": "Rimuovere la nuvola di punti?",
+      "removeCloudSuccess": "Rimosso \"{{name}}\" dall'elenco.",
+      "removeCloudFailed": "Rimozione non riuscita: {{message}}",
+      "loadingProjects": "Lettura dei progetti recenti dalla cache. Puoi già aprire una cartella locale o un file LAS/LAZ.",
+      "selectingPath": "In attesa della selezione del file...",
+      "importCancelled": "Importazione annullata.",
+      "emptyServerHint": "Carica i dataset dalla home page di CloudStudio o dal backend del server.",
+      "uploadHomeAction": "Carica dati"
     },
     "export": {
       "needDataset": "Caricare prima una nuvola di punti o un progetto scanner.",
@@ -1203,6 +1232,17 @@
     },
     "performance": {
       "detailLoading": "Pronto - i tile ad alto dettaglio continuano a caricarsi fino a {{budget}} punti"
+    },
+    "minimap": {
+      "projectCount": "Progetti {{count}}"
+    },
+    "photo": {
+      "info": {
+        "position": "Posizione: ({{x}}, {{y}}, {{z}})",
+        "orientation": "Orientamento: Yaw {{yaw}}° Pitch {{pitch}}°",
+        "camera": "Camera: {{side}}",
+        "timestamp": "Timestamp: {{timestamp}}"
+      }
     }
   },
   "phrases": {

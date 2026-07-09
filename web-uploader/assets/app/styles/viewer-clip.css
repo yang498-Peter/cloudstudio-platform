@@ -1,0 +1,402 @@
+/* Clip and delete-region workspace styles. */
+#pane-clip .clip-delete-shell,
+#pane-clip .clip-box-shell,
+#pane-clip .polygon-delete-shell,
+#pane-clip .clip-delete-note,
+#pane-clip .clip-box-rotate-row,
+#pane-clip .delete-region-card,
+#pane-clip .left-empty {
+  color: var(--cs-text-primary) !important;
+  background: var(--cs-surface-panel) !important;
+  border-color: var(--cs-border-subtle) !important;
+  box-shadow: var(--cs-shadow-hairline) !important;
+}
+
+#pane-clip .clip-delete-note,
+#pane-clip .clip-box-rotate-row,
+#pane-clip .left-empty {
+  color: var(--cs-text-secondary) !important;
+  background: var(--cs-surface-subtle) !important;
+}
+
+#pane-clip .clip-box-shell {
+  gap: 10px;
+}
+
+#pane-clip .clip-box-headline {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+#pane-clip .clip-box-head-icon {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  color: var(--cs-accent);
+  background: linear-gradient(180deg, #eff6ff 0%, #e8f0ff 100%);
+  border: 1px solid #d7e4ff;
+  box-shadow: var(--cs-shadow-hairline);
+}
+
+#pane-clip .clip-box-head-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#pane-clip .clip-delete-start {
+  justify-content: center;
+  gap: 7px;
+}
+
+#pane-clip .clip-btn-glyph {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 1;
+}
+
+#pane-clip .clip-delete-meta-row {
+  padding: 9px 10px;
+  border: 1px solid var(--cs-border-subtle);
+  border-radius: var(--cs-radius-control);
+  background: var(--cs-surface-subtle);
+}
+
+#pane-clip .clip-delete-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#pane-clip .clip-meta-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+#pane-clip .clip-meta-icon::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 5px;
+  height: 6px;
+  border: 1.5px solid #64748b;
+  border-top: 0;
+  border-radius: 0 0 3px 3px;
+}
+
+#pane-clip .clip-mode-option {
+  gap: 7px !important;
+}
+
+#pane-clip .clip-mode-option.active {
+  color: var(--cs-accent) !important;
+  background: var(--cs-accent-soft) !important;
+  border-color: var(--cs-accent-border) !important;
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.04), var(--cs-shadow-hairline) !important;
+}
+
+#pane-clip .clip-mode-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border-radius: 5px;
+  border: 1.7px dashed currentColor;
+  position: relative;
+  overflow: hidden;
+  opacity: .86;
+}
+
+#pane-clip .clip-mode-icon.inside::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 3px;
+  background: currentColor;
+  opacity: .28;
+}
+
+#pane-clip .clip-mode-icon.outside::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  opacity: .26;
+}
+
+#pane-clip .delete-region-card.pending {
+  background: var(--cs-warning-soft) !important;
+  border-color: #fde68a !important;
+}
+
+#pane-clip .clip-delete-state {
+  color: var(--cs-text-secondary) !important;
+  background: var(--cs-surface-subtle) !important;
+  border-color: var(--cs-border-subtle) !important;
+}
+
+#pane-clip .clip-delete-state.active,
+#pane-clip .clip-delete-state.pending {
+  color: var(--cs-accent) !important;
+  background: var(--cs-accent-soft) !important;
+  border-color: var(--cs-accent-border) !important;
+}
+
+#pane-clip .clip-action-grid .btn,
+#pane-clip .clip-box-mode-grid .btn,
+#pane-clip .clip-delete-actions .btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  padding: 6px 8px !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.22 !important;
+}
+
+#pane-clip .clip-box-rotate-row {
+  grid-template-columns: 22px minmax(0, 1fr) 38px !important;
+  align-items: center !important;
+  gap: 9px !important;
+  min-height: 44px;
+  padding: 9px 10px !important;
+  border-radius: var(--cs-radius-control) !important;
+  cursor: pointer;
+}
+
+#pane-clip .clip-toggle-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 7px;
+  color: var(--cs-text-secondary);
+  background: #ffffff;
+  border: 1px solid var(--cs-border-subtle);
+  position: relative;
+  flex: 0 0 auto;
+}
+
+#pane-clip .clip-toggle-icon.move::before,
+#pane-clip .clip-toggle-icon.move::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+  opacity: .75;
+}
+
+#pane-clip .clip-toggle-icon.move::before {
+  left: 4px;
+  right: 4px;
+  top: 9px;
+  height: 2px;
+}
+
+#pane-clip .clip-toggle-icon.move::after {
+  top: 4px;
+  bottom: 4px;
+  left: 9px;
+  width: 2px;
+}
+
+#pane-clip .clip-toggle-icon.rotate::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1.7px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+}
+
+#pane-clip .clip-toggle-icon.rotate::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 5px;
+  height: 5px;
+  border-top: 1.7px solid currentColor;
+  border-right: 1.7px solid currentColor;
+  transform: rotate(12deg);
+}
+
+#pane-clip .clip-toggle-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+#pane-clip .clip-toggle-copy > span {
+  color: var(--cs-text-primary);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+#pane-clip .clip-toggle-copy small {
+  color: var(--cs-text-tertiary);
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+#pane-clip .clip-box-switch {
+  appearance: none;
+  width: 36px;
+  height: 20px;
+  margin: 0 !important;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #e2e8f0;
+  position: relative;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease, opacity .16s ease;
+}
+
+#pane-clip .clip-box-switch::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 1px;
+  top: 1px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .18);
+  transition: transform .16s ease;
+}
+
+#pane-clip .clip-box-switch:checked {
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+  border-color: #2563eb;
+}
+
+#pane-clip .clip-box-switch:checked::after {
+  transform: translateX(16px);
+}
+
+#pane-clip .clip-box-switch:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+#pane-clip .clip-box-shell .clip-delete-note {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 8px;
+  align-items: start;
+  background: #f8fbff !important;
+  border-color: #d7e4ff !important;
+}
+
+#pane-clip .clip-box-shell .clip-note-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--cs-accent);
+  border: 1px solid #93c5fd;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+#pane-clip .clip-delete-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+  gap: 8px;
+}
+
+#pane-clip .clip-delete-actions .btn {
+  min-height: 36px;
+}
+
+#pane-clip .clip-export-block {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #d7e4ff;
+  border-radius: 13px;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+  box-shadow: var(--cs-shadow-hairline);
+}
+
+#pane-clip .clip-export-open {
+  min-height: 38px !important;
+  gap: 8px !important;
+}
+
+#pane-clip .clip-export-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1.7px solid currentColor;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+#pane-clip .clip-export-icon::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 3px;
+  width: 6px;
+  height: 9px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+#pane-clip .clip-export-hint,
+#pane-clip .clip-export-progress-text {
+  color: var(--cs-text-secondary);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+#pane-clip .clip-export-progress {
+  display: grid;
+  gap: 6px;
+}
+
+#pane-clip .clip-export-progress[hidden] {
+  display: none;
+}
+
+#pane-clip .clip-export-progress-bar {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dbeafe;
+}
+
+#pane-clip .clip-export-progress-bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2563eb 0%, #06b6d4 100%);
+  transition: width .22s ease;
+}

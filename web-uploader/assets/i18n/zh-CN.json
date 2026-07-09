@@ -33,7 +33,8 @@
       "save": "保存"
     },
     "status": {
-      "ready": "就绪"
+      "ready": "就绪",
+      "failed": "失败"
     },
     "author": {
       "createdBy": "作者",
@@ -604,7 +605,9 @@
       "removePending": "移除待删除区域",
       "removeApplied": "移除删除区域",
       "regionLabel": "删除区域 {{index}}",
-      "toolHint": "🧹 选择裁剪删除 — 单击添加节点，双击确认后在当前可见点云上高亮预览，可继续叠加多块区域，再统一删除 | ESC 取消"
+      "toolHint": "🧹 选择裁剪删除 — 单击添加节点，双击确认后在当前可见点云上高亮预览，可继续叠加多块区域，再统一删除 | ESC 取消",
+      "exporting": "正在导出删除区域后的 LAS 下载文件...",
+      "exportComplete": "删除区域后的 LAS 已导出，下载已开始。"
     },
     "clip": {
       "toolsTitle": "裁剪工具",
@@ -669,7 +672,11 @@
       "exportFiltered": "裁剪框过滤点数: {{count}}",
       "toolHint": "⬜ 裁剪框 - 放置盒体并调整尺寸，在裁剪面板确认后按当前裁剪模式导出 | ESC 取消",
       "statusEditing": "正在编辑裁剪框... 调整控制柄，完成后确认本轮裁剪",
-      "resumeEdit": "继续编辑此裁剪框"
+      "resumeEdit": "继续编辑此裁剪框",
+      "exporting": "正在导出裁剪后的 LAS 下载文件...",
+      "exportComplete": "裁剪后的 LAS 已导出，下载已开始。",
+      "exportOpen": "导出裁剪 LAS 下载",
+      "exportHintReady": "导出已确认的裁剪框并开始下载 LAS。当前查看器场景不会改变。"
     },
     "profile": {
       "panelTitle": "✂ 截面 / 剖面视图",
@@ -690,7 +697,10 @@
       "minimapPlaceholder": "需要地理信息才能显示地图",
       "minimapPlaceholderHint": "加载含 geo_info.csv 的扫描仪项目",
       "crsBrowserSupportNote": "当前坐标工作流支持本地坐标、WGS84、Web Mercator、UTM/UPS，以及常见坐标系定义的离线 authority code 查询。参数文件支持 `.prj / .wkt / .txt / .json / .csv`。格网方面可直接附加 `.gsb / .gtx / .tif / .tiff`；`.ggf / .grd` 是否可用取决于能否先转换为 PROJ 兼容格网。水平格网在当前转换链支持时可参与交互式坐标显示；垂直 geoid 和更通用格网将主要通过原生 PROJ/pyproj 的转换与导出链应用。",
-      "trajectoryTitle": "轨迹"
+      "trajectoryTitle": "轨迹",
+      "expandMap": "放大地图",
+      "flyTrajectoryStart": "🎬 沿轨迹漫游",
+      "flyTrajectoryStop": "⏹ 停止轨迹漫游"
     },
     "open": {
       "loading": "加载中...",
@@ -724,7 +734,26 @@
         "photos": "照片"
       },
       "importMeshReady": "模型已导入：{{name}}",
-      "openObjFile": "打开 OBJ / 模型"
+      "openObjFile": "打开 OBJ / 模型",
+      "importCancelling": "正在取消...",
+      "cancelFailed": "取消失败：{{message}}",
+      "importTitle": "正在打开点云",
+      "importStarting": "正在准备本地导入...",
+      "removeAction": "移除",
+      "removeConfirm": "要将“{{name}}”从列表中移除吗？",
+      "removeConfirmTitle": "移除扫描项目？",
+      "removing": "移除中...",
+      "removeSuccess": "已将“{{name}}”从列表中移除。",
+      "removeFailed": "移除失败：{{message}}",
+      "removeCloudConfirm": "要将“{{name}}”从列表中移除吗？原始数据不会被删除。",
+      "removeCloudConfirmTitle": "移除点云？",
+      "removeCloudSuccess": "已将“{{name}}”从列表中移除。",
+      "removeCloudFailed": "移除失败：{{message}}",
+      "loadingProjects": "正在读取最近项目缓存。你现在也可以直接打开本地文件夹或 LAS/LAZ。",
+      "selectingPath": "正在等待文件选择...",
+      "importCancelled": "已取消导入。",
+      "emptyServerHint": "请从 CloudStudio 首页或服务器后台上传数据。",
+      "uploadHomeAction": "上传数据"
     },
     "export": {
       "needDataset": "请先加载点云或扫描项目。",
@@ -1203,6 +1232,17 @@
     },
     "performance": {
       "detailLoading": "已就绪 - 高细节节点会继续加载，点预算最高 {{budget}}"
+    },
+    "minimap": {
+      "projectCount": "{{count}} 个项目"
+    },
+    "photo": {
+      "info": {
+        "position": "位置：({{x}}, {{y}}, {{z}})",
+        "orientation": "姿态：Yaw {{yaw}}° Pitch {{pitch}}°",
+        "camera": "相机：{{side}}",
+        "timestamp": "时间戳：{{timestamp}}"
+      }
     }
   },
   "phrases": {

@@ -40,6 +40,8 @@ web-uploader/MEASUREMENT_SPLIT_PLAN.md
 *.crt
 id_rsa*
 id_ed25519*
+.cloudstudio-upload-password.txt
+web-uploader/.cloudstudio-upload-password.txt
 
 # Archives and temporary packages
 *.zip
