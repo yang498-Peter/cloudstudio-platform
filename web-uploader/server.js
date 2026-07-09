@@ -570,7 +570,7 @@ const CRS_BOOTSTRAP_FILE = path.join(ASSETS_DIR, 'crs', 'bootstrap.json');
 const CRS_CACHE_FILE = path.join(CACHE_DIR, 'crs-cache.json');
 const GRID_REGISTRY_FILE = path.join(CACHE_DIR, 'grid-registry.json');
 const GRID_CATALOG_FILE = path.join(ASSETS_DIR, 'grids', 'catalog.json');
-const GAUSSIAN_EDITOR_VERSION = 'cloudstudio-browse-20260518-1';
+const GAUSSIAN_EDITOR_VERSION = 'cloudstudio-browse-20260709-camera-1';
 const EXPORT_POINTCLOUD_SCRIPT = path.join(__dirname, 'scripts', 'export_pointcloud.py');
 const FLOORPLAN_EXTRACT_SCRIPT = path.join(__dirname, 'scripts', 'extract_floorplan.py');
 const GRID_PROBE_SCRIPT = path.join(__dirname, 'scripts', 'grid_probe.py');
@@ -3173,6 +3173,40 @@ function resolveGaussianViewerRotation(manifest = {}, publishInfo = {}, fallback
   return topLevelRotation || publishRotation || normalizeGaussianViewerRotation(null, fallback);
 }
 
+function normalizeGaussianViewerCamera(value) {
+  const source = value && typeof value === 'object' ? value : null;
+  if (!source) return null;
+  const positionSource = Array.isArray(source.position)
+    ? { x: source.position[0], y: source.position[1], z: source.position[2] }
+    : source.position;
+  const targetSource = Array.isArray(source.target)
+    ? { x: source.target[0], y: source.target[1], z: source.target[2] }
+    : source.target;
+  const position = {
+    x: Number(positionSource?.x),
+    y: Number(positionSource?.y),
+    z: Number(positionSource?.z),
+  };
+  const target = {
+    x: Number(targetSource?.x),
+    y: Number(targetSource?.y),
+    z: Number(targetSource?.z),
+  };
+  if (!['x', 'y', 'z'].every(axis => Number.isFinite(position[axis]) && Number.isFinite(target[axis]))) {
+    return null;
+  }
+  const fov = Number(source.fov);
+  return {
+    position,
+    target,
+    ...(Number.isFinite(fov) && fov > 5 && fov < 175 ? { fov } : {}),
+  };
+}
+
+function resolveGaussianViewerCamera(manifest = {}, publishInfo = {}) {
+  return normalizeGaussianViewerCamera(manifest.viewerCamera || manifest.publish?.viewerCamera || publishInfo.viewerCamera);
+}
+
 function normalizeGaussianEditorLocale(value) {
   const raw = String(value || '').trim();
   const supported = new Set(['en', 'zh-CN', 'fr', 'ko-KR', 'de', 'es', 'it', 'fi', 'sv']);
@@ -3205,6 +3239,16 @@ function buildGaussianEditorUrl(assetName, manifest = {}, publishInfo = {}, opti
     'show.bound': 'false',
     v: GAUSSIAN_EDITOR_VERSION,
   });
+  const camera = resolveGaussianViewerCamera(manifest, publishInfo);
+  if (camera) {
+    params.set('cam.px', String(camera.position.x));
+    params.set('cam.py', String(camera.position.y));
+    params.set('cam.pz', String(camera.position.z));
+    params.set('cam.tx', String(camera.target.x));
+    params.set('cam.ty', String(camera.target.y));
+    params.set('cam.tz', String(camera.target.z));
+    if (Number.isFinite(camera.fov)) params.set('cam.fov', String(camera.fov));
+  }
   return `/assets/supersplat-editor/index.html?${params.toString()}`;
 }
 
